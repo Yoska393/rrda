@@ -1,0 +1,233 @@
+
+---
+title: "Application : Soybean"
+output: html_document
+author: "Hayato Yoshioka (University of Tokyo, AgroParisTech)"
+---
+
+# Overview. H.Yoshioka et al. (rrda package)
+
+Application of Soybean Data
+
+```{r}
+library(furrr)
+library(dplyr)
+library(ggplot2)
+library(reshape2)
+library(RSpectra)
+library(rrda)
+library(here)
+library(xtable)
+library(pheatmap)
+library(tictoc)
+library(stringr)
+source("script_rrda/functions_rrda_yoshioka.R")
+```
+
+```{r}
+base_path <- here("out", "Soy")
+
+if (!dir.exists(base_path)) {
+  dir.create(base_path, recursive = TRUE)
+  message("Directory created: ", base_path)
+} 
+
+SoyData<-readRDS(here("RDAdata","Soydata.RDS"))
+met <- SoyData$metabolome
+micro <- SoyData$microbiome
+
+metname<-SoyData$metname
+microname<-SoyData$microname
+
+Y <- met
+X <- micro
+```
+
+
+```{r}
+set.seed(123)
+rn<-sample(c(1:nrow(X)),20,rep=F)
+print(rn)
+
+Y_train<-Y[-rn,]
+Y_test<-Y[rn,]
+X_train<-X[-rn,]
+X_test<-X[rn,]
+
+dim(Y_train)
+dim(Y_test)
+dim(X_train)
+dim(X_test)
+
+```
+
+## All data
+
+```{r,eval=FALSE}
+set.seed(123)
+n_lam <- 50
+
+Lambda <- exp(seq(0, 15, length.out = n_lam))
+
+plan(multisession)
+cv_result<- rrda.cv(Y = Y_train, X = X_train, lambda= Lambda,maxrank =15,nfold = 5,scale.X = F,scale.Y = F)
+plan(sequential)
+
+rrda.summary(cv_result)
+saveRDS(cv_result,file.path(base_path,"path.RDS"))
+
+```
+
+plot
+
+```{r,warning=FALSE}
+cv_result <- readRDS(file.path(base_path,"path.RDS"))
+
+p<-rrda.plot(cv_result, show_error_bar = FALSE)
+print(p)
+p<-rrda.plot(cv_result, show_error_bar = TRUE)
+print(p)
+rrda.heatmap(cv_result)
+```
+
+
+
+```{r,warning=FALSE}
+# Extract optimal lambda and rank
+L <- cv_result$opt_min$lambda
+K <- cv_result$opt_min$rank
+
+# Fit the model using the optimal lambda and rank
+b <- rrda.fit(Y = Y, X = X, lambda = L, nrank = K)
+
+ck<-rrda.coef(b)[[1]][[1]]
+# Predict Y using the fitted model
+```
+
+## heatmap
+
+```{r,fig.width=9,fig.height=6}
+
+cc <- colSums(met)
+#cm<-cc[duplicated(cc) | duplicated(cc, fromLast = TRUE)]
+
+colnames(ck)<-colnames(Y)
+
+cXf<- str_extract(microname, "(?<=o__)[^;]+(?=; f__)")
+rownames(ck)<-cXf
+
+rows_to_keep <- apply(ck, 1, sd) > 0.008 #micro
+cols_to_keep <- apply(ck, 2, sd) > 0.0031 #metabo
+table(rows_to_keep)
+table(cols_to_keep)
+
+filtered_matrix <- ck[rows_to_keep, cols_to_keep]
+
+unc<-rownames(filtered_matrix)!="uncultured"
+filtered_matrix<-filtered_matrix[unc,]
+
+dim(filtered_matrix)
+h<-filtered_matrix
+
+max_value <- max(h, na.rm = TRUE)
+min_value <- min(h, na.rm = TRUE)
+
+
+custom_colors <- colorRampPalette(c("blue", "white", "red"))(200)
+max_abs_value <- max(abs(c(min_value, max_value)))
+breaks <- seq(-max_abs_value, max_abs_value, length.out = 201)
+
+
+pheatmap(h,
+         color = custom_colors,
+         breaks = breaks,
+         border_color = NA,
+         #scale = "row",
+         clustering_distance_rows = "euclidean",
+         clustering_distance_cols = "euclidean",
+         clustering_method = "complete",
+         show_rownames = TRUE,
+         show_colnames = TRUE,
+         xlab = "Micro",
+         ylab = "Met",
+         fontsize_row = 8,
+         fontsize_col =8,
+         width = 10,
+         height = 15
+)
+annotation_lookup <- setNames(metname, colnames(met))
+new_colnames <- annotation_lookup[colnames(h)]
+colnames(h)<- unname(new_colnames)
+```
+
+
+```{r,fig.width=9,fig.height=7}
+
+shortname<-c("Adenine", "Glycine", "Histidine", "Phenylalanine", "Tryptophane", "Sucrose", "Diethanolamine", "Diaminopropionic acid", "Asparagine", "Aspartic acid", "Glutamic acid", "Ornithine HCl", "Serine", "Methylguanidine HCl", "Lactose monohydrate", "Aminohexanoic acid", "Apigenin glucoside", "Kaempferol glucoside", "Naringenin glucoside", "Jasmonic acid", "allo-Threonine", "Aminovaleric acid", "Riboflavin", "Raffinose", "S-Methylcysteine", "Cyanidin glucosides", "Leucine (CC reagent)", "Isoleucine", "Cyanidin-3-glucoside", "Luteolin-7-glucoside", "Galactosamine HCl", "Guanosine monophosphate", "Cellobiose/Lactulose", "Melibiose hydrate", "Histamine/Cytosine", "Alanine/Sarcosine", "Norvaline/Valine", "Threonine variants", "Aminoethylphosphonic", "Indole aldehydes", "Aminoadipic acid", "Melezitose/Kestose", "Cyanidin malonylgluc", "Glycitin", "Genistin", "Daidzein", "Daidzin", "Malonylglycitin", "Hydroxydaidzein")
+
+colnames(h)<-shortname
+pheatmap(h,
+         color = custom_colors,
+         breaks = breaks,
+         border_color = NA,
+         #scale = "row",
+         clustering_distance_rows = "euclidean",
+         clustering_distance_cols = "euclidean",
+         clustering_method = "complete",
+         show_rownames = TRUE,
+         show_colnames = TRUE,
+         xlab = "Micro",
+         ylab = "Met",
+        fontsize_row = 8,      
+         fontsize_col =8,       
+         width = 10,   
+         height = 15  
+)
+
+
+```
+
+
+## One result
+```{R,eval=F}
+n_lam <- 50
+Lambda <- exp(seq(0, 15, length.out = n_lam))
+
+plan(multisession)
+cv_result<- rrda.cv(Y = Y_train, X = X_train, lambda= Lambda,maxrank =15,nfold = 5,scale.X = F,scale.Y = F)
+plan(sequential)
+
+rrda.summary(cv_result)
+saveRDS(cv_result,file.path(base_path,"soy_path.RDS"))
+```
+
+```{r,warning=FALSE}
+cv_result<-readRDS(file.path(base_path,"soy_path.RDS"))
+rrda.plot(cv_result = cv_result,show_error_bar = TRUE)
+rrda.plot(cv_result = cv_result,show_error_bar = FALSE)
+
+rrda.heatmap(cv_result,nrank = c(1:20))
+K<-cv_result$opt_min$rank
+L<-cv_result$opt_min$lambda
+
+best_Bhat <- rrda.fit(Y = Y_train, X = X_train, nrank = K, lambda = L,scale.X = F,scale.Y = F)
+best_Pred <- rrda.predict(Bhat = best_Bhat, X = X_test)[[1]][[1]][[1]]
+```
+
+
+```{r,fig.width=6,fig.height=6}
+best_Bhat <- rrda.fit(Y = Y_train, X = X_train, nrank = K, lambda = L,scale.X = F,scale.Y = F)
+best_Pred <- rrda.predict(Bhat = best_Bhat, X = X_test)[[1]][[1]][[1]]
+
+lim <- c(-3,4)
+
+plot(Y_test, best_Pred, cex=0.1,cex.lab=1.3, xlim=lim, ylim=lim,xlab="Metabolome",ylab="Predicted Metabolome")
+abline(0, 1, col=2)
+
+```
+
+# session info
+check the info and environment
+```{r}
+devtools::session_info()
+```

@@ -1,0 +1,240 @@
+
+---
+title: "Senario 3 : Computation Time on Simulation Data with RRDA"
+output: html_document
+author: "Hayato Yoshioka (University of Tokyo, AgroParisTech)"
+---
+
+# Overview. H.Yoshioka et al. (rrda package)
+
+Senario 3 
+
+Here, we perform comparison of computation time based on simulation data
+Compare the rrpack vs rrda
+
+
+ulimit -v 180000000 (180 GB. around 70% of memory)
+
+# package
+```{r}
+library(furrr)
+library(dplyr)
+library(ggplot2)
+library(reshape2)
+library(RSpectra)
+library(rrpack)
+library(rrda)
+library(xtable)
+library(here)
+library(parallel)
+```
+
+Create the folder for saving
+```{r}
+dir_path<-here("out","benchmark")
+
+if (!dir.exists(dir_path)) {
+  dir.create(dir_path, recursive = TRUE)
+  message("Directory created: ", dir_path)
+} 
+```
+
+
+various p are tested for the computataion time 
+
+```{r}
+measure_time <- function(fit_function, Y, X, timeout = 1) {
+  tryCatch({
+    # Run the computation in a separate process
+    job <- mcparallel({
+      system.time(fit_result <- fit_function(Y = Y, X = X, nrank = 5))
+    })
+    
+    start_time <- Sys.time()
+    
+    # Check for results periodically
+    repeat {
+      result <- mccollect(job, wait = FALSE)
+      
+      # If result is available, return elapsed time
+      if (!is.null(result)) {
+        return(result[[1]][3])
+      }
+      
+      # Check if timeout has been reached
+      if (difftime(Sys.time(), start_time, units = "secs") > timeout) {
+        cat("The process took more than", timeout, "seconds and was terminated.\n")
+        
+        # Terminate the child process
+        tools::pskill(job$pid, signal = 9) # Force kill (UNIX-based systems)
+        return(NA) # Indicate timeout
+      }
+      
+      Sys.sleep(0.1)  # Small sleep to avoid busy-waiting
+    }
+  }, error = function(e) {
+    # Handle errors gracefully by returning NA
+    return(NA)
+  })
+}
+
+```
+
+
+# compute time
+various p are tested for the computataion time 
+
+
+```{r}
+set.seed(123)
+
+plist <- c(100,1000,1000000)
+n_runs <- 2
+mat <- matrix(NA, length(plist), 4)
+colnames(mat) <- c("chen_mean", "chen_std", "hay_mean", "hay_std")
+xylist <- list()
+
+# Data generation and time measurement
+for (num_p in seq_along(plist)) {
+	p <- plist[num_p]
+	print(p)
+	
+	chen_times <- numeric(n_runs)
+	hay_times <- numeric(n_runs)
+	
+	for (i in 1:n_runs) {
+		print(i)
+		
+		# Data generation
+		mydata <- rdasim1(n = 100, p = p, q = p, k = 5)
+		X <- mydata$X
+		Y <- mydata$Y
+		xylist[[num_p]] <- list(p = list(X = X, Y = Y))
+		
+		# Measure computation time for Chen (using the common function)
+		chen_times[i] <- tryCatch({
+  system.time(rfit <- rrs.fit(Y = Y, X = X, nrank = 5))[3]
+    	}, error = function(e) {
+    		NA
+    		})
+
+		# Measure computation time for Hay (using the common function
+			
+		options(future.globals.maxSize = 100 * 1024^3) 
+		
+	
+		hay_times[i] <- tryCatch({
+  	  system.time(rfit <- rrda.fit(Y = Y, X = X, nrank = 5))[3]
+			
+    	}, error = function(e) {
+    		NA
+    		})
+
+		options(future.globals.maxSize = NULL) 
+	}
+	
+	# Save mean and standard deviation to matrix
+	mat[num_p, "chen_mean"] <- mean(chen_times)
+	mat[num_p, "chen_std"] <- round(sd(chen_times) / sqrt(n_runs), 4)
+	mat[num_p, "hay_mean"] <- mean(hay_times)
+	mat[num_p, "hay_std"] <- round(sd(hay_times) / sqrt(n_runs), 4)
+}
+
+rownames(mat) <- plist
+
+# Save results
+saveRDS(mat, here(dir_path, "sim_time_1_6.RDS"))
+
+#mat_1_6<-mat
+
+```
+
+
+# 10000 100000
+
+
+```{r}
+set.seed(123)
+
+plist <- c(10000,100000)
+n_runs <- 1
+mat <- matrix(NA, length(plist), 4)
+colnames(mat) <- c("chen_mean", "chen_std", "hay_mean", "hay_std")
+xylist <- list()
+
+# Data generation and time measurement
+for (num_p in seq_along(plist)) {
+	p <- plist[num_p]
+	print(p)
+	
+	chen_times <- numeric(n_runs)
+	hay_times <- numeric(n_runs)
+	
+	for (i in 1:n_runs) {
+		print(i)
+		
+		# Data generation
+		mydata <- rdasim1(n = 100, p = p, q = p, k = 5)
+		X <- mydata$X
+		Y <- mydata$Y
+		xylist[[num_p]] <- list(p = list(X = X, Y = Y))
+		
+		# Measure computation time for Chen (using the common function)
+		chen_times[i] <- measure_time(rrs.fit, Y, X)
+		
+		options(future.globals.maxSize = 100 * 1024^3) 
+		
+		# Measure computation time for Hay (using the common function)
+		hay_times[i] <- measure_time(rrda.fit, Y, X)
+		
+		options(future.globals.maxSize = NULL) 
+	}
+	
+	# Save mean and standard deviation to matrix
+	mat[num_p, "chen_mean"] <- mean(chen_times)
+	mat[num_p, "chen_std"] <- round(sd(chen_times) / sqrt(n_runs), 4)
+	mat[num_p, "hay_mean"] <- mean(hay_times)
+	mat[num_p, "hay_std"] <- round(sd(hay_times) / sqrt(n_runs), 4)
+}
+
+rownames(mat) <- plist
+
+# Save results
+saveRDS(mat, here(dir_path, "sim_time_5.RDS"))
+
+#mat_5 <- mat
+
+```
+
+
+# Table
+Show the result table
+```{r}
+
+format_without_leading_zero <- function(x) {
+     s <- formatC(x, format="f", digits=2)
+     return(s)
+}
+
+mat1_6 <- readRDS(here(dir_path,"sim_time_1_6.RDS"))
+mat5 <- readRDS(here(dir_path,"sim_time_5.RDS"))
+
+#mat<-rbind(mat1_6[c(1,2),],mat5,mat1_6[3,,drop=F])
+
+mat <- rbind(mat1_6[c(1,2), , drop=FALSE], mat5, mat1_6[3, , drop=FALSE])
+
+
+#mat<-mat[rownames(mat) %in% pl,]
+
+formatted_mat <- apply(mat, 2, format_without_leading_zero)
+
+table_latex <- xtable(formatted_mat)
+table_latex
+
+```
+
+# session info
+check the info and environment
+```{r}
+devtools::session_info()
+```

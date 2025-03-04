@@ -1,0 +1,242 @@
+
+---
+title: "Senario 4 : Random Splitting Process on Simulation Data with RRDA"
+output: html_document
+author: "Hayato Yoshioka (University of Tokyo, AgroParisTech)"
+---
+
+# Overview. H.Yoshioka et al. (rrda package)
+
+Compare the rrda and stars, and other general criteria for parameter tuning and test to compute MSPE
+For simulations (Model 1 and 2)
+Also compare the several parameters (CV min, 1se Lambda, 1se rank, full rank, lambda 0, full + lambda 0)
+
+# functions
+```{r}
+library(furrr)
+library(dplyr)
+library(ggplot2)
+library(reshape2)
+library(RSpectra)
+library(rrda)
+library(here)
+library(xtable)
+library(pheatmap)
+library(tictoc)
+source("script_rrda/functions_rrda_yoshioka.R")
+source("script_rrda/functions_stars_rrr_yoshioka.R")
+```
+
+
+# model1
+create folders to save
+```{r}
+base_path <- here("out", "Sim1")
+dir_path <- file.path(base_path, "aic")
+
+if (!dir.exists(dir_path)) {
+  dir.create(dir_path, recursive = TRUE)
+  message("Directory created: ", dir_path)
+} 
+```
+
+Generate data
+```{r,warning=FALSE}
+set.seed(123)
+n = 100
+p = 200
+q = 200
+k = 5
+simdata<-rdasim1(n = n,p = p,q = q,k = k)
+X <- simdata$X
+Y <- simdata$Y
+```
+
+Define samples to be extracted for Random Splitting process. (100 iterations)
+Define the lambda range for each iteration. The lambda and sampling is set to be the same for every parameter tuning criteria.
+```{r,eval=F}
+set.seed(123)
+rn_list <- list()
+
+for (k in 1:100) {
+  rn_list[[k]] <- sample(c(1:nrow(X)), 10, replace = FALSE)
+}
+saveRDS(rn_list,file.path(base_path, "rn_list.RDS"))
+lm<-get_lambda_stars(dir_path, rn_list, Y=Y, X=X) 
+```
+
+Run the Random Splitting process and get the results
+```{r,eval=F}
+base_path <- here("out", "Sim1")
+res<-readRDS(file.path(base_path,"aic", "criteria.RDS"))
+dir_path <- file.path(base_path, "aic")
+
+set.seed(123)
+
+rn_list <-readRDS(file.path(base_path, "rn_list.RDS"))
+lm<-readRDS(file.path(dir_path, "aic_lambda.RDS"))
+
+Lambda<-rrr_lambda(Y = Y, X = X)
+criteria_test_all(Y=Y,X=X,Lambda=Lambda,dir_path=dir_path,maxrank=10)
+
+criteria_test(Y=Y,X=X,num=100,Lambda=NULL,rn_list=rn_list,lm=lm,dir_path=dir_path,maxrank=10)
+
+rsbc_test(Y=Y,X=X,save=dir_path)
+tp(save=dir_path)
+```
+
+
+## table
+Plot and Table of the results
+```{r}
+base_path <- here("out", "Sim1")
+res<-readRDS(file.path(base_path,"aic", "criteria.RDS"))
+dir_path <- file.path(base_path, "aic")
+
+res<-res[c(1,2,3,4,5,7,6),c(1,4,5,6,7,11,12,8,9)]
+res<-t(res)
+#res
+
+for (s in c(2,3,5,6,7)){
+	res[s,]<-rd(res[s,],2)
+}
+
+for (s in c(9)) {
+  res[s,]<-rd(res[s,],3)
+}
+
+for (s in c(4,7,8)){
+	res[s,]<-fd(res[s,],3)
+}
+
+
+for (s in c(3,5,7,9)) {
+  res[s, ] <- paste0("(", res[s, ], ")")
+}
+
+
+xtable(res)
+res<-readRDS(file.path(base_path,"aic", "criteria_alldata.RDS"))
+#res<-res[,c(1,4,5,6,7,11,12,8,9)]
+res<-res[c(1,2,3,4,5,7,6),]
+res<-t(res)
+#res
+for (s in c(2)){
+	res[s,]<-rd(res[s,],2)
+}
+
+for (s in c(3,4)){
+	res[s,]<-fd(res[s,],3)
+}
+xtable(res)
+tp(save=dir_path)
+```
+
+
+
+# model2
+For the model 2, perform the same procedure.
+
+```{r}
+base_path <- here("out", "Sim2")
+dir_path <- file.path(base_path, "aic")
+
+if (!dir.exists(dir_path)) {
+  dir.create(dir_path, recursive = TRUE)
+  message("Directory created: ", dir_path)
+} 
+```
+
+Generate data
+```{r,warning=FALSE}
+set.seed(123)
+n = 100
+p = 200
+q = 200
+k = 5
+simdata<-rdasim2(n = n,p = p,q = q,k = k,s2n=5)
+X <- simdata$X
+Y <- simdata$Y
+```
+
+
+```{r,eval=F}
+set.seed(123)
+rn_list <- list()
+
+for (k in 1:100) {
+  rn_list[[k]] <- sample(c(1:nrow(X)), 10, replace = FALSE)
+}
+saveRDS(rn_list,file.path(base_path, "rn_list.RDS"))
+lm<-get_lambda_stars(dir_path, rn_list, Y=Y, X=X) 
+```
+
+```{r,eval=F}
+set.seed(123)
+base_path <- here("out", "Sim2")
+res<-readRDS(file.path(base_path,"aic", "criteria.RDS"))
+dir_path <- file.path(base_path, "aic")
+
+rn_list <-readRDS(file.path(base_path, "rn_list.RDS"))
+lm<-readRDS(file.path(dir_path, "aic_lambda.RDS"))
+
+Lambda<-rrr_lambda(Y = Y, X = X)
+criteria_test_all(Y=Y,X=X,Lambda=Lambda,dir_path=dir_path,maxrank=10)
+
+criteria_test(Y=Y,X=X,num=100,Lambda=NULL,rn_list=rn_list,lm=lm,dir_path=dir_path,maxrank=10)
+#criteria_fit(Y=Y,X=X,num=100,Lambda=NULL,rn_list=rn_list,lm=lm,dir_path=dir_path,maxrank=10)
+rsbc_test(Y=Y,X=X,save=dir_path)
+tp(save=dir_path)
+```
+
+## table
+```{r}
+base_path <- here("out", "Sim2")
+res<-readRDS(file.path(base_path,"aic", "criteria.RDS"))
+dir_path <- file.path(base_path, "aic")
+
+res<-res[c(1,2,3,4,5,7,6),c(1,4,5,6,7,11,12,8,9)]
+res<-t(res)
+
+for (s in c(2,3,5,6,7)){
+	res[s,]<-rd(res[s,],2)
+}
+
+for (s in c(9)) {
+  res[s,]<-rd(res[s,],3)
+}
+
+for (s in c(4,7,8)){
+	res[s,]<-fd(res[s,],3)
+}
+
+
+for (s in c(3,5,7,9)) {
+  res[s, ] <- paste0("(", res[s, ], ")")
+}
+
+xtable(res)
+
+res<-readRDS(file.path(base_path,"aic", "criteria_alldata.RDS"))
+#res<-res[,c(1,4,5,6,7,11,12,8,9)]
+res<-res[c(1,2,3,4,5,7,6),]
+res<-t(res)
+#res
+for (s in c(2)){
+	res[s,]<-rd(res[s,],2)
+}
+
+for (s in c(3,4)){
+	res[s,]<-fd(res[s,],3)
+}
+
+xtable(res)
+tp(save=dir_path)
+```
+
+# session info
+check the info and environment
+```{r}
+devtools::session_info()
+```
+

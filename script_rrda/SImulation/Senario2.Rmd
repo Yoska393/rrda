@@ -1,0 +1,94 @@
+
+---
+title: "Senario 2 : Rank Estimate Evaluation on Simulation Data with RRDA"
+output: html_document
+author: "Hayato Yoshioka (University of Tokyo, AgroParisTech)"
+---
+
+# Overview. H.Yoshioka et al. (rrda package)
+
+Senario 2 
+
+Here, we perform rank evaluation for simulation data sets.
+We test various n,p,q,k parameters for the data generation
+
+We evaluate the model by checking the percentage of the right rank estimation and the correlation between true and estimated rank.
+
+
+# package
+```{r}
+library(furrr)
+library(dplyr)
+library(ggplot2)
+library(reshape2)
+library(RSpectra)
+library(rrda)
+library(xtable)
+library(purrr) 
+library(here)
+library(progress)
+source("script_rrda/functions_rrda_yoshioka.R")
+```
+
+Create the folder for saving
+```{r}
+dir_path<- here("out/eval")
+
+if (!dir.exists(dir_path)) {
+  dir.create(dir_path, recursive = TRUE)
+  message("Directory created: ", dir_path)
+} 
+```
+
+
+# simulation run 
+2 types of simulations and 3 types of matrix size are tested
+```{r,eval=F}
+set.seed(123)
+
+n_iterations=100
+# Define your conditions
+simulations <- c("sim1", "sim2")
+sizes <- c("large", "small", "mixed")
+
+# Loop over each combination
+for (sim in simulations) {
+
+  for (size in sizes) {
+    # Run your function with each combination
+    data_list <- rank_evaluate(n_iterations = n_iterations, rdasim = sim, size = size)
+    # Save the results
+    filename <- paste0("data_list_", sim, "_", size, ".rds")
+    saveRDS(data_list, file = here("out/eval", filename))
+    data_list<-readRDS(here("out/eval", filename))
+    plot_evaluate(data_list,rdasim = sim,size=size)
+  }
+}
+
+```
+
+# get result
+Plot the results
+```{r}
+set.seed(123)
+n_iterations=100
+# Define your conditions
+ simulations <- c("sim1", "sim2")
+ sizes <- c("large", "small", "mixed")
+
+for (sim in simulations) {
+
+  for (size in sizes) {
+  	filename <- paste0("data_list_", sim, "_", size, ".rds")
+		data_list<-readRDS(here("out/eval", filename))
+    plot_evaluate(data_list,rdasim = sim,size=size)
+    
+  }
+}
+```
+
+# session info
+check the info and environment
+```{r}
+devtools::session_info()
+```

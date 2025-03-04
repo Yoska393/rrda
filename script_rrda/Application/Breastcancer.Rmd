@@ -1,0 +1,353 @@
+
+---
+title: "Application : Breast Cancer"
+output: html_document
+author: "Hayato Yoshioka (University of Tokyo, AgroParisTech)"
+---
+
+# Overview. H.Yoshioka et al. (rrda package)
+
+Application of Breast Cancer
+
+# functions
+```{r}
+library(furrr)
+library(dplyr)
+library(ggplot2)
+library(reshape2)
+library(RSpectra)
+library(rrda)
+library(here)
+library(xtable)
+library(pheatmap)
+library(tictoc)
+source("script_rrda/functions_rrda_yoshioka.R")
+source("script_rrda/functions_stars_rrr_yoshioka.R")
+```
+
+# chrom 13 only
+
+```{r,eval=T}
+base_path <- here("out", "BreastCancer")
+da<-readRDS(here("RDAdata","breast.RDS"))
+
+dir_path<-file.path(base_path, "13")
+
+if (!dir.exists(dir_path)) {
+  dir.create(dir_path, recursive = TRUE)
+  message("Directory created: ", dir_path)
+} 
+
+dna<-t(da$dna)
+rna<-t(da$rna)
+dch<-da$chrom
+rch<-da$genechr
+
+rch[is.na(rch)]<-0
+```
+
+```{R}
+set.seed(123)
+rn<-sample(c(1:89),10,rep=F)
+print(rn)
+
+Y<-dna[,dch==13]
+X<-rna[,rch==13]
+
+Y_train<-Y[-rn,]
+Y_test<-Y[rn,]
+X_train<-X[-rn,]
+X_test<-X[rn,]
+
+dim(Y_train)
+dim(Y_test)
+dim(X_train)
+dim(X_test)
+
+```
+
+## all data
+```{r,eval=F}
+set.seed(123)
+n_lam <- 50
+Lambda <- 10^seq(0, 6, length.out = n_lam)
+
+plan(multisession)
+cv_result<- rrda.cv(Y = Y, X = X,maxrank = 15,nfold = 5,scale.X = F,scale.Y = F)
+plan(sequential)
+
+rrda.summary(cv_result)
+saveRDS(cv_result,file.path(dir_path,"full.RDS"))
+
+```
+
+```{r,warning=FALSE}
+cv_result<-readRDS(file.path(dir_path,"full.RDS"))
+rrda.plot(cv_result = cv_result)
+rrda.plot(cv_result = cv_result,show_error_bar = TRUE)
+rrda.heatmap(cv_result)
+
+K<-cv_result$opt_min$rank
+L<-cv_result$opt_min$lambda
+
+best_Bhat <- rrda.fit(Y = Y, X = X, nrank = K, lambda = L,scale.X = F,scale.Y = F)
+best_Pred <- rrda.predict(Bhat = best_Bhat, X = X)[[1]][[1]][[1]]
+
+b<-rrda.coef(best_Bhat)[[1]][[1]]
+namey<-da$nuc[dch==13]
+namex<-da$genenames[rch==13]
+rownames(b)<-namex
+colnames(b)<-namey
+
+```
+## heatmap
+```{r,fig.width=12,fig.height=13}
+
+max_value <- max(b, na.rm = TRUE)
+min_value <- min(b, na.rm = TRUE)
+
+custom_colors <- colorRampPalette(c("blue", "white", "red"))(100)
+max_abs_value <- max(abs(c(min_value, max_value)))
+breaks <- seq(-max_abs_value, max_abs_value, length.out = 101)
+
+# dna clustering
+pheatmap(b,
+         color = custom_colors,
+         breaks = breaks,
+         scale = "none",
+         clustering_distance_rows = "euclidean",
+         clustering_distance_cols = "euclidean",
+         clustering_method = "complete",
+         show_rownames = TRUE,
+         show_colnames = TRUE,
+         xlab = "RNA",
+         ylab = "DNA",
+         fontsize_row = 4,       
+         fontsize_col = 4,       
+         width = 10,             
+         height = 15     
+)
+
+
+# dna non clustering
+pheatmap(b,
+         color = custom_colors,
+         breaks = breaks,
+         scale = "none",
+         #clustering_distance_rows = "euclidean",
+         #clustering_distance_cols = "euclidean",
+         clustering_method = "complete",
+         cluster_cols=F,
+         show_rownames = TRUE,
+         show_colnames = TRUE,
+         xlab = "RNA",
+         ylab = "DNA",
+         fontsize_row = 4,       
+         fontsize_col = 4,      
+         width = 10,           
+         height = 15          
+)
+
+
+```
+
+## Train and test
+
+```{R,eval=F}
+n_lam <- 50
+#Lambda <- 10^seq(0, 6, length.out = n_lam)
+
+plan(multisession)
+cv_result<- rrda.cv(Y = Y_train, X = X_train, lambda= Lambda,maxrank =15,nfold = 5,scale.X = F,scale.Y = F)
+plan(sequential)
+
+rrda.summary(cv_result)
+saveRDS(cv_result,file.path(dir_path,"train.RDS"))
+```
+
+```{r,warning=FALSE}
+cv_result<-readRDS(file.path(dir_path,"train.RDS"))
+rrda.plot(cv_result = cv_result,show_error_bar = FALSE)
+rrda.plot(cv_result = cv_result,show_error_bar = TRUE)
+rrda.heatmap(cv_result,nrank = c(1:10))
+
+K<-cv_result$opt_min$rank
+L<-cv_result$opt_min$lambda
+
+best_Bhat <- rrda.fit(Y = Y_train, X = X_train, nrank = K, lambda = L,scale.X = F,scale.Y = F)
+best_Pred <- rrda.predict(Bhat = best_Bhat, X = X_test)[[1]][[1]][[1]]
+
+```
+
+```{r,warning=FALSE,fig.width=6,fig.height=6}
+
+best_Bhat <- rrda.fit(Y = Y_train, X = X_train, nrank = K, lambda = L, center.X = T, center.Y =T,scale.X = F,scale.Y = F)
+pred_Y<- rrda.predict(Bhat = best_Bhat, X = X_test)[[1]][[1]][[1]]
+
+min<- min(Y_test)
+max<- max(Y_test)
+plot(Y_test,pred_Y,cex=0.5,xlim =c(min,max),ylim = c(min,max)
+     ,xlab="DNA",ylab="Predicted DNA",cex.lab=1.3)
+abline(0,1,col=2)
+
+```
+
+
+# all chromosome
+
+```{r,eval=T}
+base_path <- here("out", "BreastCancer")
+da<-readRDS(here("RDAdata","breast.RDS"))
+
+dir_path<-file.path(base_path, "all")
+
+
+if (!dir.exists(dir_path)) {
+  dir.create(dir_path, recursive = TRUE)
+  message("Directory created: ", dir_path)
+} 
+
+dna<-t(da$dna)
+rna<-t(da$rna)
+dch<-da$chrom
+rch<-da$genechr
+
+rch[is.na(rch)]<-0
+```
+
+```{R}
+set.seed(123)
+rn<-sample(c(1:89),10,rep=F)
+print(rn)
+Y_train<-dna[-rn,]
+Y_test<-dna[rn,]
+X_train<-rna[-rn,]
+X_test<-rna[rn,]
+
+dim(Y_train)
+dim(Y_test)
+dim(X_train)
+dim(X_test)
+```
+
+## Train and test
+
+```{R,eval=F}
+set.seed(123)
+n_lam <- 50
+Lambda <- exp(seq(4, 15, length.out = n_lam))
+
+plan(multisession)
+cv_result<- rrda.cv(Y = Y_train, X = X_train,maxrank = 40,nfold = 5,lambda = Lambda,scale.X = F,scale.Y = F)
+plan(sequential)
+
+rrda.summary(cv_result)
+saveRDS(cv_result,file.path(dir_path,"train.RDS"))
+```
+
+```{r,warning=FALSE,fig.width=9,fig.height=6}
+cv_result<-readRDS(file.path(dir_path,"train.RDS"))
+rrda.plot(cv_result = cv_result)
+rrda.plot(cv_result = cv_result,show_error_bar = TRUE)
+
+rrda.heatmap(cv_result)
+
+K<-cv_result$opt_min$rank
+L<-cv_result$opt_min$lambda
+
+best_Bhat <- rrda.fit(Y = Y_train, X = X_train, nrank = K, lambda = L,scale.X = F,scale.Y = F)
+best_Pred <- rrda.predict(Bhat = best_Bhat, X = X_test)[[1]][[1]][[1]]
+```
+
+```{r,warning=FALSE,fig.width=6,fig.height=6}
+
+best_Bhat <- rrda.fit(Y = Y_train, X = X_train, nrank = K, lambda = L, center.X = T, center.Y =T,scale.X = F,scale.Y = F)
+pred_Y<- rrda.predict(Bhat = best_Bhat, X = X_test)[[1]][[1]][[1]]
+
+
+min<- min(-0.8,pred_Y)
+max<- max(pred_Y,1.3)
+plot(Y_test,pred_Y,cex=0.1,xlim =c(min,max),ylim = c(min,max)
+     ,xlab="DNA",ylab="Predicted DNA",cex.lab=1.3)
+abline(0,1,col=2)
+
+```
+
+
+each chrom plot
+
+```{r,fig.width=6,fig.height=6}
+
+# Get unique chromosomes
+unique_labels <- unique(dch)
+
+colors <- colorRampPalette(c("red", "blue", "green", "orange", "purple", "cyan", "pink", "yellow"))(length(unique_labels))
+
+# Map each label in dch to its corresponding color
+label_colors <- colors[as.factor(dch)]
+
+# Map each label in dch to its corresponding color
+label_colors <- colors[as.factor(dch)]
+
+# Adjust plot code to include coloring by labels
+min <- min(-0.8, best_Pred)
+max <- max(best_Pred, 1.3)
+
+plot(Y_test, best_Pred, cex = 0.1, xlim = c(min, max), ylim = c(min, max),
+     xlab = "DNA", ylab = "Predicted DNA", cex.lab = 1.3,
+     col = label_colors) # Add colors based on dch
+abline(0, 1, col = 1)
+
+# Optionally add a legend to describe colors
+legend("topright", legend = unique_labels, col = colors, pch = 1, title = "Chromosome",cex=0.4)
+
+```
+
+
+
+
+```{r,fig.width=8,fig.height=8}
+# Adjust margins: c(bottom, left, top, right)
+par(mar = c(2, 2, 2, 2))
+
+# Get unique chromosomes
+unique_chromosomes <- unique(dch)
+
+# Set plot area to have multiple subplots
+par(mfrow = c(ceiling(sqrt(length(unique_chromosomes))), ceiling(sqrt(length(unique_chromosomes)))))
+
+# Loop through each chromosome
+for (i in seq_along(unique_chromosomes)) {
+    chrom <- unique_chromosomes[i]  # Get the current chromosome
+    chrom_indices <- dch == chrom  # Subset data for this chromosome
+    
+    Y_test_chrom <- Y_test[chrom_indices]
+    best_Pred_chrom <- best_Pred[chrom_indices]
+    
+    # Set color for this chromosome
+    chrom_color <- colors[i]  # Use the index to map the correct color
+    
+    # Define plot limits
+    min_chrom <- min(min(-0.8, best_Pred_chrom))
+    max_chrom <- max(max(best_Pred_chrom, 1.3))
+
+    # Plot for the specific chromosome
+    plot(Y_test_chrom, best_Pred_chrom, cex = 0.2, xlim = c(min_chrom, max_chrom), ylim = c(min_chrom, max_chrom),
+         xlab = "True DNA", ylab = "Predicted DNA", cex.lab = 1.3,
+         col = chrom_color, main = paste("Chromosome", chrom)) # Title with chromosome label
+    
+    # Add y = x line for reference
+    abline(0, 1, col = 1)
+}
+
+# Reset plotting parameters after you're done
+par(mfrow = c(1, 1))
+
+
+```
+
+# session info
+check the info and environment
+```{r}
+devtools::session_info()
+```
