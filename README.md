@@ -1,4 +1,9 @@
-Hello
+
+
+<img src="rrda.jpg" width="1000" height="500">
+
+
+Hello Bonjour,
 
 Here I store all the script for the simulations and applications, and my own functions used for the analysis.
 
