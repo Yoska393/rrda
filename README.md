@@ -1,6 +1,6 @@
 
 
-<img src="rrda.jpg" width="800" height="500">
+<img src="rrda.jpg" width="500" height="400">
 
 
 Hello Bonjour,
