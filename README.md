@@ -2,9 +2,6 @@
 
 <img src="rrda.jpg" width="500" height="400">
 
-
-
-
 # Ridge Redundancy Analysis (RRDA)
 
 ## Overview
@@ -13,186 +10,116 @@ Hello Bonjour,
 
 Here I store all the scripts for the simulations and applications, and my own functions used for the analysis. Also, all the application data is stored as .rds file in a folder (RDAdata)
 
-This package provides functions for performing **Ridge Redundancy Analysis (RRDA)**, which is useful for modeling the relationship between a matrix of response variables (**Y**; \( n 	\times q \)) and a matrix of explanatory variables (**X**; \( n 	imes p \)). The method is designed to handle **high-dimensional data efficiently**, allowing computation and storage optimization.
+This package provides functions for performing **Ridge Redundancy Analysis (RRDA)**, which is useful for modeling the relationship between a matrix of response variables (**Y**; n × q ) and a matrix of explanatory variables (**X**;  n × p ). The method is designed to handle **high-dimensional data efficiently**, allowing computation and storage optimization.
 
-## Ridge Redundancy Analysis Model
-The model is represented as:
+This repository contains functions for Ridge Redundancy Analysis (RRDA) and cross-validation for high-dimensional regression problems, such as omics data analysis. The main functions are `rrda.fit` for fitting the RRDA model and `rrda.cv` for performing cross-validation.
 
-\[
-Y = XB + E
-\]
+## Installation
 
-where:
-- \( Y \) is the response matrix (\( n 	imes q \))
-- \( X \) is the predictor matrix (\( n 	imes p \))
-- \( B \) is the regression coefficient matrix (\( p 	imes q \))
-- \( E \) is the error matrix (\( n 	imes q \))
+You can install the package from GitHub using the `devtools` package:
 
-The regularized estimate of \( B \) is:
+```r
+devtools::install_github("username/repository_name")
+```
 
-\[
-\hat{B}(\lambda) = \left(X'X + \lambda P_{X'}
-ight)^{-} X'Y
-\]
+## Dependencies
 
-Additionally, the regularized-rank-restricted estimation of \( B \) is:
-
-\[
-\hat{B}(\lambda, r) = U_{\hat{B}(\lambda)}^{[r]} D_{\hat{B}(\lambda)}^{[r]} V_{\hat{B}(\lambda)}^{[r]'}
-\]
-
-where:
-- \( U_{\hat{B}(\lambda)}^{[r]} \) is a \( p 	imes r \) matrix
-- \( D_{\hat{B}(\lambda)}^{[r]} \) is a \( r 	imes r \) diagonal matrix
-- \( V_{\hat{B}(\lambda)}^{[r]} \) is a \( q 	imes r \) matrix
-
-### Storing Large Coefficients
-By default, the estimated coefficient matrix \( \hat{B}(\lambda) \) is stored as:
-
-- **Left component** \( F \) (\( p 	imes r \))
-- **Right component** \( G \) (\( q 	imes r \))
-
-For \( i = 1, \dots, r \), the decomposition follows:
-
-\[
-F_{.i} = U_{\hat{B}(\lambda)}^{[i]}D_{\hat{B}(\lambda)}^{[i]}, \quad G_{.i} = V_{\hat{B}(\lambda)}^{[i]}
-\]
-
-To reconstruct \( \hat{B}(\lambda) \), use the function `rrda.coef()`.
+- `RSpectra`
+- `furrr`
+- `dplyr`
+- `stats`
 
 ## Functions
 
-### `rrda.fit()`
-#### Description:
-Fits the Ridge Redundancy Analysis model.
+### `rrda.fit`
+
+Performs Ridge Redundancy Analysis (RRDA) to obtain the coefficient matrix (Bhat), which models the relationship between a matrix of response variables (Y) and a matrix of explanatory variables (X).
 
 #### Parameters:
-- `Y`: Numeric matrix of response variables.
-- `X`: Numeric matrix of explanatory variables.
-- `nrank`: Vector specifying the rank(s) of \( \hat{B} \). Default: `NULL` (set to `1:min(15, min(dim(X), dim(Y)))`).
-- `lambda`: Numeric vector of ridge penalty values. Default: `1`.
-- `component`: Logical; if `TRUE`, returns \( \hat{B} \) as component vectors. Default: `TRUE`.
-- `center.X`, `center.Y`: Logical; whether to center `X` and `Y`. Default: `TRUE`.
-- `scale.X`, `scale.Y`: Logical; whether to scale `X` and `Y`. Default: `FALSE`.
+- `Y` : Numeric matrix of response variables.
+- `X` : Numeric matrix of explanatory variables.
+- `nrank` : Numeric vector specifying the ranks of Bhat. Default is NULL, which sets it to (1:min(15, min(dim(X), dim(Y)))).
+- `lambda` : Numeric vector of ridge penalty values. Default value is 1.
+- `component` : Logical indicating if Bhat is returned as component vectors. Default is TRUE.
+- `center.X` : Logical indicating if X should be centered. Default is TRUE.
+- `center.Y` : Logical indicating if Y should be centered. Default is TRUE.
+- `scale.X` : Logical indicating if X should be scaled. Default is FALSE.
+- `scale.Y` : Logical indicating if Y should be scaled. Default is FALSE.
 
-#### Return:
-A list containing \( \hat{B} \) as component matrices or full matrices.
+#### Returns:
+A list containing Bhat components or matrices (the coefficient of Ridge Redundancy Analysis for each parameter lambda and nrank), ranks, and lambda values.
 
 #### Example:
 ```r
 simdata <- rdasim1(n = 100, p = 200, q = 200, k = 5)
-X <- simdata$X
-Y <- simdata$Y
+X <- simdata×X
+Y <- simdata×Y
 
+# Sequential
 Bhat <- rrda.fit(Y = Y, X = X, nrank = c(1:10))
 names(Bhat)
 ```
 
----
+### `rrda.cv`
 
-### `rrda.cv()`
-#### Description:
-Performs **cross-validation** to evaluate different **ranks** and **ridge penalty values** by computing Mean Squared Error (MSE).
-
-#### Lambda Calculation:
-By default, the range of \( \lambda \) is set automatically:
-
-\[
-\lambda_{	ext{max}} = rac{\max_{j \in \{1, 2, \dots, p\}} \sqrt{\sum_{k=1}^{q} \left( \sum_{i=1}^{n}  (x_{ij}\cdot y_{ik})  
-ight)^2}}{N 	imes 10^{-3}}
-\]
-
-and:
-
-\[
-\lambda_{\min} = 10^{-4} \lambda_{\max}
-\]
+Performs cross-validation to evaluate the performance of Ridge Redundancy Analysis (RDA) models. It calculates the mean squared error (MSE) for different ranks and ridge penalty values through cross-validation folds.
 
 #### Parameters:
-- `Y`: Numeric response matrix.
-- `X`: Numeric predictor matrix.
-- `maxrank`: Maximum rank of \( \hat{B} \). Default: `NULL` (set to `min(15, min(dim(X), dim(Y)))`).
-- `lambda`: Ridge penalty values. Default: `NULL` (automatically set).
-- `nfold`: Number of folds in cross-validation. Default: `10`.
-- `folds`: Custom fold assignments. Default: `NULL` (random).
-- `sample.X`, `sample.Y`: Number of variables sampled for lambda estimation. Default: `1000`.
-- `center.X`, `center.Y`, `scale.X`, `scale.Y`: Centering/scaling options.
+- `Y` : Numeric matrix of response variables.
+- `X` : Numeric matrix of explanatory variables.
+- `maxrank` : Numeric vector specifying the maximum rank of the coefficient Bhat. Default is NULL, which sets it to (min(15, min(dim(X), dim(Y)))).
+- `lambda` : Numeric vector of ridge penalty values. Default is NULL, where the lambda values are automatically chosen.
+- `nfold` : The number of folds for cross-validation. Default is 10.
+- `folds` : A vector specifying the folds. Default is NULL, which randomly assigns folds.
+- `sample.X` : Number of variables sampled from X for the lambda range estimate. Default is 1000.
+- `sample.Y` : Number of variables sampled from Y for the lambda range estimate. Default is 1000.
+- `scale.X` : Logical indicating if X should be scaled. Default is FALSE.
+- `scale.Y` : Logical indicating if Y should be scaled. Default is FALSE.
+- `center.X` : Logical indicating if X should be centered. Default is TRUE.
+- `center.Y` : Logical indicating if Y should be centered. Default is TRUE.
+- `verbose` : Logical indicating if the function should display information about the function call. Default is TRUE.
 
-#### Return:
-A list containing:
-- Cross-validation **MSE matrix**
-- **Optimal lambda** and **rank** values
-- **Lambda sequence** and **rank sequence**
+#### Returns:
+A list containing the cross-validated MSE matrix, lambda values, rank values, and the optimal lambda and rank.
 
 #### Example:
 ```r
 simdata <- rdasim1(n = 100, p = 200, q = 200, k = 5)
-X <- simdata$X
-Y <- simdata$Y
+X <- simdata×X
+Y <- simdata×Y
 
 cv_result <- rrda.cv(Y = Y, X = X)
 rrda.summary(cv_result = cv_result)
-```
 
----
+# Complete Example
+cv_result <- rrda.cv(Y = Y, X = X, maxrank = 10) # cv
+rrda.summary(cv_result = cv_result) # cv result
 
-## Example Workflow
-```r
-# Simulated Data
-simdata <- rdasim1(n = 100, p = 200, q = 200, k = 5)
-X <- simdata$X
-Y <- simdata$Y
-
-# Cross-validation
-cv_result <- rrda.cv(Y = Y, X = X, maxrank = 10)
-rrda.summary(cv_result)
-
-# Plot Results
+# Plot the CV result
 p <- rrda.plot(cv_result)
 print(p)
 
+# Heatmap of the CV result
 h <- rrda.heatmap(cv_result)
 print(h)
 
-# Extract Optimal Parameters
-estimated_lambda <- cv_result$opt_min$lambda
-estimated_rank <- cv_result$opt_min$rank
+# Extract optimal parameters
+estimated_lambda <- cv_result×opt_min×lambda
+estimated_rank <- cv_result×opt_min×rank
 
-# Fit Model with Optimal Parameters
+# Fit the model with the optimal parameters
 Bhat <- rrda.fit(Y = Y, X = X, nrank = estimated_rank, lambda = estimated_lambda)
-
-# Get Regression Coefficients
 Bhat_mat <- rrda.coef(Bhat)
 
-# Predict Y
+# Make predictions
 Yhat_mat <- rrda.predict(Bhat = Bhat, X = X)
 Yhat <- Yhat_mat[[1]][[1]][[1]]
 
-# Compute Correlation
+# Correlation
 cor_Y_Yhat <- diag(cor(Y, Yhat))
 summary(cor_Y_Yhat)
 ```
 
-## Dependencies
-The package depends on:
-- `stats`
-- `furrr`
-- `RSpectra`
-- `dplyr`
+## References
 
-## Installation
-To install this package, use:
-
-```r
-devtools::install_github("your-repo/RRDA")
-```
-
-## License
-This package is open-source and distributed under the MIT license.
-
----
-*For more details, refer to Yoshioka et al. (2025).*
-
-
-
-Merci beaucoup, Hayato 24/Mar/2024
+Yoshioka et al., 2025. RRDA: Ridge Redundancy Analysis for High-Dimensional Omics Data
