@@ -27,7 +27,7 @@ devtools::install_github("username/repository_name")
 - `RSpectra`
 - `furrr`
 - `dplyr`
-- `stats`
+- `reshape2`
 - `ggplot2`
 
 ## Functions
