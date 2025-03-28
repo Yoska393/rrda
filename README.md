@@ -28,6 +28,7 @@ devtools::install_github("username/repository_name")
 - `furrr`
 - `dplyr`
 - `stats`
+- `ggplot2`
 
 ## Functions
 
