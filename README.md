@@ -30,6 +30,10 @@ devtools::install_github("username/repository_name")
 - `reshape2`
 - `ggplot2`
 
+## Data
+
+For the application data, the data for breast cancer (Witten et al., 2009) and soybean data (Dang et al., 2023) are stored in this page. For the methylation data, refer to Ruiz-Arenas and González 2020. 
+
 ## Functions
 
 ### `rrda.fit`
