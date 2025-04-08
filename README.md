@@ -8,7 +8,7 @@
 
 For the application data, the data for breast cancer (Witten et al., 2009) and soybean data (Dang et al., 2023) are stored on this page. Also refer to For the methylation data, refer to Ruiz-Arenas and González 2020. 
 
-The metabolome data were downloaded from the RIKEN DropMet website http://prime.psc.riken.jp/menta.cgi/prime/drop_index ; ID: DM0071, DM0072.
+The metabolome data were downloaded from the RIKEN DropMet website (http://prime.psc.riken.jp/menta.cgi/prime/drop_index) ; ID: DM0071, DM0072.
 
 ## Overview
 
