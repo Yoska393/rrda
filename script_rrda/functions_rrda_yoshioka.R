@@ -928,7 +928,7 @@ run_simulation <- function(n, p, q, k,rdasim) {
 	Y <- simdata$Y
 	
 	# Run cross-validation using rrda.cv
-	cv_result <- rrda.cv(Y = Y, X = X, center.X = TRUE, center.Y = TRUE,scale.X = F,scale.Y = F,verbose = F)
+	cv_result <- rrda.cv(Y = Y, X = X, center.X = TRUE, center.Y = TRUE,scale.X = F,scale.Y = F,verbose = F,nfold = 5)
 	rrda.plot(cv_result)
 	# Extract the optimal rank (esR)
 	esR <- cv_result$opt_min$rank

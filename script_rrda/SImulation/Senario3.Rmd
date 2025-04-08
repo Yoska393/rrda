@@ -1,37 +1,38 @@
 
 ---
-title: "Senario 3 : Computation Time on Simulation Data with RRDA"
+title: "Senario 3 : Random Splitting Process on Simulation Data with RRDA"
 output: html_document
 author: "Hayato Yoshioka (University of Tokyo, AgroParisTech)"
 ---
 
 # Overview. H.Yoshioka et al. (rrda package)
 
-Senario 3 
+Compare the rrda and stars, and other general criteria for parameter tuning and test to compute MSPE
+For simulations (Model 1 and 2)
+Also compare the several parameters (CV min, 1se Lambda, 1se rank, full rank, lambda 0, full + lambda 0)
 
-Here, we perform comparison of computation time based on simulation data
-Compare the rrpack vs rrda
-
-
-ulimit -v 180000000 (180 GB. around 70% of memory)
-
-# package
+# functions
 ```{r}
 library(furrr)
 library(dplyr)
 library(ggplot2)
 library(reshape2)
 library(RSpectra)
-library(rrpack)
 library(rrda)
-library(xtable)
 library(here)
-library(parallel)
+library(xtable)
+library(pheatmap)
+library(tictoc)
+source("script_rrda/functions_rrda_yoshioka.R")
+source("script_rrda/functions_stars_rrr_yoshioka.R")
 ```
 
-Create the folder for saving
+
+# model1
+create folders to save
 ```{r}
-dir_path<-here("out","benchmark")
+base_path <- here("out", "Sim1")
+dir_path <- file.path(base_path, "aic")
 
 if (!dir.exists(dir_path)) {
   dir.create(dir_path, recursive = TRUE)
@@ -39,198 +40,198 @@ if (!dir.exists(dir_path)) {
 } 
 ```
 
-
-various p are tested for the computataion time 
-
-```{r}
-measure_time <- function(fit_function, Y, X, timeout = 1) {
-  tryCatch({
-    # Run the computation in a separate process
-    job <- mcparallel({
-      system.time(fit_result <- fit_function(Y = Y, X = X, nrank = 5))
-    })
-    
-    start_time <- Sys.time()
-    
-    # Check for results periodically
-    repeat {
-      result <- mccollect(job, wait = FALSE)
-      
-      # If result is available, return elapsed time
-      if (!is.null(result)) {
-        return(result[[1]][3])
-      }
-      
-      # Check if timeout has been reached
-      if (difftime(Sys.time(), start_time, units = "secs") > timeout) {
-        cat("The process took more than", timeout, "seconds and was terminated.\n")
-        
-        # Terminate the child process
-        tools::pskill(job$pid, signal = 9) # Force kill (UNIX-based systems)
-        return(NA) # Indicate timeout
-      }
-      
-      Sys.sleep(0.1)  # Small sleep to avoid busy-waiting
-    }
-  }, error = function(e) {
-    # Handle errors gracefully by returning NA
-    return(NA)
-  })
-}
-
+Generate data
+```{r,warning=FALSE}
+set.seed(123)
+n = 100
+p = 200
+q = 200
+k = 5
+simdata<-rdasim1(n = n,p = p,q = q,k = k)
+X <- simdata$X
+Y <- simdata$Y
 ```
 
+Define samples to be extracted for Random Splitting process. (100 iterations)
+Define the lambda range for each iteration. The lambda and sampling is set to be the same for every parameter tuning criteria.
+```{r,eval=F}
+set.seed(123)
+rn_list <- list()
 
-# compute time
-various p are tested for the computataion time 
+for (k in 1:100) {
+  rn_list[[k]] <- sample(c(1:nrow(X)), 10, replace = FALSE)
+}
+saveRDS(rn_list,file.path(base_path, "rn_list.RDS"))
+lm<-get_lambda_stars(dir_path, rn_list, Y=Y, X=X) 
+```
 
+Run the Random Splitting process and get the results
+```{r,eval=F}
+base_path <- here("out", "Sim1")
+#res<-readRDS(file.path(base_path,"aic", "criteria.RDS"))
+dir_path <- file.path(base_path, "aic")
 
-```{r}
 set.seed(123)
 
-plist <- c(100,1000,1000000)
-n_runs <- 2
-mat <- matrix(NA, length(plist), 4)
-colnames(mat) <- c("chen_mean", "chen_std", "hay_mean", "hay_std")
-xylist <- list()
+rn_list <-readRDS(file.path(base_path, "rn_list.RDS"))
+lm<-readRDS(file.path(dir_path, "aic_lambda.RDS"))
 
-# Data generation and time measurement
-for (num_p in seq_along(plist)) {
-	p <- plist[num_p]
-	print(p)
-	
-	chen_times <- numeric(n_runs)
-	hay_times <- numeric(n_runs)
-	
-	for (i in 1:n_runs) {
-		print(i)
-		
-		# Data generation
-		mydata <- rdasim1(n = 100, p = p, q = p, k = 5)
-		X <- mydata$X
-		Y <- mydata$Y
-		xylist[[num_p]] <- list(p = list(X = X, Y = Y))
-		
-		# Measure computation time for Chen (using the common function)
-		chen_times[i] <- tryCatch({
-  system.time(rfit <- rrs.fit(Y = Y, X = X, nrank = 5))[3]
-    	}, error = function(e) {
-    		NA
-    		})
+Lambda<-rrr_lambda(Y = Y, X = X)
+criteria_test_all(Y=Y,X=X,Lambda=Lambda,dir_path=dir_path,maxrank=10)
 
-		# Measure computation time for Hay (using the common function
-			
-		options(future.globals.maxSize = 100 * 1024^3) 
-		
-	
-		hay_times[i] <- tryCatch({
-  	  system.time(rfit <- rrda.fit(Y = Y, X = X, nrank = 5))[3]
-			
-    	}, error = function(e) {
-    		NA
-    		})
+criteria_test(Y=Y,X=X,num=100,Lambda=NULL,rn_list=rn_list,lm=lm,dir_path=dir_path,maxrank=10)
 
-		options(future.globals.maxSize = NULL) 
-	}
-	
-	# Save mean and standard deviation to matrix
-	mat[num_p, "chen_mean"] <- mean(chen_times)
-	mat[num_p, "chen_std"] <- round(sd(chen_times) / sqrt(n_runs), 4)
-	mat[num_p, "hay_mean"] <- mean(hay_times)
-	mat[num_p, "hay_std"] <- round(sd(hay_times) / sqrt(n_runs), 4)
-}
-
-rownames(mat) <- plist
-
-# Save results
-saveRDS(mat, here(dir_path, "sim_time_1_6.RDS"))
-
-#mat_1_6<-mat
-
+rsbc_test(Y=Y,X=X,save=dir_path)
+tp(save=dir_path)
 ```
 
 
-# 10000 100000
+## table
+Plot and Table of the results
+```{r}
+base_path <- here("out", "Sim1")
+res<-readRDS(file.path(base_path,"aic", "criteria.RDS"))
+dir_path <- file.path(base_path, "aic")
 
+res<-res[c(1,2,3,4,5,7,6),c(1,4,5,6,7,11,12,8,9)]
+res<-t(res)
+#res
+
+for (s in c(2,3,5,6,7)){
+	res[s,]<-rd(res[s,],2)
+}
+
+for (s in c(9)) {
+  res[s,]<-rd(res[s,],3)
+}
+
+for (s in c(4,7,8)){
+	res[s,]<-fd(res[s,],3)
+}
+
+
+for (s in c(3,5,7,9)) {
+  res[s, ] <- paste0("(", res[s, ], ")")
+}
+
+
+xtable(res)
+res<-readRDS(file.path(base_path,"aic", "criteria_alldata.RDS"))
+#res<-res[,c(1,4,5,6,7,11,12,8,9)]
+res<-res[c(1,2,3,4,5,7,6),]
+res<-t(res)
+#res
+for (s in c(2)){
+	res[s,]<-rd(res[s,],2)
+}
+
+for (s in c(3,4)){
+	res[s,]<-fd(res[s,],3)
+}
+xtable(res)
+tp(save=dir_path)
+```
+
+
+
+# model2
+For the model 2, perform the same procedure.
 
 ```{r}
+base_path <- here("out", "Sim2")
+dir_path <- file.path(base_path, "aic")
+
+if (!dir.exists(dir_path)) {
+  dir.create(dir_path, recursive = TRUE)
+  message("Directory created: ", dir_path)
+} 
+```
+
+Generate data
+```{r,warning=FALSE}
 set.seed(123)
-
-plist <- c(10000,100000)
-n_runs <- 1
-mat <- matrix(NA, length(plist), 4)
-colnames(mat) <- c("chen_mean", "chen_std", "hay_mean", "hay_std")
-xylist <- list()
-
-# Data generation and time measurement
-for (num_p in seq_along(plist)) {
-	p <- plist[num_p]
-	print(p)
-	
-	chen_times <- numeric(n_runs)
-	hay_times <- numeric(n_runs)
-	
-	for (i in 1:n_runs) {
-		print(i)
-		
-		# Data generation
-		mydata <- rdasim1(n = 100, p = p, q = p, k = 5)
-		X <- mydata$X
-		Y <- mydata$Y
-		xylist[[num_p]] <- list(p = list(X = X, Y = Y))
-		
-		# Measure computation time for Chen (using the common function)
-		chen_times[i] <- measure_time(rrs.fit, Y, X)
-		
-		options(future.globals.maxSize = 100 * 1024^3) 
-		
-		# Measure computation time for Hay (using the common function)
-		hay_times[i] <- measure_time(rrda.fit, Y, X)
-		
-		options(future.globals.maxSize = NULL) 
-	}
-	
-	# Save mean and standard deviation to matrix
-	mat[num_p, "chen_mean"] <- mean(chen_times)
-	mat[num_p, "chen_std"] <- round(sd(chen_times) / sqrt(n_runs), 4)
-	mat[num_p, "hay_mean"] <- mean(hay_times)
-	mat[num_p, "hay_std"] <- round(sd(hay_times) / sqrt(n_runs), 4)
-}
-
-rownames(mat) <- plist
-
-# Save results
-saveRDS(mat, here(dir_path, "sim_time_5.RDS"))
-
-#mat_5 <- mat
-
+n = 100
+p = 200
+q = 200
+k = 5
+simdata<-rdasim2(n = n,p = p,q = q,k = k,s2n=5)
+X <- simdata$X
+Y <- simdata$Y
 ```
 
 
-# Table
-Show the result table
-```{r}
+```{r,eval=F}
+set.seed(123)
+rn_list <- list()
 
-format_without_leading_zero <- function(x) {
-     s <- formatC(x, format="f", digits=2)
-     return(s)
+for (k in 1:100) {
+  rn_list[[k]] <- sample(c(1:nrow(X)), 10, replace = FALSE)
+}
+saveRDS(rn_list,file.path(base_path, "rn_list.RDS"))
+lm<-get_lambda_stars(dir_path, rn_list, Y=Y, X=X) 
+```
+
+```{r,eval=F}
+set.seed(123)
+base_path <- here("out", "Sim2")
+#res<-readRDS(file.path(base_path,"aic", "criteria.RDS"))
+dir_path <- file.path(base_path, "aic")
+
+rn_list <-readRDS(file.path(base_path, "rn_list.RDS"))
+lm<-readRDS(file.path(dir_path, "aic_lambda.RDS"))
+
+Lambda<-rrr_lambda(Y = Y, X = X)
+criteria_test_all(Y=Y,X=X,Lambda=Lambda,dir_path=dir_path,maxrank=10)
+
+criteria_test(Y=Y,X=X,num=100,Lambda=NULL,rn_list=rn_list,lm=lm,dir_path=dir_path,maxrank=10)
+#criteria_fit(Y=Y,X=X,num=100,Lambda=NULL,rn_list=rn_list,lm=lm,dir_path=dir_path,maxrank=10)
+rsbc_test(Y=Y,X=X,save=dir_path)
+tp(save=dir_path)
+```
+
+## table
+```{r}
+base_path <- here("out", "Sim2")
+res<-readRDS(file.path(base_path,"aic", "criteria.RDS"))
+dir_path <- file.path(base_path, "aic")
+
+res<-res[c(1,2,3,4,5,7,6),c(1,4,5,6,7,11,12,8,9)]
+res<-t(res)
+
+for (s in c(2,3,5,6,7)){
+	res[s,]<-rd(res[s,],2)
 }
 
-mat1_6 <- readRDS(here(dir_path,"sim_time_1_6.RDS"))
-mat5 <- readRDS(here(dir_path,"sim_time_5.RDS"))
+for (s in c(9)) {
+  res[s,]<-rd(res[s,],3)
+}
 
-#mat<-rbind(mat1_6[c(1,2),],mat5,mat1_6[3,,drop=F])
+for (s in c(4,7,8)){
+	res[s,]<-fd(res[s,],3)
+}
 
-mat <- rbind(mat1_6[c(1,2), , drop=FALSE], mat5, mat1_6[3, , drop=FALSE])
 
+for (s in c(3,5,7,9)) {
+  res[s, ] <- paste0("(", res[s, ], ")")
+}
 
-#mat<-mat[rownames(mat) %in% pl,]
+xtable(res)
 
-formatted_mat <- apply(mat, 2, format_without_leading_zero)
+res<-readRDS(file.path(base_path,"aic", "criteria_alldata.RDS"))
+#res<-res[,c(1,4,5,6,7,11,12,8,9)]
+res<-res[c(1,2,3,4,5,7,6),]
+res<-t(res)
+#res
+for (s in c(2)){
+	res[s,]<-rd(res[s,],2)
+}
 
-table_latex <- xtable(formatted_mat)
-table_latex
+for (s in c(3,4)){
+	res[s,]<-fd(res[s,],3)
+}
 
+xtable(res)
+tp(save=dir_path)
 ```
 
 # session info
@@ -238,3 +239,4 @@ check the info and environment
 ```{r}
 devtools::session_info()
 ```
+

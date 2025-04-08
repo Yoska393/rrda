@@ -1,20 +1,21 @@
 
 ---
-title: 'Senario 1 : Cross Validation and Fitting on Simulation Data with RRDA'
-output:
-  html_document: default
+title: "Senario 1 : Rank Estimate Evaluation on Simulation Data with RRDA"
+output: html_document
 author: "Hayato Yoshioka (University of Tokyo, AgroParisTech)"
 ---
 
 # Overview. H.Yoshioka et al. (rrda package)
 
-Senario 1
+Senario 2 
 
-Here, we perform the parameter tuning for lambda and rank and fitting. After obtaining the parameters, the model is also tested.
+Here, we perform rank evaluation for simulation data sets.
+We test various n,p,q,k parameters for the data generation
 
-Data generation is based on two types of methods, called simulation 1 (Latent Space Model) and simulation 2 (Matrix Factorization Model).
+We evaluate the model by checking the percentage of the right rank estimation and the correlation between true and estimated rank.
 
 
+# package
 ```{r}
 library(furrr)
 library(dplyr)
@@ -23,15 +24,16 @@ library(reshape2)
 library(RSpectra)
 library(rrda)
 library(xtable)
+library(purrr) 
 library(here)
+library(progress)
+source("script_rrda/functions_rrda_yoshioka.R")
 ```
 
-# simulation 1 (Latent Space Model)
-
-Create folder for saving
+Create the folder for saving
 ```{r}
-base_path <- here("out", "senario1")
-dir_path <- file.path(base_path, "sim1")
+dir_path<- here("out/eval")
+
 if (!dir.exists(dir_path)) {
   dir.create(dir_path, recursive = TRUE)
   message("Directory created: ", dir_path)
@@ -39,256 +41,50 @@ if (!dir.exists(dir_path)) {
 ```
 
 
-## whole data
-In this section, whole data is used for parameter tuning (cv) and test
-
-Generate data
-```{r,warning=FALSE}
-set.seed(123)
-n = 100
-p = 200
-q = 200
-k = 5
-simdata<-rdasim1(n = n,p = p,q = q,k = k)
-X <- simdata$X
-Y <- simdata$Y
-```
-
-rrda.cv on whole data
+# simulation run 
+2 types of simulations and 3 types of matrix size are tested
 ```{r,eval=F}
-plan(multisession)
-cv_result<- rrda.cv(Y = Y, X = X,lambda = NULL,maxrank = 10,scale.X = F,scale.Y = F)
-plan(sequential)
-
-saveRDS(cv_result,file.path(dir_path, "whole_cv.RDS"))
-```
-
-Plot the results
-```{r,warning=FALSE}
-cv_result <- readRDS(file.path(dir_path, "whole_cv.RDS"))
-rrda.plot(cv_result = cv_result)
-rrda.plot(cv_result = cv_result,show_error_bar = T)
-rrda.heatmap(cv_result)
-rrda.summary(cv_result)
-
-# get mse and sem for each rank
-m <- apply(cv_result$MSE, 1, min)
-min_indices <- apply(cv_result$MSE, 1, which.min)
-std <- cv_result$SEM[cbind(1:nrow(cv_result$SEM), min_indices)]
-result1 <- cbind(m, std)
-
-```
-
-Plot the result
-```{r,fig.width=6,fig.height=6}
-b<-rrda.fit(Y,X,nrank = cv_result$opt_min$rank, lambda = cv_result$opt_min$lambda,scale.X = F,scale.Y = F)
-
-pred<-rrda.predict(Bhat=b,X = X)[[1]][[1]][[1]]
-
-min<- min(Y)
-max<- max(Y)
-plot(Y,pred,cex = 0.1,xlim =c(min,max),ylim = c(min,max),ylab = "Prediction",cex.lab=1.3)
-abline(0,1,col=2)
-
-codna<-diag(cor(Y,pred))
-mean(codna)
-
-hist(codna,main="Fitting COR for predicted variales")
-
-```
-
-## train test
-sampled data is used for parameter tuning (cv) and rest of the data is used for test
-
-data is splitted to train data (n=90) and test data (n=10)
-```{r}
 set.seed(123)
 
-rn<-c(1:10)
-X_train<-X[-rn,]
-Y_train<-Y[-rn,]
-X_test<-X[rn,]
-Y_test<-Y[rn,]
-```
+n_iterations=100
+# Define your conditions
+simulations <- c("sim1","sim2")
+sizes <- c("large", "small", "mixed")
 
-rrda.cv on training data
-```{r,eval=F}
-plan(multisession)
-cv_result<- rrda.cv(Y = Y_train, X = X_train,lambda = NULL,maxrank = 10,scale.X = F,scale.Y = F)
-plan(sequential)
-saveRDS(cv_result,file.path(dir_path, "tt_cv.RDS"))
-```
+# Loop over each combination
+for (sim in simulations) {
 
-Plot the result
-```{r}
-cv_result <- readRDS(file.path(dir_path, "tt_cv.RDS"))
-rrda.plot(cv_result = cv_result)
-rrda.plot(cv_result = cv_result,show_error_bar = T)
-rrda.heatmap(cv_result)
-rrda.summary(cv_result)
-```
-
-Check fitting
-```{r,fig.width=6,fig.height=6}
-b<-rrda.fit(Y = Y_train, X = X_train,nrank = cv_result$opt_min$rank, lambda = cv_result$opt_min$lambda,scale.X = F,scale.Y = F)
-
-pred<-rrda.predict(Bhat=b,X = X_test)[[1]][[1]][[1]]
-
-min<- min(Y)
-max<- max(Y)
-plot(Y_test,pred,cex = 0.5,xlim =c(min,max),ylim = c(min,max),ylab = "Prediction",cex.lab=1.3)
-abline(0,1,col=2)
-
-codna<-diag(cor(Y_test,pred))
-mean(codna)
-
-hist(codna,main="Fitting COR for predicted variales")
-
-```
-
-# simulation 2 (Matrix Factorization Model)
-Here we perform the same procdure for model 2
-
-```{r}
-base_path <- here("out", "senario1")
-dir_path <- file.path(base_path, "sim2")
-if (!dir.exists(dir_path)) {
-  dir.create(dir_path, recursive = TRUE)
-  message("Directory created: ", dir_path)
-} 
-```
-
-## whole data
-all data is used for parameter tuning (cv) and test
-
-data
-```{r,warning=FALSE}
-set.seed(123)
-n = 100
-p = 200
-q = 200
-k = 5
-
-simdata<-rdasim2(n = n,p = p,q = q,k = k,s2n=5)
-X <- simdata$X
-Y <- simdata$Y
-
-B <- simdata$B
-E <- simdata$E
-```
-
-cv
-```{r,eval=F}
-plan(multisession)
-cv_result<- rrda.cv(Y = Y, X = X,lambda = NULL,maxrank = 10,scale.X = F,scale.Y = F)
-plan(sequential)
-saveRDS(cv_result,file.path(dir_path, "whole_cv.RDS"))
-```
-
-Plot the results
-```{r,warning=FALSE}
-cv_result <- readRDS(file.path(dir_path, "whole_cv.RDS"))
-rrda.plot(cv_result = cv_result)
-rrda.plot(cv_result = cv_result,show_error_bar = T)
-rrda.heatmap(cv_result)
-rrda.summary(cv_result)
-
-# get mse and sem for each rank
-m <- apply(cv_result$MSE, 1, min)
-min_indices <- apply(cv_result$MSE, 1, which.min)
-std <- cv_result$SEM[cbind(1:nrow(cv_result$SEM), min_indices)]
-result2 <- cbind(m, std)
-
-```
-
-fit
-```{r,fig.width=6,fig.height=6}
-b<-rrda.fit(Y,X,nrank = cv_result$opt_min$rank, lambda = cv_result$opt_min$lambda,scale.X = F,scale.Y = F)
-
-pred<-rrda.predict(Bhat=b,X = X)[[1]][[1]][[1]]
-
-min<- min(Y)
-max<- max(Y)
-plot(Y,pred,cex = 0.1,xlim =c(min,max),ylim = c(min,max),ylab = "Prediction",cex.lab=1.3)
-abline(0,1,col=2)
-
-plot(Y,X %*% B,cex = 0.1,xlim =c(min,max),ylim = c(min,max),ylab = "XB",cex.lab=1.3)
-abline(0,1,col=2)
-
-codna<-diag(cor(Y,pred))
-mean(codna)
-
-hist(codna,main="Fitting COR for predicted variales")
-
-```
-
-
-## train test
-
-sampled data is used for parameter tuning (cv) and rest of the data is used for test
-data is splitted to train data (n=90) and test data (n=10)
-
-```{r}
-set.seed(123)
-
-rn<-c(1:10)
-X_train<-X[-rn,]
-Y_train<-Y[-rn,]
-X_test<-X[rn,]
-Y_test<-Y[rn,]
-```
-
-cv
-```{r,eval=F}
-plan(multisession)
-cv_result<- rrda.cv(Y = Y_train, X = X_train,lambda = NULL,maxrank = 10,scale.X = F,scale.Y = F)
-plan(sequential)
-saveRDS(cv_result,file.path(dir_path, "tt_cv.RDS"))
-```
-
-Plot the resuts
-```{r}
-cv_result <- readRDS(file.path(dir_path, "tt_cv.RDS"))
-rrda.plot(cv_result = cv_result)
-rrda.plot(cv_result = cv_result,show_error_bar = T)
-rrda.heatmap(cv_result)
-rrda.summary(cv_result)
-```
-
-fit
-```{r,fig.width=6,fig.height=6}
-b<-rrda.fit(Y = Y_train, X = X_train,nrank = cv_result$opt_min$rank, lambda = cv_result$opt_min$lambda,scale.X = F,scale.Y = F)
-
-pred<-rrda.predict(Bhat=b,X = X_test)[[1]][[1]][[1]]
-
-min<- min(Y)
-max<- max(Y)
-plot(Y_test,pred,cex = 0.5,xlim =c(min,max),ylim = c(min,max),ylab = "Prediction",cex.lab=1.3)
-abline(0,1,col=2)
-
-plot(Y_test,X_test %*% B,cex = 0.5,xlim =c(min,max),ylim = c(min,max),ylab = "X_test B",cex.lab=1.3)
-abline(0,1,col=2)
-
-codna<-diag(cor(Y_test,pred))
-mean(codna)
-
-hist(codna,main="Fitting COR for predicted variales")
-
-```
-
-# table for the results
-THe table for simulation 1 and 2 (Whole data)
-```{r}
-lat<-cbind(result1,result2)
-
-format_without_leading_zero <- function(x) {
-     s <- formatC(x, format="f", digits=4)  
-     return(s)
+  for (size in sizes) {
+    # Run your function with each combination
+    data_list <- rank_evaluate(n_iterations = n_iterations, rdasim = sim, size = size)
+    # Save the results
+    filename <- paste0("data_list_", sim, "_", size, ".rds")
+    saveRDS(data_list, file = here("out/eval", filename))
+    data_list<-readRDS(here("out/eval", filename))
+    plot_evaluate(data_list,rdasim = sim,size=size)
+  }
 }
 
-lat <- apply(lat, 2, format_without_leading_zero)
+```
 
-xtable(lat)
+# get result
+Plot the results
+```{r}
+set.seed(123)
+n_iterations=100
+# Define your conditions
+ simulations <- c("sim1", "sim2")
+ sizes <- c("large", "small", "mixed")
+
+for (sim in simulations) {
+
+  for (size in sizes) {
+  	filename <- paste0("data_list_", sim, "_", size, ".rds")
+		data_list<-readRDS(here("out/eval", filename))
+    plot_evaluate(data_list,rdasim = sim,size=size)
+    
+  }
+}
 ```
 
 # session info
