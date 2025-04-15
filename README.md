@@ -25,7 +25,23 @@ This repository contains functions for Ridge Redundancy Analysis (rrda) and cros
 You can install the package from GitHub using the `devtools` package:
 
 ```r
-devtools::install_github("Yoska393/rrda")
+# Check if other packages are installed, and install them if they are not
+required_packages <- c("dplyr", "furrr", "ggplot2", "RSpectra","reshape2")
+
+missing_packages <- required_packages[!(required_packages %in% installed.packages()[,"Package"])]
+
+if(length(missing_packages) > 0) {
+  install.packages(missing_packages)
+}
+
+# Install rrda
+# Please correct the path to where you donloaded the tar.gz
+if (!requireNamespace("rrda", quietly = TRUE)) {
+  install.packages("~/Downloads/rrda_0.0.0.9000.tar.gz", repos = NULL, type = "source")
+}
+
+# Load the rrda library
+library(rrda)
 ```
 
 ## Dependencies
