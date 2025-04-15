@@ -25,7 +25,7 @@ This repository contains functions for Ridge Redundancy Analysis (rrda) and cros
 You can install the package from GitHub using the `devtools` package:
 
 ```r
-devtools::install_github("username/repository_name")
+devtools::install_github("Yoska393/rrda")
 ```
 
 ## Dependencies
