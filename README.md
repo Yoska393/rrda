@@ -38,7 +38,7 @@ devtools::install_github("Yoska393/rrda", dependencies = TRUE)
 
 
 
-## Functions
+## Main Functions
 
 ### `rrda.fit`
 
