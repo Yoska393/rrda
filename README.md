@@ -2,7 +2,7 @@
 
 <img src="rrda.jpg" width="500" height="400">
 
-# Ridge Redundancy Analysis (rrda)
+# ridge redundancy analysis (rrda)
 
 ## Data
 
