@@ -14,7 +14,7 @@ The metabolome data were downloaded from the RIKEN DropMet website (http://prime
 
 Hello Bonjour,
 
-Here I store all the scripts for the simulations and applications, and my own functions used for the analysis. Also, the application data is stored as .rds file in a folder (RDAdata). For methylation data, you can refer to the R package (MEAL, Ruiz-Arenas and González 2024)
+Here I store all the scripts for the simulations and applications, and my own functions used for the analysis. Also, the application data of breast cancer and soybean are stored as .rds file in a folder (RDAdata). For methylation data, you can refer to the R package (MEAL, Ruiz-Arenas and González 2024)
 
 This package provides functions for performing **ridge redundancy analysis (rrda)**, which is useful for modeling the relationship between a matrix of response variables (**Y**; n × q ) and a matrix of explanatory variables (**X**;  n × p ). The method is designed to handle **high-dimensional data efficiently**, allowing computation and storage optimization.
 
