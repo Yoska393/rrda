@@ -10,16 +10,16 @@
 
 Could you cite when using `rrda` ? Thank you 😊
 
-## Overview
+## 🔍 Overview
 
-Hello Bonjour,
+Hello / Bonjour! 👋
 
 This R package `rrda` provides functions for performing **ridge redundancy analysis (rrda)**, which is useful for modeling the relationship between a matrix of response variables (**Y**; n × q ) and a matrix of explanatory variables (**X**;  n × p ). The method is designed to handle **high-dimensional data efficiently**, allowing computation and storage optimization.
 
 
 Also, I store all the scripts and my own functions used in our article (Yoshioka et al. 2025). 
 
-## Installation
+## 🛠 Installation
 
 You can install the package from GitHub using the `devtools` package:
 
@@ -27,7 +27,7 @@ You can install the package from GitHub using the `devtools` package:
 devtools::install_github("Yoska393/rrda", dependencies = TRUE)
 ```
 
-## Dependencies
+## 📦 Dependencies
 
 - `RSpectra`
 - `furrr`
@@ -35,7 +35,7 @@ devtools::install_github("Yoska393/rrda", dependencies = TRUE)
 - `reshape2`
 - `ggplot2`
 
-## Data
+## 📊 Data
 
 For the application data, the data for breast cancer (Witten et al., 2009) and soybean data (Dang et al., 2023) are stored on this page. Also, refer to Ruiz-Arenas and González 2020) for the methylation data. 
 
@@ -43,7 +43,7 @@ The application data of breast cancer and soybean are stored as .rds file in a f
 
 The metabolome data were downloaded from the RIKEN DropMet website (http://prime.psc.riken.jp/menta.cgi/prime/drop_index) ; ID: DM0071, DM0072.
 
-## Main Functions
+## 🔧 Main Functions
 
 ### `rrda.fit`
 
@@ -136,7 +136,7 @@ cor_Y_Yhat <- diag(cor(Y, Yhat))
 summary(cor_Y_Yhat)
 ```
 
-## References
+## 📚 References
 - Dang, T., Fuji, Y., Kumaishi, K., Usui, E., Kobori, S., Sato, T., Toda, Y., Sakurai, K., Yamasaki, Y., Tsujimoto, H. and Hirai, M.Y., 2023. An integrative framework of stochastic variational variable selection for joint analysis of multi-omics microbiome data. bioRxiv, pp.2023-08.
 - Ruiz-Arenas C, Gonzalez J (2024). MEAL: Perform methylation analysis. R package version 1.34.0. MEAL: Perform methylation analysis. 
 - Witten D, Tibshirani R, Gross S, Narasimhan B (2024). PMA: Penalized Multivariate Analysis. R package version 1.2-4,
