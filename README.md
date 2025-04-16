@@ -8,7 +8,7 @@
 
 **Yoshioka, H., Aubert, J., Iwata, H., and Mary-Huard, T. (2025).**  *Ridge Redundancy Analysis for High-Dimensional Omics Data.*
 
-Please cite when using **rrda** 😊 Thank you!
+Caould you cite when using **rrda** 😊 Thank you!
 
 ## Overview
 
