@@ -45,25 +45,56 @@ The metabolome data were downloaded from the RIKEN DropMet website (http://prime
 
 ## 🔧 Tutorial
 
-#### Example 1 Fitting:
+#### Example 1: Fitting
 
 `rdasim1` function generates rank-restricted matrices X and Y. 
 
 ```r
-simdata <- rdasim1(n = 100, p = 200, q = 200, k = 5)
-X <- simdata×X
-Y <- simdata×Y
+library(rrda)
+set.seed(123)
+simdata <- rdasim2(n = 10, p = 20, q = 20, k = 5)
+X <- simdata$X
+Y <- simdata$Y
 ```
-`rrda.fit` function solves the rrda (ridge redundancy) for X and Y. This is equivalent to the prediction from X to Y, where Y = XB + E.
+`rrda.fit` function solves the rrda (ridge redundancy) for X and Y. 
+This is equivalent to the prediction from X to Y, where Y = XB + E.
+
+`nrank` indicates the rank restrictions for the model. Here, it is the value of 1 to 5.
+
+`lambda` indicates the ridge penalty for the model. Here, it is the value of 0.1, 1, 10.   
+
+The model solves several ranks and lambdas efficiently. In this case, the model returns all the combinations of ranks and lambdas (3 times 5 = 15).
 
 ```r
-# Sequential
-Bhat <- rrda.fit(Y = Y, X = X, nrank = c(1:10))
+Bhat <- rrda.fit(Y = Y, X = X, nrank = c(1:5), lambda = c(0.1,1,10))
 names(Bhat)
 ```
 
+When you see the Bhat, you will see the list composed of each lambda. In each lambda value, you have the coefficient `B` according to each rank.
 
-#### Example 2 Parameter Tuning by Cross-Validation:
+Note! The Bhat is stored in a decomposed form. This is because the function is designed for high-dimensional settings.
+
+If you want to have a matrix form of B, you can perform:
+
+```r
+Bhat_mat1 <- rrda.coef(Bhat = Bhat)
+```
+
+If you want to specify the rank or lambda, you may indicate as below
+```r
+Bhat_mat2 <- rrda.coef(Bhat = Bhat, nrank = 5, lambda= 1)
+```
+
+Maybe a heatmap can explain the variable relationships
+
+```r
+heatmap(Bhat_mat2$lambda1$rank5)
+#heatmap(Bhat_mat2[[1]][[1]]) # same result
+```
+Don't forget to specify the location of the matrix in the list 
+
+#### Example 2: Parameter Tuning by Cross-Validation
+
 ```r
 set.seed(123)
 simdata <- rdasim1(n = 100, p = 200, q = 200, k = 5)
