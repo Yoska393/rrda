@@ -4,9 +4,9 @@
 
 # ridge redundancy analysis (rrda)
 
-## Citation
+## 📌 Citation (Please cite when using RRDA):
 
-Yoshioka, H., Aubert, J., Iwata, H., and Mary-Huard, T., 2025. Ridge Redundancy Analysis for High-Dimensional Omics Data.
+**Yoshioka, H., Aubert, J., Iwata, H., and Mary-Huard, T. (2025).**  *Ridge Redundancy Analysis for High-Dimensional Omics Data.*
 
 ## Overview
 
