@@ -52,7 +52,7 @@ The metabolome data were downloaded from the RIKEN DropMet website (http://prime
 ```r
 library(rrda)
 set.seed(123)
-simdata <- rdasim2(n = 10, p = 20, q = 20, k = 5)
+simdata <- rdasim1(n = 10, p = 20, q = 20, k = 5)
 X <- simdata$X
 Y <- simdata$Y
 ```
