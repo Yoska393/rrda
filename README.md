@@ -27,15 +27,6 @@ You can install the package from GitHub using the `devtools` package:
 devtools::install_github("Yoska393/rrda", dependencies = TRUE)
 ```
 
-
-## Data
-
-For the application data, the data for breast cancer (Witten et al., 2009) and soybean data (Dang et al., 2023) are stored on this page. Also, refer to Ruiz-Arenas and González 2020) for the methylation data. 
-
-The application data of breast cancer and soybean are stored as .rds file in a folder (RDAdata). For methylation data, you can refer to the R package (MEAL, Ruiz-Arenas and González 2024)
-
-The metabolome data were downloaded from the RIKEN DropMet website (http://prime.psc.riken.jp/menta.cgi/prime/drop_index) ; ID: DM0071, DM0072.
-
 ## Dependencies
 
 - `RSpectra`
@@ -44,7 +35,13 @@ The metabolome data were downloaded from the RIKEN DropMet website (http://prime
 - `reshape2`
 - `ggplot2`
 
+## Data
 
+For the application data, the data for breast cancer (Witten et al., 2009) and soybean data (Dang et al., 2023) are stored on this page. Also, refer to Ruiz-Arenas and González 2020) for the methylation data. 
+
+The application data of breast cancer and soybean are stored as .rds file in a folder (RDAdata). For methylation data, you can refer to the R package (MEAL, Ruiz-Arenas and González 2024)
+
+The metabolome data were downloaded from the RIKEN DropMet website (http://prime.psc.riken.jp/menta.cgi/prime/drop_index) ; ID: DM0071, DM0072.
 
 ## Main Functions
 
