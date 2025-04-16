@@ -47,17 +47,23 @@ The metabolome data were downloaded from the RIKEN DropMet website (http://prime
 
 #### Example 1 Fitting:
 
+`rdasim1` function generates rank-restricted matrices X and Y. 
+
 ```r
 simdata <- rdasim1(n = 100, p = 200, q = 200, k = 5)
 X <- simdata×X
 Y <- simdata×Y
+```
+`rrda.fit` function solves the rrda (ridge redundancy) for X and Y. This is equivalent to the prediction from X to Y, where Y = XB + E.
 
+```r
 # Sequential
 Bhat <- rrda.fit(Y = Y, X = X, nrank = c(1:10))
 names(Bhat)
 ```
 
-#### Example 2 Parameter TUnig by Cross-Validation:
+
+#### Example 2 Parameter Tuning by Cross-Validation:
 ```r
 set.seed(123)
 simdata <- rdasim1(n = 100, p = 200, q = 200, k = 5)
