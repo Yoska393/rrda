@@ -4,21 +4,26 @@
 
 # ridge redundancy analysis (rrda)
 
+## Citation
+
+Yoshioka, H., Aubert, J., Iwata, H., and Mary-Huard, T., 2025. Ridge Redundancy Analysis for High-Dimensional Omics Data.
+
+## Overview
+
+Hello Bonjour,
+
+Here I store all the scripts for the simulations and applications, and my own functions used for the analysis. 
+
+This package provides functions for performing **ridge redundancy analysis (rrda)**, which is useful for modeling the relationship between a matrix of response variables (**Y**; n × q ) and a matrix of explanatory variables (**X**;  n × p ). The method is designed to handle **high-dimensional data efficiently**, allowing computation and storage optimization.
+
+
 ## Data
 
 For the application data, the data for breast cancer (Witten et al., 2009) and soybean data (Dang et al., 2023) are stored on this page. Also, refer to Ruiz-Arenas and González 2020) for the methylation data. 
 
 The metabolome data were downloaded from the RIKEN DropMet website (http://prime.psc.riken.jp/menta.cgi/prime/drop_index) ; ID: DM0071, DM0072.
 
-## Overview
-
-Hello Bonjour,
-
-Here I store all the scripts for the simulations and applications, and my own functions used for the analysis. Also, the application data of breast cancer and soybean are stored as .rds file in a folder (RDAdata). For methylation data, you can refer to the R package (MEAL, Ruiz-Arenas and González 2024)
-
-This package provides functions for performing **ridge redundancy analysis (rrda)**, which is useful for modeling the relationship between a matrix of response variables (**Y**; n × q ) and a matrix of explanatory variables (**X**;  n × p ). The method is designed to handle **high-dimensional data efficiently**, allowing computation and storage optimization.
-
-This repository contains functions for Ridge Redundancy Analysis (rrda) and cross-validation for high-dimensional regression problems, such as omics data analysis. The main functions are `rrda.fit` for fitting the rrda model and `rrda.cv` for performing cross-validation.
+The application data of breast cancer and soybean are stored as .rds file in a folder (RDAdata). For methylation data, you can refer to the R package (MEAL, Ruiz-Arenas and González 2024)
 
 ## Installation
 
@@ -41,6 +46,8 @@ devtools::install_github("Yoska393/rrda", dependencies = TRUE)
 ## Main Functions
 
 ### `rrda.fit`
+
+This repository contains functions for Ridge Redundancy Analysis (rrda) and cross-validation for high-dimensional regression problems, such as omics data analysis. The main functions are `rrda.fit` for fitting the rrda model and `rrda.cv` for performing cross-validation.
 
 Performs Ridge Redundancy Analysis (rrda) to obtain the coefficient matrix (Bhat), which models the relationship between a matrix of response variables (Y) and a matrix of explanatory variables (X).
 
@@ -133,4 +140,4 @@ summary(cor_Y_Yhat)
 - Dang, T., Fuji, Y., Kumaishi, K., Usui, E., Kobori, S., Sato, T., Toda, Y., Sakurai, K., Yamasaki, Y., Tsujimoto, H. and Hirai, M.Y., 2023. An integrative framework of stochastic variational variable selection for joint analysis of multi-omics microbiome data. bioRxiv, pp.2023-08.
 - Ruiz-Arenas C, Gonzalez J (2024). MEAL: Perform methylation analysis. R package version 1.34.0. MEAL: Perform methylation analysis. 
 - Witten D, Tibshirani R, Gross S, Narasimhan B (2024). PMA: Penalized Multivariate Analysis. R package version 1.2-4,
-- Yoshioka, H., Aubert, J., Iwata, H., and Mary-Huard, T., 2025. RRDA: Ridge Redundancy Analysis for High-Dimensional Omics Data.
+- Yoshioka, H., Aubert, J., Iwata, H., and Mary-Huard, T., 2025. Ridge Redundancy Analysis for High-Dimensional Omics Data.
