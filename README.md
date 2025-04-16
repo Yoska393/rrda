@@ -43,29 +43,10 @@ The application data of breast cancer and soybean are stored as .rds file in a f
 
 The metabolome data were downloaded from the RIKEN DropMet website (http://prime.psc.riken.jp/menta.cgi/prime/drop_index) ; ID: DM0071, DM0072.
 
-## 🔧 Main Functions
+## 🔧 Tutorial
 
-### `rrda.fit`
+#### Example 1 Fitting:
 
-This repository contains functions for Ridge Redundancy Analysis (rrda) and cross-validation for high-dimensional regression problems, such as omics data analysis. The main functions are `rrda.fit` for fitting the rrda model and `rrda.cv` for performing cross-validation.
-
-Performs Ridge Redundancy Analysis (rrda) to obtain the coefficient matrix (Bhat), which models the relationship between a matrix of response variables (Y) and a matrix of explanatory variables (X).
-
-#### Parameters:
-- `Y` : Numeric matrix of response variables.
-- `X` : Numeric matrix of explanatory variables.
-- `nrank` : Numeric vector specifying the ranks of Bhat. Default is NULL, which sets it to (1:min(15, min(dim(X), dim(Y)))).
-- `lambda` : Numeric vector of ridge penalty values. Default value is 1.
-- `component` : Logical indicating if Bhat is returned as component vectors. Default is TRUE.
-- `center.X` : Logical indicating if X should be centered. Default is TRUE.
-- `center.Y` : Logical indicating if Y should be centered. Default is TRUE.
-- `scale.X` : Logical indicating if X should be scaled. Default is FALSE.
-- `scale.Y` : Logical indicating if Y should be scaled. Default is FALSE.
-
-#### Returns:
-A list containing Bhat components or matrices (the coefficient of Ridge Redundancy Analysis for each parameter lambda and nrank), ranks, and lambda values.
-
-#### Example:
 ```r
 simdata <- rdasim1(n = 100, p = 200, q = 200, k = 5)
 X <- simdata×X
@@ -76,30 +57,9 @@ Bhat <- rrda.fit(Y = Y, X = X, nrank = c(1:10))
 names(Bhat)
 ```
 
-### `rrda.cv`
-
-Performs cross-validation to evaluate the performance of Ridge Redundancy Analysis (RDA) models. It calculates the mean squared error (MSE) for different ranks and ridge penalty values through cross-validation folds.
-
-#### Parameters:
-- `Y` : Numeric matrix of response variables.
-- `X` : Numeric matrix of explanatory variables.
-- `maxrank` : Numeric vector specifying the maximum rank of the coefficient Bhat. Default is NULL, which sets it to (min(15, min(dim(X), dim(Y)))).
-- `lambda` : Numeric vector of ridge penalty values. Default is NULL, where the lambda values are automatically chosen.
-- `nfold` : The number of folds for cross-validation. Default is 10.
-- `folds` : A vector specifying the folds. Default is NULL, which randomly assigns folds.
-- `sample.X` : Number of variables sampled from X for the lambda range estimate. Default is 1000.
-- `sample.Y` : Number of variables sampled from Y for the lambda range estimate. Default is 1000.
-- `scale.X` : Logical indicating if X should be scaled. Default is FALSE.
-- `scale.Y` : Logical indicating if Y should be scaled. Default is FALSE.
-- `center.X` : Logical indicating if X should be centered. Default is TRUE.
-- `center.Y` : Logical indicating if Y should be centered. Default is TRUE.
-- `verbose` : Logical indicating if the function should display information about the function call. Default is TRUE.
-
-#### Returns:
-A list containing the cross-validated MSE matrix, lambda values, rank values, and the optimal lambda and rank.
-
-#### Example:
+#### Example 2 Parameter TUnig by Cross-Validation:
 ```r
+set.seed(123)
 simdata <- rdasim1(n = 100, p = 200, q = 200, k = 5)
 X <- simdata×X
 Y <- simdata×Y
