@@ -101,9 +101,6 @@ simdata <- rdasim1(n = 100, p = 200, q = 200, k = 5)
 X <- simdata×X
 Y <- simdata×Y
 
-cv_result <- rrda.cv(Y = Y, X = X)
-rrda.summary(cv_result = cv_result)
-
 # Complete Example
 cv_result <- rrda.cv(Y = Y, X = X, maxrank = 10) # cv
 rrda.summary(cv_result = cv_result) # cv result
