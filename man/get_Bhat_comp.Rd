@@ -16,7 +16,7 @@ get_Bhat_comp(rsid2_1L, DUtY, nrank, tV)
 \item{tV}{A numeric matrix.}
 }
 \value{
-A list containing the left and right components of Bhat of (\code{LeftBhatlambda_k} and \code{RightBhatlambda_k}).
+A list containing the left and right components of Bhat (\code{LeftBhatlambda_k} , \code{RightBhatlambda_k} and singular values (Bd) for GSVD of Bhat).
 }
 \description{
 Compute the components of Bhat using SVD. In our formula, Bhat is stored as LeftBhatlambda_k (p times r matrix) and RightBhatlambda_k (q times r). Here, n is the number of samples, p is the number of variables of X, q is the number of variables of Y, and r is the specified rank in the Ridge Redundancy Analysis.

@@ -290,7 +290,7 @@ rrda.coef<- function(Bhat, nrank = NULL, lambda= NULL) {
 #' @param DUtY A numeric matrix (n times q).
 #' @param nrank A numeric vector indicating the rank(s) of Bhat.
 #' @param tV A numeric matrix.
-#' @return A list containing the left and right components of Bhat of (`LeftBhatlambda_k` and `RightBhatlambda_k`).
+#' @return A list containing the left and right components of Bhat (`LeftBhatlambda_k` , `RightBhatlambda_k` and singular values (Bd) for GSVD of Bhat).
 get_Bhat_comp<- function(rsid2_1L,DUtY,nrank,tV) {
   maxrank <- max(nrank)
   M   <- DUtY * rsid2_1L
@@ -310,7 +310,8 @@ get_Bhat_comp<- function(rsid2_1L,DUtY,nrank,tV) {
   # LeftBhatlambda_k <- crossprod(tV, BU * rsid2_1L)
   # RightBhatlambda_k <- t(t(BV) * Bd)
   return(list(LeftBhatlambda_k=LeftBhatlambda_k,
-              RightBhatlambda_k=RightBhatlambda_k))
+              RightBhatlambda_k=RightBhatlambda_k,
+              Bd = Bd))
 }
 
 

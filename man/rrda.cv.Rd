@@ -76,7 +76,12 @@ simdata<-rdasim1(n = 10,p = 30,q = 30,k = 3) # data generation
 X <- simdata$X
 Y <- simdata$Y
 
+# library(future) # <- if you want to compute in parallel
+
+# plan(multisession) # <- if you want to compute in parallel
 cv_result<- rrda.cv(Y = Y, X = X, maxrank = 5, nfold = 5) # cv
+# plan(multisession) # <- To come back to sequential computing
+
 rrda.summary(cv_result = cv_result) # cv result
 
 p <- rrda.plot(cv_result) # cv result plot
