@@ -169,8 +169,10 @@ summary(cor_Y_Yhat)
 plot(Y,Yhat)
 
 ```
-<img src="image/path.png" width="400" height="250">
-<img src="image/fit.png" width="400" height="400">
+<div style="display: flex; align-items: center; gap: 10px;">
+  <img src="image/path.png" width="400" height="300">
+  <img src="image/fit.png" width="300" height="300">
+</div>
 
 
 ## 📚 References
