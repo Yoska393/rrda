@@ -78,8 +78,10 @@ When you see the Bhat, you will see the list composed of each lambda. In each la
 If you want to plot X and Y matrix in two-dimensional space (like classic RDA approach) :
 
 ```r
-# Two sets of variables of X and Y on the latent space
-ud<-Bhat[[1]][[1]][[1]]
+# You want to specify one lambda in `rrda.fit` to visualize (if not, you can also specify the location afterwhile)
+Bhat_lambda0.1 <- rrda.fit(Y = Y, X = X, nrank = c(1:5), lambda = c(0.1))
+
+ud<-Bhat[[1]][[1]][[1]] #you can also specify the location if you have multiple lambda
 v<-Bhat[[1]][[1]][[2]]
 
 ud12 <- ud[, 1:2]
