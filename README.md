@@ -78,11 +78,11 @@ When you see the Bhat, you will see the list composed of each lambda. In each la
 If you want to plot X and Y matrix in two-dimensional space (like classic RDA approach) :
 
 ```r
-# You want to specify one lambda in `rrda.fit` to visualize (if not, you can also specify the location afterwhile)
+# You want to specify one lambda in `rrda.fit` to visualize (if not, you can also specify the location afterward)
 Bhat_lambda0.1 <- rrda.fit(Y = Y, X = X, nrank = c(1:5), lambda = c(0.1))
 
 ud<-Bhat[[1]][[1]][[1]] #you can also specify the location if you have multiple lambda
-v<-Bhat[[1]][[1]][[2]]
+v<-Bhat[[1]][[1]][[2]]  #you can also specify the location if you have multiple lambda
 
 ud12 <- ud[, 1:2]
 v12 <- v[, 1:2]
@@ -107,19 +107,19 @@ text(v12, labels = paste0("Y", 1:nrow(v12)), pos = 3, col = "red", cex = 0.8)
 If you want to have a matrix form of B, you can perform:
 
 ```r
-Bhat_mat1 <- rrda.coef(Bhat = Bhat)
+Bhat_mat_all <- rrda.coef(Bhat = Bhat)
 ```
 
 If you want to specify the rank or lambda, you may indicate as below
 ```r
-Bhat_mat2 <- rrda.coef(Bhat = Bhat, nrank = 5, lambda= 1)
+Bhat_mat <- rrda.coef(Bhat = Bhat, nrank = 5, lambda= 1)
 ```
 
 Maybe a heatmap can explain the variable relationships
 
 ```r
-h5<-Bhat_mat2$lambda1$rank5
-h5<-Bhat_mat2[[1]][[1]]
+h5<-Bhat_mat$lambda1$rank5
+h5<-Bhat_mat[[1]][[1]]
 rownames(h5) <- paste0("Y", 1:nrow(h5))
 colnames(h5) <- paste0("X", 1:ncol(h5))
 
@@ -165,6 +165,7 @@ Yhat <- Yhat_mat[[1]][[1]][[1]]
 cor_Y_Yhat <- diag(cor(Y, Yhat))
 summary(cor_Y_Yhat)
 ```
+<img src="image/rrda_path.png" width="500" height="400">
 
 ## 📚 References
 - Dang, T., Fuji, Y., Kumaishi, K., Usui, E., Kobori, S., Sato, T., Toda, Y., Sakurai, K., Yamasaki, Y., Tsujimoto, H. and Hirai, M.Y., 2023. An integrative framework of stochastic variational variable selection for joint analysis of multi-omics microbiome data. bioRxiv, pp.2023-08.
