@@ -170,7 +170,7 @@ plot(Y,Yhat)
 
 ```
 <div style="display: flex; align-items: center; gap: 10px;">
-  <img src="image/path.png" width="400" height="300">
+  <img src="image/path.png" width="420" height="300">
   <img src="image/fit.png" width="300" height="300">
 </div>
 
