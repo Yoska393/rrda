@@ -165,7 +165,7 @@ Yhat <- Yhat_mat[[1]][[1]][[1]]
 cor_Y_Yhat <- diag(cor(Y, Yhat))
 summary(cor_Y_Yhat)
 ```
-<img src="image/rrda_path.png" width="500" height="400">
+<img src="image/path.png" width="500" height="300">
 
 ## 📚 References
 - Dang, T., Fuji, Y., Kumaishi, K., Usui, E., Kobori, S., Sato, T., Toda, Y., Sakurai, K., Yamasaki, Y., Tsujimoto, H. and Hirai, M.Y., 2023. An integrative framework of stochastic variational variable selection for joint analysis of multi-omics microbiome data. bioRxiv, pp.2023-08.
