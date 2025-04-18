@@ -101,8 +101,6 @@ arrows(0, 0, v12[,1], v12[,2], col = "red", length = 0.1)
 # Optionally add text labels
 text(ud12, labels = paste0("X", 1:nrow(ud12)), pos = 3, col = "blue", cex = 0.8)
 text(v12, labels = paste0("Y", 1:nrow(v12)), pos = 3, col = "red", cex = 0.8)
-
-
 ```
 
 
@@ -120,8 +118,12 @@ Bhat_mat2 <- rrda.coef(Bhat = Bhat, nrank = 5, lambda= 1)
 Maybe a heatmap can explain the variable relationships
 
 ```r
-heatmap(Bhat_mat2$lambda1$rank5)
-#heatmap(Bhat_mat2[[1]][[1]]) # same result
+h5<-Bhat_mat2$lambda1$rank5
+h5<-Bhat_mat2[[1]][[1]]
+rownames(h5) <- paste0("Y", 1:nrow(h5))
+colnames(h5) <- paste0("X", 1:ncol(h5))
+
+heatmap(h5, main = "rrda results (5 dimensions)")
 ```
 Don't forget to specify the location of the matrix in the list 
 
