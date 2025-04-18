@@ -72,7 +72,37 @@ names(Bhat)
 
 When you see the Bhat, you will see the list composed of each lambda. In each lambda value, you have the coefficient `B` according to each rank.
 
-Note! The Bhat is stored in a decomposed form. This is because the function is designed for high-dimensional settings.
+(Note! The Bhat is stored in a decomposed form. This is because the function is designed for high-dimensional settings.)
+
+
+If you want to plot X and Y matrix in two-dimensional space (like classic RDA approach) :
+
+```r
+# Two sets of variables of X and Y on the latent space
+ud<-Bhat[[1]][[1]][[1]]
+v<-Bhat[[1]][[1]][[2]]
+
+ud12 <- ud[, 1:2]
+v12 <- v[, 1:2]
+
+# Base plot: ud (e.g., site scores)
+plot(ud12, 
+     xlab = "RRDA1", ylab = "RRDA2", 
+     xlim = range(c(ud12[,1], v12[,1])) * 1.1, 
+     ylim = range(c(ud12[,2], v12[,2])) * 1.1, 
+     pch = 19, col = "blue", 
+     main = "rrda results (2 dimensions)")
+
+# Add v (e.g., species scores) as arrows from origin
+arrows(0, 0, v12[,1], v12[,2], col = "red", length = 0.1)
+
+# Optionally add text labels
+text(ud12, labels = paste0("X", 1:nrow(ud12)), pos = 3, col = "blue", cex = 0.8)
+text(v12, labels = paste0("Y", 1:nrow(v12)), pos = 3, col = "red", cex = 0.8)
+
+
+```
+
 
 If you want to have a matrix form of B, you can perform:
 
@@ -95,13 +125,15 @@ Don't forget to specify the location of the matrix in the list
 
 #### Example 2: Parameter Tuning by Cross-Validation
 
+How do we know the best lambda and rank by the way 
+-> Do Cross-validation 
+
 ```r
 set.seed(123)
 simdata <- rdasim1(n = 100, p = 200, q = 200, k = 5)
 X <- simdata×X
 Y <- simdata×Y
 
-# Complete Example
 cv_result <- rrda.cv(Y = Y, X = X, maxrank = 10) # cv
 rrda.summary(cv_result = cv_result) # cv result
 
