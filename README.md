@@ -1,6 +1,6 @@
 
 
-<img src="rrda.jpg" width="500" height="400">
+<img src="image/rrda.jpg" width="500" height="400">
 
 # Ridge Redundancy Analysis (`rrda`)
 
@@ -102,7 +102,7 @@ arrows(0, 0, v12[,1], v12[,2], col = "red", length = 0.1)
 text(ud12, labels = paste0("X", 1:nrow(ud12)), pos = 3, col = "blue", cex = 0.8)
 text(v12, labels = paste0("Y", 1:nrow(v12)), pos = 3, col = "red", cex = 0.8)
 ```
-
+<img src="image/rrda_two.png" width="500" height="400">
 
 If you want to have a matrix form of B, you can perform:
 
@@ -125,6 +125,7 @@ colnames(h5) <- paste0("X", 1:ncol(h5))
 
 heatmap(h5, main = "rrda results (5 dimensions)")
 ```
+<img src="image/rrda_heat.png" width="500" height="400">
 Don't forget to specify the location of the matrix in the list 
 
 #### Example 2: Parameter Tuning by Cross-Validation
