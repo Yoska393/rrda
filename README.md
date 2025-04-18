@@ -126,7 +126,6 @@ colnames(h5) <- paste0("X", 1:ncol(h5))
 heatmap(h5, main = "rrda results (5 dimensions)")
 ```
 <img src="image/rrda_heat.png" width="500" height="400">
-Don't forget to specify the location of the matrix in the list 
 
 #### Example 2: Parameter Tuning by Cross-Validation
 
