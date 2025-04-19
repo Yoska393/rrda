@@ -4,13 +4,13 @@
 
 # Ridge Redundancy Analysis (`rrda`)
 
-## 📖 Please cite:
+## 📌 Please cite:
 
 **Yoshioka, H., Aubert, J., Iwata, H., and Mary-Huard, T. (2025).**  *Ridge Redundancy Analysis for High-Dimensional Omics Data.*
 
 Could you cite when using `rrda` ? Thank you 😊
 
-## 👀 Overview
+## Overview
 
 Hello / Bonjour! 👋
 
@@ -43,7 +43,7 @@ The application data of breast cancer and soybean are stored as .rds file in a f
 
 The metabolome data were downloaded from the RIKEN DropMet website (http://prime.psc.riken.jp/menta.cgi/prime/drop_index) ; ID: DM0071, DM0072.
 
-## 🔧 Tutorial
+## 💡 Tutorial
 
 #### Example 1: Fitting
 
