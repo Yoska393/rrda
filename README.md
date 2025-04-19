@@ -119,7 +119,7 @@ Maybe a heatmap can explain the variable relationships
 
 ```r
 h5<-Bhat_mat$lambda1$rank5
-h5<-Bhat_mat[[1]][[1]]
+#h5<-Bhat_mat[[1]][[1]] #same result
 rownames(h5) <- paste0("Y", 1:nrow(h5))
 colnames(h5) <- paste0("X", 1:ncol(h5))
 
