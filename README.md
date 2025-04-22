@@ -196,6 +196,10 @@ plot(Y,Yhat)
 
 
 
+## 👷‍♀️ Maintenance
+- Julie Aubert (INRAE)
+- Hayato Yoshioka (University of Tokyo)
+
 
 ## 📚 References
 - Dang, T., Fuji, Y., Kumaishi, K., Usui, E., Kobori, S., Sato, T., Toda, Y., Sakurai, K., Yamasaki, Y., Tsujimoto, H. and Hirai, M.Y., 2023. An integrative framework of stochastic variational variable selection for joint analysis of multi-omics microbiome data. bioRxiv, pp.2023-08.
