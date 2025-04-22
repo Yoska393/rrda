@@ -129,14 +129,15 @@ heatmap(h5, main = "rrda results (5 dimensions)")
 
 #### Example 2: Parameter Tuning by Cross-Validation
 
-How do we know the best lambda and rank by the way 
--> Do Cross-validation 
+How do we know the best lambda and rank ??
+
+-> Cross-validation by `rrda.cv` function
 
 ```r
 set.seed(123)
-simdata <- rdasim1(n = 100, p = 200, q = 200, k = 5)
-X <- simdata×X
-Y <- simdata×Y
+simdata <- rdasim1(n = 10, p = 20, q = 20, k = 5)
+X <- simdata$X
+Y <- simdata$Y
 
 cv_result <- rrda.cv(Y = Y, X = X, maxrank = 10) # cv
 rrda.summary(cv_result = cv_result) # cv result
@@ -148,10 +149,29 @@ print(p)
 # Heatmap of the CV result
 h <- rrda.heatmap(cv_result)
 print(h)
+```
+`rrda.summary` tells you the parameters suggested via CV. 
 
+```
+=== opt_min ===
+MSE: 
+[1] 3.179695
+rank: 
+[1] 5
+lambda: 
+[1] 22.43
+```
+
+Also, `rrda.plot` and `rrda.heatmap` show you the figures to select the parameters.
+
+<div style="display: flex; align-items: center; gap: 10px;">
+  <img src="image/path.png" width="420" height="300">
+</div>
+
+```r
 # Extract optimal parameters
-estimated_lambda <- cv_result×opt_min×lambda
-estimated_rank <- cv_result×opt_min×rank
+estimated_lambda <- cv_result$opt_min$lambda
+estimated_rank <- cv_result$opt_min$rank
 
 # Fit the model with the optimal parameters
 Bhat <- rrda.fit(Y = Y, X = X, nrank = estimated_rank, lambda = estimated_lambda)
@@ -169,10 +189,12 @@ summary(cor_Y_Yhat)
 plot(Y,Yhat)
 
 ```
+
 <div style="display: flex; align-items: center; gap: 10px;">
-  <img src="image/path.png" width="420" height="300">
   <img src="image/fit.png" width="300" height="300">
 </div>
+
+
 
 
 ## 📚 References
