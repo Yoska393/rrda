@@ -197,8 +197,9 @@ plot(Y,Yhat)
 
 
 ## 👷‍♀️ Maintenance
-- Julie Aubert (INRAE)
-- Hayato Yoshioka (University of Tokyo)
+- Hayato Yoshioka (Author, University of Tokyo)
+- Julie Aubert (Author \& Creator, INRAE)
+- Tristan Mary-Huard (Author, INRAE)
 
 
 ## 📚 References
