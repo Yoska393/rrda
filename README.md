@@ -6,7 +6,7 @@
 
 ## 📌 Please cite:
 
-**Yoshioka, H., Aubert, J., Iwata, H., and Mary-Huard, T. (2025).**  *Ridge Redundancy Analysis for High-Dimensional Omics Data.*
+**Yoshioka, H., Aubert, J., Iwata, H., and Mary-Huard, T. (2025).**  *Ridge Redundancy Analysis for High-Dimensional Omics Data.* bioRxiv, doi: 10.1101/2025.04.16.649138
 
 Could you cite when using `rrda` ? Thank you 😊
 
