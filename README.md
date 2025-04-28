@@ -196,9 +196,9 @@ plot(Y,Yhat)
 
 
 
-## 🏃‍♀️‍➡️ Author and Creator
+## 🏃‍♀️‍➡️ Author and Maintainer
 - Hayato Yoshioka (Author, University of Tokyo)
-- Julie Aubert (Author \& Creator, INRAE)
+- Julie Aubert (Author \& Maintainer, INRAE)
 - Tristan Mary-Huard (Author, INRAE)
 
 
