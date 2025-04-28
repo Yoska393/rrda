@@ -1,6 +1,6 @@
 Package: rrda
 Title: Ridge Redundancy Analysis for High-Dimensional Omics Data
-Version: 0.0.0.9000
+Version: 0.1.1
 Authors@R: c(
     person("Hayato", "Yoshioka", , "yoshioka-hayato393@g.ecc.u-tokyo.ac.jp", role = "aut",
            comment = c(ORCID = "0000-0001-5383-2909")),
@@ -9,7 +9,7 @@ Authors@R: c(
     person("Tristan", "Mary-Huard", , "tristan.mary-huard@agroparistech.fr", role = "aut",
            comment = c(ORCID = "0000-0002-3839-9067"))
   )
-Description: Efficient framework for Ridge Redundancy Analysis (RRDA),
+Description: Efficient framework for ridge redundancy analysis (rrda),
     tailored for high-dimensional omics datasets where the number of
     predictors exceeds the number of samples. The method leverages
     Singular Value Decomposition (SVD) to avoid direct inversion of the
@@ -18,7 +18,8 @@ Description: Efficient framework for Ridge Redundancy Analysis (RRDA),
     matrices, enabling practical use in large-scale applications. The
     package supports cross-validation for selecting regularization
     parameters and reduced-rank dimensions, making it a robust and
-    flexible tool for multivariate analysis in omics research.
+    flexible tool for multivariate analysis in omics research. Please
+    refer to our article (Yoshioka et al., 2025) for more details.
 License: GPL (>= 3)
 Imports: 
     dplyr,
