@@ -21,10 +21,10 @@ Also, I store all the scripts and my own functions used in our article (Yoshioka
 
 ## 🛠 Installation
 
-You can install the package from GitHub using the `devtools` package:
+You can install the package from CRAN
 
 ```r
-devtools::install_github("Yoska393/rrda", dependencies = TRUE)
+install.packages("rrda")
 ```
 
 ## 📦 Dependencies
