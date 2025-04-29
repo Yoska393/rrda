@@ -10,14 +10,6 @@
 
 Could you cite when using `rrda` ? Thank you 😊
 
-## Overview
-
-Hello / Bonjour / Konichiwa 🇫🇷🇯🇵
-
-This R package `rrda` provides functions for performing **ridge redundancy analysis (rrda)**, which is useful for modeling the relationship between a matrix of response variables (**Y**; n × q ) and a matrix of explanatory variables (**X**;  n × p ). The method is designed to handle **high-dimensional data efficiently**, allowing computation and storage optimization.
-
-
-Also, I store all the scripts and my own functions used in our article (Yoshioka et al. 2025). 
 
 ## 🛠 Installation
 
@@ -34,6 +26,16 @@ install.packages("rrda")
 - `dplyr`
 - `reshape2`
 - `ggplot2`
+
+## Overview
+
+Hello / Bonjour / Konichiwa 🇫🇷🇯🇵
+
+This R package `rrda` provides functions for performing **ridge redundancy analysis (rrda)**, which is useful for modeling the relationship between a matrix of response variables (**Y**; n × q ) and a matrix of explanatory variables (**X**;  n × p ). The method is designed to handle **high-dimensional data efficiently**, allowing computation and storage optimization.
+
+
+Also, I store all the scripts and my own functions used in our article (Yoshioka et al. 2025). 
+
 
 ## 📊 Data
 
