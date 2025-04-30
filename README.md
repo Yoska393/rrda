@@ -13,7 +13,7 @@ Could you cite when using `rrda` ? Thank you 😊
 
 ## 🛠 Installation
 
-You can install the package from CRAN
+You can install the package from CRAN (https://cran.r-project.org/package=rrda)
 
 ```r
 install.packages("rrda")
