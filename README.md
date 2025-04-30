@@ -1,6 +1,6 @@
 
 
-<img src="image/rrda.jpg" width="500" height="400">
+<img src="image/rrda.jpg" width="500" >
 
 # Ridge Redundancy Analysis (`rrda`)
 
@@ -105,7 +105,7 @@ arrows(0, 0, v12[,1], v12[,2], col = "red", length = 0.1)
 text(ud12, labels = paste0("X", 1:nrow(ud12)), pos = 3, col = "blue", cex = 0.8)
 text(v12, labels = paste0("Y", 1:nrow(v12)), pos = 3, col = "red", cex = 0.8)
 ```
-<img src="image/rrda_two.png" width="500" height="400">
+<img src="image/rrda_two.png" width="500" >
 
 If you want to have a matrix form of B, you can perform:
 
@@ -128,7 +128,7 @@ colnames(h5) <- paste0("X", 1:ncol(h5))
 
 heatmap(h5, main = "rrda results (5 dimensions)")
 ```
-<img src="image/rrda_heat.png" width="500" height="400">
+<img src="image/rrda_heat.png" width="500" >
 
 #### Example 2: Parameter Tuning by Cross-Validation
 
@@ -168,7 +168,7 @@ lambda:
 Also, `rrda.plot` and `rrda.heatmap` show you the figures to select the parameters.
 
 <div style="display: flex; align-items: center; gap: 10px;">
-  <img src="image/path.png" width="420" height="300">
+  <img src="image/path.png" width="420" >
 </div>
 
 ```r
@@ -194,7 +194,7 @@ plot(Y,Yhat)
 ```
 
 <div style="display: flex; align-items: center; gap: 10px;">
-  <img src="image/fit.png" width="300" height="300">
+  <img src="image/fit.png" width="300" >
 </div>
 
 
