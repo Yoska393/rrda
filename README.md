@@ -10,10 +10,11 @@
 
 Could you cite when using `rrda` ? Thank you 😊
 
+The package is documented on CRAN (https://cran.r-project.org/package=rrda)
 
 ## 🛠 Installation
 
-You can install the package from CRAN (https://cran.r-project.org/package=rrda)
+You can install the package from CRAN
 
 ```r
 install.packages("rrda")
