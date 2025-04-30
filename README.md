@@ -27,8 +27,6 @@ install.packages("rrda")
 - `dplyr`
 - `reshape2`
 - `ggplot2`
-- `MASS`
-- `scales`
 
 ## Overview
 
