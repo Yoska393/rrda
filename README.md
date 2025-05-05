@@ -2,7 +2,7 @@
 
 <img src="image/rrda.jpg" width="500" >
 
-# Ridge Redundancy Analysis (`rrda`)
+# `rrda`: Ridge Redundancy Analysis for High-Dimensional Omics Data
 
 ## 📌 Please cite 😊:
 
