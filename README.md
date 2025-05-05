@@ -4,11 +4,9 @@
 
 # Ridge Redundancy Analysis (`rrda`)
 
-## 📌 Please cite:
+## 📌 Please cite 😊:
 
 **Yoshioka, H., Aubert, J., Iwata, H., and Mary-Huard, T. (2025).**  Ridge Redundancy Analysis for High-Dimensional Omics Data. *bioRxiv*, doi: https://doi.org/10.1101/2025.04.16.649138
-
-Could you cite when using `rrda` ? Thank you 😊
 
 The package is documented on CRAN (https://cran.r-project.org/package=rrda)
 
@@ -34,12 +32,10 @@ Hello / Bonjour / Konichiwa 🇫🇷🇯🇵
 
 This R package `rrda` provides functions for performing **ridge redundancy analysis (rrda)**.
 
-
-- rrda/script_rrda:  Acripts and my own functions used in our article.
+- rrda/script_rrda:  Scripts and my own functions used in our article.
 - rrda/RDAdata:  Application data used in our article.
 
 It is useful for modeling the relationship between a matrix of response variables (**Y**; n × q ) and a matrix of explanatory variables (**X**;  n × p ). The method is designed to handle **high-dimensional data efficiently**, allowing computation and storage optimization.
-
 
 ## 📊 Data
 
