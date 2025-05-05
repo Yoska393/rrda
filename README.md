@@ -32,10 +32,13 @@ install.packages("rrda")
 
 Hello / Bonjour / Konichiwa 🇫🇷🇯🇵
 
-This R package `rrda` provides functions for performing **ridge redundancy analysis (rrda)**, which is useful for modeling the relationship between a matrix of response variables (**Y**; n × q ) and a matrix of explanatory variables (**X**;  n × p ). The method is designed to handle **high-dimensional data efficiently**, allowing computation and storage optimization.
+This R package `rrda` provides functions for performing **ridge redundancy analysis (rrda)**.
 
 
-Also, I store all the scripts and my own functions used in our article (script_rrda, Yoshioka et al. 2025). 
+- rrda/script_rrda:  Acripts and my own functions used in our article.
+- rrda/RDAdata:  Application data used in our article.
+
+It is useful for modeling the relationship between a matrix of response variables (**Y**; n × q ) and a matrix of explanatory variables (**X**;  n × p ). The method is designed to handle **high-dimensional data efficiently**, allowing computation and storage optimization.
 
 
 ## 📊 Data
