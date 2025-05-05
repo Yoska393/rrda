@@ -18,14 +18,6 @@ You can install the package from CRAN
 install.packages("rrda")
 ```
 
-## 📦 Dependencies
-
-- `RSpectra`
-- `furrr`
-- `dplyr`
-- `reshape2`
-- `ggplot2`
-
 ## Overview
 
 Hello / Bonjour / Konichiwa 🇫🇷🇯🇵
@@ -196,6 +188,15 @@ plot(Y,Yhat)
   <img src="image/fit.png" width="300" >
 </div>
 
+
+
+## 📦 Dependencies
+
+- `RSpectra`
+- `furrr`
+- `dplyr`
+- `reshape2`
+- `ggplot2`
 
 
 ## 🏃‍♀️‍➡️ Author and Maintainer
