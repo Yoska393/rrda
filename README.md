@@ -8,7 +8,7 @@
 
 Hello / Bonjour / Konichiwa 🇫🇷🇯🇵
 
-This R package `rrda` provides functions for performing **ridge redundancy analysis (rrda)**.
+This R package `rrda` provides functions for performing **ridge redundancy analysis (rrda)** for high-dimensional datasets.
 
 - rrda/script_rrda:  Scripts and my own functions used in our article.
 - rrda/RDAdata:  Application data used in our article.
