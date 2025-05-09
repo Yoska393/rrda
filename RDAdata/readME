@@ -2,6 +2,6 @@ Hi,
 
 Here I store data for applications in the article "Ridge Redundancy Analysis for High-Dimensional Omics Data" (2025) doi: https://doi.org/10.1101/2025.04.16.649138
 
-For the methylation data, the data is too big, so refer to the package "brgedata"
+For the methylation data, the data is too big, refer to my code (rrda_script/Meth.rmd) for the installation and downloading. Also refer to the package "brgedata". (Pelegri-Siso et al. 2024)
 
 Merci beaucoup, Hayato 19/11/2024
