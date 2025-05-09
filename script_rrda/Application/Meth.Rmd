@@ -47,7 +47,7 @@ mg<-list(
 	gexp=gexp
 )
 
-saveRDS(mg,here(out,Methdata.RDS))
+saveRDS(mg,here(RDAdata,Methdata.RDS))
 ```
 
 
