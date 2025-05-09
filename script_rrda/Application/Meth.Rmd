@@ -24,6 +24,33 @@ library(tictoc)
 source("script_rrda/functions_rrda_yoshioka.R")
 ```
 
+To install breast cancer data from brgedata (Pelegri-Siso et al. 2024)
+
+The data is also available on github https://github.com/Yoska393/rrda/tree/main/RDAdata)
+
+```{ Methylation_Data,eval=FALSE}
+library(brgedata)
+data(brge_methy)
+brge_methy
+data(brge_gexp)
+brge_gexp
+
+common_samples <- intersect(colnames(brge_gexp), colnames(brge_methy))
+brge_gexp_filtered <- brge_gexp[, common_samples]
+brge_methy_filtered <- brge_methy[, common_samples]
+
+methy <- t(assay(brge_methy_filtered, "Beta"))
+gexp <- t(as.matrix(brge_gexp_filtered))
+
+mg<-list(
+	methy=methy,
+	gexp=gexp
+)
+
+saveRDS(mg,here(out,Methdata.RDS))
+```
+
+
 ## data
 ```{r}
 base_path <- here("out", "Meth")

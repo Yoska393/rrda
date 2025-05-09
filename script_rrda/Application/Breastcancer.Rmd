@@ -25,6 +25,16 @@ source("script_rrda/functions_rrda_yoshioka.R")
 source("script_rrda/functions_stars_rrr_yoshioka.R")
 ```
 
+
+To install breast cancer data from PMA (Witten et al. 2024)
+
+The data is also available on github https://github.com/Yoska393/rrda/tree/main/RDAdata)
+```{}
+library(PMA)
+da<-download_breast_data()
+```
+
+
 # chrom 13 only
 
 ```{r,eval=T}
