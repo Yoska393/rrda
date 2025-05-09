@@ -1,0 +1,420 @@
+---
+title: "testing_hayato"
+author: "Hayato Yoshioka"
+date: "2025-03-30"
+output: html_document
+---
+
+#check code for console
+
+
+## R CMD check 
+--no-manual to avoid the html error regarding detecting <main>
+
+Status: 3 NOTEs
+See
+  ‘/Users/hayatoyoshioka/Documents/R/HayatoINRAE/rrda.Rcheck/00check.log’
+for details.
+
+## note 1 -> ca va
+* checking CRAN incoming feasibility ... [3s/37s] NOTE
+Maintainer: ‘Julie Aubert <julie.aubert@inrae.fr>’
+
+## note 2 -> ca va
+* checking for future file timestamps ... NOTE
+unable to verify current time
+
+## note 3 -> computation time for examples -> ca va
+
+* checking examples ... [19s/19s] NOTE
+Examples with CPU (user + system) or elapsed time > 5s
+         user system elapsed
+rrda.cv 8.232  0.131   8.521
+
+
+( cd .. )
+R CMD check --as-cran --no-manual rrda_0.0.0.9000.tar.gz
+
+R CMD check --as-cran  rrda_0.1.0.tar.gz
+
+```{}
+* using log directory ‘/Users/hayatoyoshioka/Documents/R/HayatoINRAE/rrda.Rcheck’
+* using R version 4.4.1 (2024-06-14)
+* using platform: aarch64-apple-darwin20
+* R was compiled by
+    Apple clang version 14.0.0 (clang-1400.0.29.202)
+    GNU Fortran (GCC) 12.2.0
+* running under: macOS Sonoma 14.5
+* using session charset: UTF-8
+* using options ‘--no-manual --as-cran’
+* checking for file ‘rrda/DESCRIPTION’ ... OK
+* this is package ‘rrda’ version ‘0.0.0.9000’
+* package encoding: UTF-8
+* checking CRAN incoming feasibility ... [4s/62s] NOTE
+Maintainer: ‘Julie Aubert <julie.aubert@inrae.fr>’
+
+New submission
+
+Version contains large components (0.0.0.9000)
+* checking package namespace information ... OK
+* checking package dependencies ... OK
+* checking if this is a source package ... OK
+* checking if there is a namespace ... OK
+* checking for executable files ... OK
+* checking for hidden files and directories ... OK
+* checking for portable file names ... OK
+* checking for sufficient/correct file permissions ... OK
+* checking serialization versions ... OK
+* checking whether package ‘rrda’ can be installed ... OK
+* checking installed package size ... OK
+* checking package directory ... OK
+* checking for future file timestamps ... NOTE
+unable to verify current time
+* checking DESCRIPTION meta-information ... OK
+* checking top-level files ... OK
+* checking for left-over files ... OK
+* checking index information ... OK
+* checking package subdirectories ... OK
+* checking code files for non-ASCII characters ... OK
+* checking R files for syntax errors ... OK
+* checking whether the package can be loaded ... OK
+* checking whether the package can be loaded with stated dependencies ... OK
+* checking whether the package can be unloaded cleanly ... OK
+* checking whether the namespace can be loaded with stated dependencies ... OK
+* checking whether the namespace can be unloaded cleanly ... OK
+* checking use of S3 registration ... OK
+* checking dependencies in R code ... OK
+* checking S3 generic/method consistency ... OK
+* checking replacement functions ... OK
+* checking foreign function calls ... OK
+* checking R code for possible problems ... OK
+* checking Rd files ... OK
+* checking Rd metadata ... OK
+* checking Rd line widths ... OK
+* checking Rd cross-references ... OK
+* checking for missing documentation entries ... OK
+* checking for code/documentation mismatches ... OK
+* checking Rd \usage sections ... OK
+* checking Rd contents ... OK
+* checking for unstated dependencies in examples ... OK
+* checking examples ... [19s/19s] NOTE
+Examples with CPU (user + system) or elapsed time > 5s
+         user system elapsed
+rrda.cv 8.232  0.131   8.521
+* checking for non-standard things in the check directory ... OK
+* checking for detritus in the temp directory ... OK
+* DONE
+Status: 3 NOTEs
+
+```
+
+
+## R CMD check
+it say there is main in the rd
+R CMD check --as-cran rrda_0.0.0.9000.tar.gz
+```{}
+(base) Hayatos-MacBook-Pro:HayatoINRAE hayatoyoshioka$ R CMD check --as-cran rrda_0.0.0.9000.tar.gz
+* using log directory ‘/Users/hayatoyoshioka/Documents/R/HayatoINRAE/rrda.Rcheck’
+* using R version 4.4.1 (2024-06-14)
+* using platform: aarch64-apple-darwin20
+* R was compiled by
+    Apple clang version 14.0.0 (clang-1400.0.29.202)
+    GNU Fortran (GCC) 12.2.0
+* running under: macOS Sonoma 14.5
+* using session charset: UTF-8
+* using option ‘--as-cran’
+* checking for file ‘rrda/DESCRIPTION’ ... OK
+* this is package ‘rrda’ version ‘0.0.0.9000’
+* package encoding: UTF-8
+* checking CRAN incoming feasibility ... [3s/34s] NOTE
+Maintainer: ‘Julie Aubert <julie.aubert@inrae.fr>’
+
+New submission
+
+Version contains large components (0.0.0.9000)
+
+DESCRIPTION fields with placeholder content:
+  Title: what the package does (one line, title case)
+  Description: what the package does (one paragraph).
+* checking package namespace information ... OK
+* checking package dependencies ... OK
+* checking if this is a source package ... OK
+* checking if there is a namespace ... OK
+* checking for executable files ... OK
+* checking for hidden files and directories ... OK
+* checking for portable file names ... OK
+* checking for sufficient/correct file permissions ... OK
+* checking serialization versions ... OK
+* checking whether package ‘rrda’ can be installed ... OK
+* checking installed package size ... OK
+* checking package directory ... OK
+* checking for future file timestamps ... NOTE
+unable to verify current time
+* checking DESCRIPTION meta-information ... NOTE
+Authors@R field gives persons with invalid ORCID identifiers:
+  Hayato Yoshioka <yoshioka-hayato393@g.ecc.u-tokyo.ac.jp> [aut] (YOUR-ORCID-ID)
+* checking top-level files ... OK
+* checking for left-over files ... OK
+* checking index information ... OK
+* checking package subdirectories ... OK
+* checking code files for non-ASCII characters ... OK
+* checking R files for syntax errors ... OK
+* checking whether the package can be loaded ... OK
+* checking whether the package can be loaded with stated dependencies ... OK
+* checking whether the package can be unloaded cleanly ... OK
+* checking whether the namespace can be loaded with stated dependencies ... OK
+* checking whether the namespace can be unloaded cleanly ... OK
+* checking use of S3 registration ... OK
+* checking dependencies in R code ... OK
+* checking S3 generic/method consistency ... OK
+* checking replacement functions ... OK
+* checking foreign function calls ... OK
+* checking R code for possible problems ... OK
+* checking Rd files ... OK
+* checking Rd metadata ... OK
+* checking Rd line widths ... OK
+* checking Rd cross-references ... OK
+* checking for missing documentation entries ... OK
+* checking for code/documentation mismatches ... OK
+* checking Rd \usage sections ... OK
+* checking Rd contents ... OK
+* checking for unstated dependencies in examples ... OK
+* checking examples ... [19s/19s] NOTE
+Examples with CPU (user + system) or elapsed time > 5s
+         user system elapsed
+rrda.cv 8.129  0.147   8.417
+* checking PDF version of manual ... OK
+* checking HTML version of manual ... NOTE
+Found the following HTML validation problems:
+Bhat_mat_rlist.html:15:44 (Bhat_mat_rlist.Rd:5): Error: <main> is not recognized!
+Bhat_mat_rlist.html:15:44 (Bhat_mat_rlist.Rd:5): Warning: discarding unexpected <main>
+Bhat_mat_rlist.html:52:1 (Bhat_mat_rlist.Rd:15): Warning: discarding unexpected </main>
+Bhat_mat_rlist.html:4:1 (Bhat_mat_rlist.Rd:5): Warning: <link> inserting "type" attribute
+Bhat_mat_rlist.html:12:1 (Bhat_mat_rlist.Rd:5): Warning: <script> proprietary attribute "onload"
+Bhat_mat_rlist.html:12:1 (Bhat_mat_rlist.Rd:5): Warning: <script> inserting "type" attribute
+Bhat_mat_rlist.html:17:1 (Bhat_mat_rlist.Rd:5): Warning: <table> lacks "summary" attribute
+Bhat_mat_rlist.html:35:1 (Bhat_mat_rlist.Rd:10): Warning: <table> lacks "summary" attribute
+MSE_lambda_rank.html:15:44 (MSE_lambda_rank.Rd:5): Error: <main> is not recognized!
+MSE_lambda_rank.html:15:44 (MSE_lambda_rank.Rd:5): Warning: discarding unexpected <main>
+MSE_lambda_rank.html:60:1 (MSE_lambda_rank.Rd:19): Warning: discarding unexpected </main>
+MSE_lambda_rank.html:4:1 (MSE_lambda_rank.Rd:5): Warning: <link> inserting "type" attribute
+MSE_lambda_rank.html:12:1 (MSE_lambda_rank.Rd:5): Warning: <script> proprietary attribute "onload"
+MSE_lambda_rank.html:12:1 (MSE_lambda_rank.Rd:5): Warning: <script> inserting "type" attribute
+MSE_lambda_rank.html:17:1 (MSE_lambda_rank.Rd:5): Warning: <table> lacks "summary" attribute
+MSE_lambda_rank.html:35:1 (MSE_lambda_rank.Rd:10): Warning: <table> lacks "summary" attribute
+Yhat_mat_rlist.html:15:44 (Yhat_mat_rlist.Rd:5): Error: <main> is not recognized!
+Yhat_mat_rlist.html:15:44 (Yhat_mat_rlist.Rd:5): Warning: discarding unexpected <main>
+Yhat_mat_rlist.html:56:1 (Yhat_mat_rlist.Rd:17): Warning: discarding unexpected </main>
+Yhat_mat_rlist.html:4:1 (Yhat_mat_rlist.Rd:5): Warning: <link> inserting "type" attribute
+Yhat_mat_rlist.html:12:1 (Yhat_mat_rlist.Rd:5): Warning: <script> proprietary attribute "onload"
+Yhat_mat_rlist.html:12:1 (Yhat_mat_rlist.Rd:5): Warning: <script> inserting "type" attribute
+Yhat_mat_rlist.html:17:1 (Yhat_mat_rlist.Rd:5): Warning: <table> lacks "summary" attribute
+Yhat_mat_rlist.html:35:1 (Yhat_mat_rlist.Rd:10): Warning: <table> lacks "summary" attribute
+get_Bhat_comp.html:15:44 (get_Bhat_comp.Rd:5): Error: <main> is not recognized!
+get_Bhat_comp.html:15:44 (get_Bhat_comp.Rd:5): Warning: discarding unexpected <main>
+get_Bhat_comp.html:60:1 (get_Bhat_comp.Rd:19): Warning: discarding unexpected </main>
+get_Bhat_comp.html:4:1 (get_Bhat_comp.Rd:5): Warning: <link> inserting "type" attribute
+get_Bhat_comp.html:12:1 (get_Bhat_comp.Rd:5): Warning: <script> proprietary attribute "onload"
+get_Bhat_comp.html:12:1 (get_Bhat_comp.Rd:5): Warning: <script> inserting "type" attribute
+get_Bhat_comp.html:17:1 (get_Bhat_comp.Rd:5): Warning: <table> lacks "summary" attribute
+get_Bhat_comp.html:35:1 (get_Bhat_comp.Rd:10): Warning: <table> lacks "summary" attribute
+get_lambda.html:15:44 (get_lambda.Rd:5): Error: <main> is not recognized!
+get_lambda.html:15:44 (get_lambda.Rd:5): Warning: discarding unexpected <main>
+get_lambda.html:64:1 (get_lambda.Rd:21): Warning: discarding unexpected </main>
+get_lambda.html:4:1 (get_lambda.Rd:5): Warning: <link> inserting "type" attribute
+get_lambda.html:12:1 (get_lambda.Rd:5): Warning: <script> proprietary attribute "onload"
+get_lambda.html:12:1 (get_lambda.Rd:5): Warning: <script> inserting "type" attribute
+get_lambda.html:17:1 (get_lambda.Rd:5): Warning: <table> lacks "summary" attribute
+get_lambda.html:35:1 (get_lambda.Rd:10): Warning: <table> lacks "summary" attribute
+get_rlist.html:15:44 (get_rlist.Rd:5): Error: <main> is not recognized!
+get_rlist.html:15:44 (get_rlist.Rd:5): Warning: discarding unexpected <main>
+get_rlist.html:56:1 (get_rlist.Rd:17): Warning: discarding unexpected </main>
+get_rlist.html:4:1 (get_rlist.Rd:5): Warning: <link> inserting "type" attribute
+get_rlist.html:12:1 (get_rlist.Rd:5): Warning: <script> proprietary attribute "onload"
+get_rlist.html:12:1 (get_rlist.Rd:5): Warning: <script> inserting "type" attribute
+get_rlist.html:17:1 (get_rlist.Rd:5): Warning: <table> lacks "summary" attribute
+get_rlist.html:35:1 (get_rlist.Rd:10): Warning: <table> lacks "summary" attribute
+rdasim1.html:15:44 (rdasim1.Rd:5): Error: <main> is not recognized!
+rdasim1.html:15:44 (rdasim1.Rd:5): Warning: discarding unexpected <main>
+rdasim1.html:68:1 (rdasim1.Rd:27): Warning: discarding unexpected </main>
+rdasim1.html:4:1 (rdasim1.Rd:5): Warning: <link> inserting "type" attribute
+rdasim1.html:12:1 (rdasim1.Rd:5): Warning: <script> proprietary attribute "onload"
+rdasim1.html:12:1 (rdasim1.Rd:5): Warning: <script> inserting "type" attribute
+rdasim1.html:17:1 (rdasim1.Rd:5): Warning: <table> lacks "summary" attribute
+rdasim1.html:35:1 (rdasim1.Rd:10): Warning: <table> lacks "summary" attribute
+rdasim2.html:15:44 (rdasim2.Rd:5): Error: <main> is not recognized!
+rdasim2.html:15:44 (rdasim2.Rd:5): Warning: discarding unexpected <main>
+rdasim2.html:76:1 (rdasim2.Rd:31): Warning: discarding unexpected </main>
+rdasim2.html:4:1 (rdasim2.Rd:5): Warning: <link> inserting "type" attribute
+rdasim2.html:12:1 (rdasim2.Rd:5): Warning: <script> proprietary attribute "onload"
+rdasim2.html:12:1 (rdasim2.Rd:5): Warning: <script> inserting "type" attribute
+rdasim2.html:17:1 (rdasim2.Rd:5): Warning: <table> lacks "summary" attribute
+rdasim2.html:35:1 (rdasim2.Rd:10): Warning: <table> lacks "summary" attribute
+rrda.coef.html:15:44 (rrda.coef.Rd:5): Error: <main> is not recognized!
+rrda.coef.html:15:44 (rrda.coef.Rd:5): Warning: discarding unexpected <main>
+rrda.coef.html:82:1 (rrda.coef.Rd:39): Warning: discarding unexpected </main>
+rrda.coef.html:4:1 (rrda.coef.Rd:5): Warning: <link> inserting "type" attribute
+rrda.coef.html:12:1 (rrda.coef.Rd:5): Warning: <script> proprietary attribute "onload"
+rrda.coef.html:12:1 (rrda.coef.Rd:5): Warning: <script> inserting "type" attribute
+rrda.coef.html:17:1 (rrda.coef.Rd:5): Warning: <table> lacks "summary" attribute
+rrda.coef.html:50:1 (rrda.coef.Rd:10): Warning: <table> lacks "summary" attribute
+rrda.cv.html:15:44 (rrda.cv.Rd:5): Error: <main> is not recognized!
+rrda.cv.html:15:44 (rrda.cv.Rd:5): Warning: discarding unexpected <main>
+rrda.cv.html:154:1 (rrda.cv.Rd:94): Warning: discarding unexpected </main>
+rrda.cv.html:4:1 (rrda.cv.Rd:5): Warning: <link> inserting "type" attribute
+rrda.cv.html:12:1 (rrda.cv.Rd:5): Warning: <script> proprietary attribute "onload"
+rrda.cv.html:12:1 (rrda.cv.Rd:5): Warning: <script> inserting "type" attribute
+rrda.cv.html:17:1 (rrda.cv.Rd:5): Warning: <table> lacks "summary" attribute
+rrda.cv.html:58:1 (rrda.cv.Rd:24): Warning: <table> lacks "summary" attribute
+rrda.fit.html:15:44 (rrda.fit.Rd:5): Error: <main> is not recognized!
+rrda.fit.html:15:44 (rrda.fit.Rd:5): Warning: discarding unexpected <main>
+rrda.fit.html:159:1 (rrda.fit.Rd:82): Warning: discarding unexpected </main>
+rrda.fit.html:4:1 (rrda.fit.Rd:5): Warning: <link> inserting "type" attribute
+rrda.fit.html:12:1 (rrda.fit.Rd:5): Warning: <script> proprietary attribute "onload"
+rrda.fit.html:12:1 (rrda.fit.Rd:5): Warning: <script> inserting "type" attribute
+rrda.fit.html:17:1 (rrda.fit.Rd:5): Warning: <table> lacks "summary" attribute
+rrda.fit.html:102:1 (rrda.fit.Rd:20): Warning: <table> lacks "summary" attribute
+rrda.heatmap.html:15:44 (rrda.heatmap.Rd:5): Error: <main> is not recognized!
+rrda.heatmap.html:15:44 (rrda.heatmap.Rd:5): Warning: discarding unexpected <main>
+rrda.heatmap.html:86:1 (rrda.heatmap.Rd:41): Warning: discarding unexpected </main>
+rrda.heatmap.html:4:1 (rrda.heatmap.Rd:5): Warning: <link> inserting "type" attribute
+rrda.heatmap.html:12:1 (rrda.heatmap.Rd:5): Warning: <script> proprietary attribute "onload"
+rrda.heatmap.html:12:1 (rrda.heatmap.Rd:5): Warning: <script> inserting "type" attribute
+rrda.heatmap.html:17:1 (rrda.heatmap.Rd:5): Warning: <table> lacks "summary" attribute
+rrda.heatmap.html:42:1 (rrda.heatmap.Rd:17): Warning: <table> lacks "summary" attribute
+rrda.plot.html:15:44 (rrda.plot.Rd:5): Error: <main> is not recognized!
+rrda.plot.html:15:44 (rrda.plot.Rd:5): Warning: discarding unexpected <main>
+rrda.plot.html:86:1 (rrda.plot.Rd:41): Warning: discarding unexpected </main>
+rrda.plot.html:4:1 (rrda.plot.Rd:5): Warning: <link> inserting "type" attribute
+rrda.plot.html:12:1 (rrda.plot.Rd:5): Warning: <script> proprietary attribute "onload"
+rrda.plot.html:12:1 (rrda.plot.Rd:5): Warning: <script> inserting "type" attribute
+rrda.plot.html:17:1 (rrda.plot.Rd:5): Warning: <table> lacks "summary" attribute
+rrda.plot.html:42:1 (rrda.plot.Rd:17): Warning: <table> lacks "summary" attribute
+rrda.predict.html:15:44 (rrda.predict.Rd:5): Error: <main> is not recognized!
+rrda.predict.html:15:44 (rrda.predict.Rd:5): Warning: discarding unexpected <main>
+rrda.predict.html:83:1 (rrda.predict.Rd:38): Warning: discarding unexpected </main>
+rrda.predict.html:4:1 (rrda.predict.Rd:5): Warning: <link> inserting "type" attribute
+rrda.predict.html:12:1 (rrda.predict.Rd:5): Warning: <script> proprietary attribute "onload"
+rrda.predict.html:12:1 (rrda.predict.Rd:5): Warning: <script> inserting "type" attribute
+rrda.predict.html:17:1 (rrda.predict.Rd:5): Warning: <table> lacks "summary" attribute
+rrda.predict.html:48:1 (rrda.predict.Rd:10): Warning: <table> lacks "summary" attribute
+rrda.summary.html:15:44 (rrda.summary.Rd:5): Error: <main> is not recognized!
+rrda.summary.html:15:44 (rrda.summary.Rd:5): Warning: discarding unexpected <main>
+rrda.summary.html:48:1 (rrda.summary.Rd:13): Warning: discarding unexpected </main>
+rrda.summary.html:4:1 (rrda.summary.Rd:5): Warning: <link> inserting "type" attribute
+rrda.summary.html:12:1 (rrda.summary.Rd:5): Warning: <script> proprietary attribute "onload"
+rrda.summary.html:12:1 (rrda.summary.Rd:5): Warning: <script> inserting "type" attribute
+rrda.summary.html:17:1 (rrda.summary.Rd:5): Warning: <table> lacks "summary" attribute
+rrda.summary.html:35:1 (rrda.summary.Rd:10): Warning: <table> lacks "summary" attribute
+sqrt_inv_d2_lambda.html:15:44 (sqrt_inv_d2_lambda.Rd:5): Error: <main> is not recognized!
+sqrt_inv_d2_lambda.html:15:44 (sqrt_inv_d2_lambda.Rd:5): Warning: discarding unexpected <main>
+sqrt_inv_d2_lambda.html:52:1 (sqrt_inv_d2_lambda.Rd:15): Warning: discarding unexpected </main>
+sqrt_inv_d2_lambda.html:4:1 (sqrt_inv_d2_lambda.Rd:5): Warning: <link> inserting "type" attribute
+sqrt_inv_d2_lambda.html:12:1 (sqrt_inv_d2_lambda.Rd:5): Warning: <script> proprietary attribute "onload"
+sqrt_inv_d2_lambda.html:12:1 (sqrt_inv_d2_lambda.Rd:5): Warning: <script> inserting "type" attribute
+sqrt_inv_d2_lambda.html:17:1 (sqrt_inv_d2_lambda.Rd:5): Warning: <table> lacks "summary" attribute
+sqrt_inv_d2_lambda.html:35:1 (sqrt_inv_d2_lambda.Rd:10): Warning: <table> lacks "summary" attribute
+unbiased_scale.html:15:44 (unbiased_scale.Rd:5): Error: <main> is not recognized!
+unbiased_scale.html:15:44 (unbiased_scale.Rd:5): Warning: discarding unexpected <main>
+unbiased_scale.html:48:1 (unbiased_scale.Rd:13): Warning: discarding unexpected </main>
+unbiased_scale.html:4:1 (unbiased_scale.Rd:5): Warning: <link> inserting "type" attribute
+unbiased_scale.html:12:1 (unbiased_scale.Rd:5): Warning: <script> proprietary attribute "onload"
+unbiased_scale.html:12:1 (unbiased_scale.Rd:5): Warning: <script> inserting "type" attribute
+unbiased_scale.html:17:1 (unbiased_scale.Rd:5): Warning: <table> lacks "summary" attribute
+unbiased_scale.html:35:1 (unbiased_scale.Rd:10): Warning: <table> lacks "summary" attribute
+unscale_matrices.html:15:44 (unscale_matrices.Rd:5): Error: <main> is not recognized!
+unscale_matrices.html:15:44 (unscale_matrices.Rd:5): Warning: discarding unexpected <main>
+unscale_matrices.html:56:1 (unscale_matrices.Rd:17): Warning: discarding unexpected </main>
+unscale_matrices.html:4:1 (unscale_matrices.Rd:5): Warning: <link> inserting "type" attribute
+unscale_matrices.html:12:1 (unscale_matrices.Rd:5): Warning: <script> proprietary attribute "onload"
+unscale_matrices.html:12:1 (unscale_matrices.Rd:5): Warning: <script> inserting "type" attribute
+unscale_matrices.html:17:1 (unscale_matrices.Rd:5): Warning: <table> lacks "summary" attribute
+unscale_matrices.html:35:1 (unscale_matrices.Rd:10): Warning: <table> lacks "summary" attribute
+unscale_nested_matrices_map.html:15:44 (unscale_nested_matrices_map.Rd:5): Error: <main> is not recognized!
+unscale_nested_matrices_map.html:15:44 (unscale_nested_matrices_map.Rd:5): Warning: discarding unexpected <main>
+unscale_nested_matrices_map.html:56:1 (unscale_nested_matrices_map.Rd:17): Warning: discarding unexpected </main>
+unscale_nested_matrices_map.html:4:1 (unscale_nested_matrices_map.Rd:5): Warning: <link> inserting "type" attribute
+unscale_nested_matrices_map.html:12:1 (unscale_nested_matrices_map.Rd:5): Warning: <script> proprietary attribute "onload"
+unscale_nested_matrices_map.html:12:1 (unscale_nested_matrices_map.Rd:5): Warning: <script> inserting "type" attribute
+unscale_nested_matrices_map.html:17:1 (unscale_nested_matrices_map.Rd:5): Warning: <table> lacks "summary" attribute
+unscale_nested_matrices_map.html:35:1 (unscale_nested_matrices_map.Rd:10): Warning: <table> lacks "summary" attribute
+Skipping checking math rendering: package 'V8' unavailable
+* checking for non-standard things in the check directory ... OK
+* checking for detritus in the temp directory ... OK
+* DONE
+
+Status: 5 NOTEs
+See
+  ‘/Users/hayatoyoshioka/Documents/R/HayatoINRAE/rrda.Rcheck/00check.log’
+for details.
+
+(base) Hayatos-MacBook-Pro:HayatoINRAE hayatoyoshioka$ 
+```
+
+
+## html check
+tools::Rd2HTML("rrda/man/Bhat_mat_rlist.Rd")
+
+```{}
+<!DOCTYPE html><html><head><title>R: Generate a list of rank-specific Bhat matrices (the...</title>
+																																										 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+																																										 	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+																																										 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.3/dist/katex.min.css">
+																																										 	<script type="text/javascript">
+																																										 	const macros = { "\\R": "\\textsf{R}", "\\code": "\\texttt"};
+																																										 function processMathHTML() {
+																																										 	var l = document.getElementsByClassName('reqn');
+																																										 	for (let e of l) { katex.render(e.textContent, e, { throwOnError: false, macros }); }
+																																										 	return;
+																																										 }</script>
+																																										 	<script defer src="https://cdn.jsdelivr.net/npm/katex@0.15.3/dist/katex.min.js"
+																																										 onload="processMathHTML();"></script>
+																																										 	<link rel="stylesheet" type="text/css" href="R.css" />
+																																										 	</head><body><div class="container"><main>
+																																										 	
+																																										 	<table style="width: 100%;"><tr><td>Bhat_mat_rlist</td><td style="text-align: right;">R Documentation</td></tr></table>
+																																										 	
+																																										 	<h2>Generate a list of rank-specific Bhat matrices (the coefficient of Ridge Redundancy Analysis for each parameter lambda and nrank).</h2>
+																																										 	
+																																										 	<h3>Description</h3>
+																																										 	
+																																										 	<p>Generate a list of rank-specific Bhat matrices (the coefficient of Ridge Redundancy Analysis for each parameter lambda and nrank). In our formula, Bhat is stored as LeftBhatlambda_k (p times r matrix) and RightBhatlambda_k (q times r). Here, n is the number of samples, p is the number of variables of X, q is the number of variables of Y, and r is the specified rank in the Ridge Redundancy Analysis.
+																																										 </p>
+																																										 	
+																																										 	
+																																										 	<h3>Usage</h3>
+																																										 	
+																																										 	<pre><code class='language-R'>Bhat_mat_rlist(Bhat_comp_1L, nrank)
+																																										 </code></pre>
+																																										 	
+																																										 	
+																																										 	<h3>Arguments</h3>
+																																										 	
+																																										 	<table>
+																																										 	<tr><td><code id="Bhat_comp_1L">Bhat_comp_1L</code></td>
+																																										 	<td>
+																																										 	<p>A list containing components of Bhat for each lambda value.</p>
+																																										 	</td></tr>
+																																										 	<tr><td><code id="nrank">nrank</code></td>
+																																										 	<td>
+																																										 	<p>A numeric vector indicating the rank(s) of Bhat.</p>
+																																										 	</td></tr>
+																																										 	</table>
+																																										 	
+																																										 	
+																																										 	<h3>Value</h3>
+																																										 	
+																																										 	<p>A list of matrices, each representing a rank-specific Bhat matrix.
+																																										 </p>
+																																										 	
+																																										 	</main>
+																																										 	
+																																										 	</div>
+																																										 	</body></html>
+																																										 	
+																														
+```
+
+
+																																			
+																																			
