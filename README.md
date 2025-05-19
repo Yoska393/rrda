@@ -16,7 +16,7 @@ This R package `rrda` provides functions for performing **ridge redundancy analy
 It is useful for modeling the relationship between a matrix of response variables (**Y**; n × q ) and a matrix of explanatory variables (**X**;  n × p ). The method is designed to handle **high-dimensional data efficiently**, allowing computation and storage optimization.
 
 
-## 📌 Please cite 😊
+## 📌 Please cite :)
 
 **Yoshioka, H., Aubert, J., Iwata, H., and Mary-Huard, T. (2025).**  Ridge Redundancy Analysis for High-Dimensional Omics Data. *bioRxiv*, doi: https://doi.org/10.1101/2025.04.16.649138
 
