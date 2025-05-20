@@ -1,4 +1,3 @@
-
 ---
 title: "Application : Random Splitting on Application Data"
 output: html_document

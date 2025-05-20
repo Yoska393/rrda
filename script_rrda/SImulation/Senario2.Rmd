@@ -7,7 +7,7 @@ author: "Hayato Yoshioka (University of Tokyo, AgroParisTech)"
 
 # Overview. H.Yoshioka et al. (rrda package)
 
-Senario 3 
+Senario 2
 
 Here, we perform comparison of computation time based on simulation data
 Compare the rrpack vs rrda
@@ -86,6 +86,7 @@ various p are tested for the computataion time
 
 
 ```{r}
+
 set.seed(123)
 
 plist <- c(100,1000)

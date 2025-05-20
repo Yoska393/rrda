@@ -583,6 +583,104 @@ criteria_fit<- function(Y,X,num,Lambda=NULL,rn_list=NULL,lm=NULL,dir_path,maxran
 }
 
 
+criteria_b<- function(Y,X,B,num,Lambda=NULL,rn_list=NULL,lm=NULL,dir_path,maxrank=20,nfold=5,
+												criteria= c("AIC", "BIC", "GIC", "BICP", "GCV","rrda","StARS"),oneout=FALSE){
+	
+	res_criteria<-readRDS(file.path(dir_path,"criteria.RDS"))
+	# Initialize a data frame to store results for each method
+	
+	# Loop over each model type
+	for (mot in criteria) {
+		#for (mot in c("AIC", "BIC","GIC", "BICP", "GCV")) {
+		
+		av <- res_criteria[res_criteria$Method==mot,]$Ranks_Vectors [[1]]
+		al <-  res_criteria[res_criteria$Method==mot,]$Lambdas_Vectors [[1]]
+		mv <- c()  # Vector to store MSPE values
+		computation_times <- numeric(num)
+		pb <- txtProgressBar(min = 0, max = num, style = 3)
+		
+		for (ite in 1:num) {
+			
+			if (oneout){
+				if (num>nrow(Y)){
+					stop("num > n is not allowed")
+				}
+				rn <- ite
+			} else{
+				rn <-  rn_list[[ite]]
+			}
+			
+			Y_train <- Y[-rn,,drop=F]
+			Y_test <- Y[rn,,drop=F]
+			X_train <- X[-rn,,drop=F]
+			X_test <- X[rn,,drop=F]
+
+			
+			# Append results
+			
+			optimized_rank   <- av[ite]
+			optimized_lambda <- al[ite]
+			
+			if (optimized_rank < 1) {
+				model_rank <-optimized_rank
+				meansYtr <- colMeans(Y_train)
+				best_Bhat <- rrda.fit(Y = Y_train, X = X_train, nrank = 1, lambda = optimized_lambda,scale.X = F,scale.Y = F)
+				best_Bhat<-rrda.coef(best_Bhat)[[1]][[1]]
+				#best_Pred <- matrix(meansYtr,nrow(Y_test),ncol(Y_test), byrow = TRUE)
+			} else {
+				model_rank <-optimized_rank
+				best_Bhat <- rrda.fit(Y = Y_train, X = X_train, nrank = model_rank, lambda = optimized_lambda,scale.X = F,scale.Y = F)
+				best_Bhat<-rrda.coef(best_Bhat)[[1]][[1]]
+				#best_Pred <- rrda.predict(Bhat = best_Bhat, X = X_test)[[1]][[1]][[1]]
+			}
+			
+			#mspe <- 100 * sum((Y_test - best_Pred)^2) / (ncol(Y_test) * nrow(Y_test))
+			#mspe <- 100 * sum((B - best_Bhat)^2) / (ncol(B) * nrow(B))
+			norm<-norm(B- best_Bhat, type = "F")
+			#dim(best_Bhat)
+			#dim(B)
+			#mspe<-cor(as.vector(best_Bhat), as.vector(B))
+			mv <- c(mv, norm)  # Store MSPE
+			
+			# Update the progress bar
+			setTxtProgressBar(pb, ite)
+		}
+		
+		close(pb)
+		
+		# Calculate mean and standard error for ranks, lambdas, and MSPE
+		mean_rank <- mean(av)
+		std_err_rank <- sd(av) / sqrt(length(av))
+		
+		mean_lambda <- mean(al)
+		std_err_lambda <- sd(al) / sqrt(length(al))
+		
+		mean_norm <- mean(mv)
+		std_err_norm <- sd(mv) / sqrt(length(mv))
+		
+		res_criteria[res_criteria$Method==mot,]$MSPE_Vectors <- I(list(mv))
+		res_criteria[res_criteria$Method==mot,]$Average_MSPE <- mean_norm
+		res_criteria[res_criteria$Method==mot,]$Std_Err_MSPE <-std_err_norm
+		
+		colnames(res_criteria)[colnames(res_criteria) == "MSPE_Vectors"] <- "NORM_Vectors"
+		colnames(res_criteria)[colnames(res_criteria) == "Average_MSPE"] <- "Average_NORM"
+		colnames(res_criteria)[colnames(res_criteria) == "Std_Err_MSPE"] <- "Std_Err_NORM"
+		
+		
+		# Populate the results data frame
+		
+	}
+	
+	
+	if (!dir.exists(dir_path)) {
+		dir.create(dir_path, recursive = TRUE)
+	}
+	
+	saveRDS(res_criteria, file.path(dir_path,"criteria_b.RDS"))
+	
+	return(res_criteria)
+}
+
 criteria_test_all<- function(Y,X,Lambda=NULL,dir_path,maxrank=20,nfold=5,
 														 criteria= c("AIC", "BIC", "GIC", "BICP", "GCV","rrda","StARS")){
 	
@@ -920,7 +1018,7 @@ run_simulation <- function(n, p, q, k,rdasim) {
 	if (rdasim=="sim1"){
 		simdata <- rdasim1(n = n, p = p, q = q, k = k)
 	} else if (rdasim=="sim2"){
-		simdata <- rdasim2(n = n, p = p, q = q, k = k,s2n = 5)
+		simdata <- rdasim2(n = n, p = p, q = q, k = k)
 	} else{
 		stop("simulation model must be selected properly")
 	}
@@ -986,58 +1084,533 @@ rank_evaluate<- function(n_iterations,rdasim,size){
 	return(data_list)
 }
 
+rank_evaluate_50<- function(n_iterations,rdasim,size){
+	
+	# Generate randomized lists for n, p, q, and k
+	
+	if (size == "small"){
+		combo <- expand.grid(
+			n = c(100, 200),
+			pq = c(50, 100),
+			k = c(2, 5, 10)
+		)
+		
+		# Repeat each row 50 times
+		combo <- combo[rep(1:nrow(combo), each = n_iterations), ]
+		
+		# Extract into separate lists or vectors
+		n_list <- combo$n
+		p_list <- combo$pq
+		q_list <- combo$pq
+		k_list <- combo$k
+	} else if (size == "large"){
+		combo <- expand.grid(
+			n = c(50, 100),
+			pq = c(200, 500),
+			k = c(2, 5, 10)
+		)
+		# Repeat each row 50 times
+		combo <- combo[rep(1:nrow(combo), each = n_iterations), ]
+		
+		# Extract into separate lists or vectors
+		n_list <- combo$n
+		p_list <- combo$pq
+		q_list <- combo$pq
+		k_list <- combo$k
+	} else{
+		stop ("size error")
+	}
+	
+	# Apply the simulation function to each set of n, p, q, k values using map functions
+	print(rdasim)
+	
+	# Initialize the progress bar
+	pb <- progress_bar$new(
+		total = length(n_list),
+		format = "  Progress [:bar] :percent in :elapsed"
+	)
+	
+	# Define a custom function to run the simulation and update the progress bar
+	run_simulation_with_progress <- function(n, p, q, k, rdasim) {
+		pb$tick()  # Update the progress bar
+		run_simulation(n, p, q, k, rdasim)  # Call your main simulation function
+	}
+	
+	# Use pmap_dbl with the custom function
+	esR_vector <- pmap_dbl(list(n_list, p_list, q_list, k_list, rdasim = rdasim), 
+												 run_simulation_with_progress)
+	
+	#esR_vector <- pmap_dbl(list(n_list, p_list, q_list, k_list, rdasim = rdasim), run_simulation)
+	
+	data_list <- list(n_list = n_list, p_list = p_list, q_list = q_list, k_list = k_list, esR_vector = esR_vector)
+	
+	return(data_list)
+}
+
 # Define a function to apply for each set of parameters 3
-plot_evaluate <- function(data_list,rdasim,size){
+plot_evaluate <- function(data_list,rdasim,size,n_iterations){
 	
 	k_list<-data_list$k_list
 	esR_vector <-data_list$esR_vector
 	
 	h=12
 	
+	
 	countR <- sum(esR_vector == k_list) 
-	perR <- n_iterations * countR / n_iterations 
+	perR <- 100 * countR / length(k_list) 
 	cat("rank is well estimated in :", perR, "% \n")
 	
 	# Correlation between esR and k
 	correlation <- cor(esR_vector, k_list)
 	cat("Correlation between esR and k:", signif(correlation, 3), "\n")
 	
-	
-	#heat
-	
-	data_table <- table(esR_vector, k_list)
-	full_combination <- expand.grid(esR_vector = 1:h, k_list = 1:10)
-	data_melt <- as.data.frame(as.table(data_table))
-	full_data_melt <- merge(full_combination, data_melt, by = c("esR_vector", "k_list"), all.x = TRUE)
-	full_data_melt$Freq[is.na(full_data_melt$Freq)] <- 0
-	
-	g<-ggplot(full_data_melt, aes(x = k_list, y = esR_vector, fill = Freq)) +
-		geom_tile(color = "black") +
-		scale_fill_gradient(low = "white", high = "red", breaks = c(0, 5, 10)) +
-		theme_minimal(base_size = 15)  +
-		theme(
-			axis.title.x = element_text(size = 14),
-			axis.title.y = element_text(size = 14),
-			plot.title = element_text(hjust = 0, size = 18),
-			panel.grid = element_blank(),
-			axis.text.x = element_text(size = 10),
-			axis.text.y = element_text(size = 10)
-		) +
-		scale_x_continuous(breaks = 1:10, labels = as.character(1:10)) +
-		scale_y_continuous(breaks = 1:h, labels = as.character(1:h))
-	
-	if (rdasim=="sim1"){
-		model = 1
-	} else if (rdasim=="sim2"){
-		model = 2
-	} else{
-		stop()
-	}
-	
-	g<-g+labs(title = paste0("Rank Estimate - Model ",model," - Size:",size), x = "True Rank", y = "Estimated Rank", fill = "Frequency") 
-	
-	print(g) 
-	
-	return(list(correlation=signif(correlation, 3),perR =perR ))
+	perR_vec <- numeric(12)
+
+# チャンクごとに処理
+for (i in 1:12) {
+  start_idx <- (i - 1) * n_iterations + 1
+  end_idx <- i * n_iterations
+  
+  k_chunk <- k_list[start_idx:end_idx]
+  esR_chunk <- esR_vector[start_idx:end_idx]
+  
+  countR <- sum(esR_chunk == k_chunk)
+  perR_e <- 100 * countR / n_iterations
+  
+  perR_vec[i] <- perR_e
 }
 
+	# 
+	# #heat
+	# 
+	# data_table <- table(esR_vector, k_list)
+	# full_combination <- expand.grid(esR_vector = 1:h, k_list = 1:10)
+	# data_melt <- as.data.frame(as.table(data_table))
+	# full_data_melt <- merge(full_combination, data_melt, by = c("esR_vector", "k_list"), all.x = TRUE)
+	# full_data_melt$Freq[is.na(full_data_melt$Freq)] <- 0
+	# 
+	# g<-ggplot(full_data_melt, aes(x = k_list, y = esR_vector, fill = Freq)) +
+	# 	geom_tile(color = "black") +
+	# 	scale_fill_gradient(low = "white", high = "red", breaks = c(0, 5, 10)) +
+	# 	theme_minimal(base_size = 15)  +
+	# 	theme(
+	# 		axis.title.x = element_text(size = 14),
+	# 		axis.title.y = element_text(size = 14),
+	# 		plot.title = element_text(hjust = 0, size = 18),
+	# 		panel.grid = element_blank(),
+	# 		axis.text.x = element_text(size = 10),
+	# 		axis.text.y = element_text(size = 10)
+	# 	) +
+	# 	scale_x_continuous(breaks = 1:10, labels = as.character(1:10)) +
+	# 	scale_y_continuous(breaks = 1:h, labels = as.character(1:h))
+	# 
+	# if (rdasim=="sim1"){
+	# 	model = 1
+	# } else if (rdasim=="sim2"){
+	# 	model = 2
+	# } else{
+	# 	stop()
+	# }
+	# 
+	# g<-g+labs(title = paste0("Rank Estimate - Model ",model," - Size:",size), x = "True Rank", y = "Estimated Rank", fill = "Frequency") 
+	# 
+	# print(g) 
+	
+	return(list(correlation=signif(correlation, 3),perR =perR,perR_vec=perR_vec))
+}
+
+
+tune_sRDA_ust <- function(X, Y, nonzero_vals = c(5, 10, 20, 50, 100), num_vals = c(1, 2, 3), dir_path = ".") {
+	set.seed(123)
+	tic()
+	folds <- createFolds(1:nrow(X), k = 5, list = TRUE)
+	results_summary <- data.frame(
+		num = integer(),
+		nonzero = integer(),
+		mean_abs_corr_sum = numeric(),
+		mean_MSE = numeric(),
+		se_abs_corr_sum = numeric(),
+		se_mean_MSE = numeric()
+	)
+	
+	for (num in num_vals) {
+		multi <- num > 1
+		
+		for (nz in nonzero_vals) {
+			cat("Running CV for num =", num, ", nonzero =", nz, "\n")
+			
+			abs_corr_sums <- c()
+			mses <- c()
+			
+			for (i in 1:5) {
+				test_idx <- folds[[i]]
+				train_idx <- setdiff(1:nrow(X), test_idx)
+				
+				X_train <- X[train_idx, ]
+				Y_train <- Y[train_idx, ]
+				X_test <- X[test_idx, ]
+				Y_test <- Y[test_idx, ]
+				
+				# モデル学習
+				res <- sRDA(
+					predictor = X_train, predicted = Y_train,
+					nonzero = nz, penalization = "ust", nr_LVs = num,
+					multiple_LV = multi
+				)
+				
+				if (multi) {
+					Y_hat <- matrix(0, nrow = nrow(X_test), ncol = ncol(Y_test))
+					for (lv in seq_along(res$ALPHA)) {
+						xi_test <- scale(X_test %*% res$ALPHA[[lv]])
+						Y_hat <- Y_hat + xi_test %*% t(res$BETA[[lv]])
+					}
+				} else {
+					xi_test <- scale(X_test %*% res$ALPHA)
+					Y_hat <- xi_test %*% t(res$BETA)
+				}
+				
+				# 評価
+				abs_corrs <- sapply(1:ncol(Y_test), function(k) abs(cor(xi_test, Y_test[, k])))
+				abs_corr_sum <- sum(abs_corrs)
+				mse <- mean((Y_test - Y_hat)^2)
+				
+				abs_corr_sums <- c(abs_corr_sums, abs_corr_sum)
+				mses <- c(mses, mse)
+			}
+			
+			# 結果保存
+			results_summary <- rbind(results_summary, data.frame(
+				num = num,
+				nonzero = nz,
+				mean_abs_corr_sum = mean(abs_corr_sums),
+				mean_MSE = mean(mses),
+				se_abs_corr_sum = sd(abs_corr_sums) / sqrt(length(abs_corr_sums)),
+				se_mean_MSE = sd(mses) / sqrt(length(mses))
+			))
+		}
+	}
+	
+	a <- toc()
+	
+	# 最良パラメータ取得
+	best_row <- results_summary[which.max(results_summary$mean_abs_corr_sum), ]
+	best_num <- best_row$num
+	best_nonzero <- best_row$nonzero
+	
+	cat("Best number of LVs:", best_num, "\n")
+	cat("Best nonzero value:", best_nonzero, "\n")
+	
+	saveRDS(results_summary, file.path(dir_path, "ust.rds"))
+	saveRDS(a, file.path(dir_path, "time.rds"))
+	
+	return(list(
+		best_num = best_num,
+		best_nonzero = best_nonzero,
+		time = a
+	))
+	
+}
+
+tune_sRDA_enet <- function(X, Y, 
+													 nonzero_vals = c(5, 10, 20, 50, 100), 
+													 num_vals = c(1, 2, 3, 4, 5), 
+													 lambda_vals = c(0.1, 1, 10, 100),
+													 dir_path = ".") {
+	set.seed(123)
+	tic()
+	folds <- createFolds(1:nrow(X), k = 5, list = TRUE)
+	
+	results_summary <- data.frame(
+		num = integer(),
+		nonzero = integer(),
+		lambda = numeric(),
+		mean_abs_corr_sum = numeric(),
+		mean_MSE = numeric(),
+		se_abs_corr_sum = numeric(),
+		se_mean_MSE = numeric()
+	)
+	
+	for (num in num_vals) {
+		multi <- num > 1
+		
+		for (lambda in lambda_vals) {
+			for (nz in nonzero_vals) {
+				cat("Running CV for num =", num, ", nonzero =", nz, ", lambda =", lambda, "\n")
+				
+				abs_corr_sums <- c()
+				mses <- c()
+				
+				for (i in 1:5) {
+					test_idx <- folds[[i]]
+					train_idx <- setdiff(1:nrow(X), test_idx)
+					
+					X_train <- X[train_idx, ]
+					Y_train <- Y[train_idx, ]
+					X_test <- X[test_idx, ]
+					Y_test <- Y[test_idx, ]
+					
+					# モデル学習
+					res <- sRDA(
+						predictor = X_train, predicted = Y_train,
+						nonzero = nz, penalization = "enet", nr_LVs = num,
+						multiple_LV = multi, ridge_penalty = lambda, cross_validate = FALSE
+					)
+					
+					if (multi) {
+						Y_hat <- matrix(0, nrow = nrow(X_test), ncol = ncol(Y_test))
+						for (lv in seq_along(res$ALPHA)) {
+							xi_test <- scale(X_test %*% res$ALPHA[[lv]])
+							Y_hat <- Y_hat + xi_test %*% t(res$BETA[[lv]])
+						}
+					} else {
+						xi_test <- scale(X_test %*% res$ALPHA)
+						Y_hat <- xi_test %*% t(res$BETA)
+					}
+					
+					# 評価
+					abs_corrs <- sapply(1:ncol(Y_test), function(k) abs(cor(xi_test, Y_test[, k])))
+					abs_corr_sum <- sum(abs_corrs)
+					mse <- mean((Y_test - Y_hat)^2)
+					
+					abs_corr_sums <- c(abs_corr_sums, abs_corr_sum)
+					mses <- c(mses, mse)
+				}
+				
+				# 結果保存
+				results_summary <- rbind(results_summary, data.frame(
+					num = num,
+					nonzero = nz,
+					lambda = lambda,
+					mean_abs_corr_sum = mean(abs_corr_sums),
+					mean_MSE = mean(mses),
+					se_abs_corr_sum = sd(abs_corr_sums) / sqrt(length(abs_corr_sums)),
+					se_mean_MSE = sd(mses) / sqrt(length(mses))
+				))
+			}
+		}
+	}
+	
+	a <- toc()
+	
+	# 最良パラメータ取得
+	best_row <- results_summary[which.max(results_summary$mean_abs_corr_sum), ]
+	best_num <- best_row$num
+	best_nonzero <- best_row$nonzero
+	best_lambda <- best_row$lambda
+	
+	cat("Best number of LVs:", best_num, "\n")
+	cat("Best nonzero value:", best_nonzero, "\n")
+	cat("Best lambda:", best_lambda, "\n")
+	
+	saveRDS(results_summary, file.path(dir_path, "enet.rds"))
+	saveRDS(a, file.path(dir_path, "enettime.rds"))
+	
+	return(list(
+		best_num = best_num,
+		best_nonzero = best_nonzero,
+		best_lambda = best_lambda,
+		time = a
+	))
+}
+
+
+
+tune_rrda <- function(X, Y, 
+											n_lam = 50,
+											maxrank = 40,
+											dir_path = ".", 
+											plot_result = FALSE) {
+	set.seed(123)
+	tic()
+	
+	Lambda <- 10^seq(0, 6, length.out = n_lam)
+	
+	# クロスバリデーション実行
+	cv_result <- rrda.cv(Y = Y, X = X, maxrank = maxrank, lambda = Lambda)
+	
+	# プロット（必要に応じて）
+	if (plot_result) {
+		rrda.plot(cv_result = cv_result)
+	}
+	
+	a<-toc()
+	# 最適パラメータ
+	K <- cv_result$opt_min$rank
+	L <- cv_result$opt_min$lambda
+	mse <- cv_result$opt_min$MSE
+	
+	cat("Best rank (K):", K, "\n")
+	cat("Best lambda (L):", L, "\n")
+	cat("Minimum MSE:", mse, "\n")
+	
+	# 保存
+	saveRDS(cv_result, file.path(dir_path, "rrda_cv_result.rds"))
+	saveRDS(toc(), file.path(dir_path, "rrda_time.rds"))
+	
+	# 結果を返す
+	return(list(K = K, lambda = L, MSE = mse,time=a))
+}
+
+run_parameter_selection <- function(X, Y, split_times = 5, dir_path = ".",nonzero_vals,num_vals,lambda_vals) {
+	set.seed(123)  # 再現性のため
+	
+	rrda_params_list <- list()
+	ust_params_list <- list()
+	enet_params_list <- list()
+	split_folds <- list()
+	
+	n <- nrow(X)
+	
+	for (i in 1:split_times) {
+		cat("\n=== Split", i, "===\n")
+		
+		# 10件を検証用にランダムに抽出
+		test_idx <- sample(1:n, 10)
+		train_idx <- setdiff(1:n, test_idx)
+		
+		X_train <- X[train_idx, ]
+		Y_train <- Y[train_idx, ]
+		
+		# 保存する fold 情報
+		split_folds[[i]] <- list(train_idx = train_idx, test_idx = test_idx)
+		
+		# ---- RRDA ----
+		cat("Tuning RRDA...\n")
+		rrda_params <- tune_rrda(X_train, Y_train, dir_path = dir_path, plot_result = FALSE)
+		rrda_params_list[[i]] <- rrda_params
+		
+		# ---- UST ----
+		cat("Tuning UST...\n")
+		ust_params <- tune_sRDA_ust(X_train, Y_train, dir_path = dir_path,nonzero_vals = nonzero_vals,num_vals = num_vals)
+		ust_params_list[[i]] <- ust_params
+		
+		# ---- ENET ----
+		cat("Tuning ENET...\n")
+		enet_params <- tune_sRDA_enet(X_train, Y_train, dir_path = dir_path,nonzero_vals=nonzero_vals,num_vals = num_vals,lambda_vals = lambda_vals)
+		enet_params_list[[i]] <- enet_params
+	}
+	
+	# 保存
+	saveRDS(split_folds, file.path(dir_path, "split_folds.rds"))
+	saveRDS(rrda_params_list, file.path(dir_path, "rrda_params_list.rds"))
+	saveRDS(ust_params_list, file.path(dir_path, "ust_params_list.rds"))
+	saveRDS(enet_params_list, file.path(dir_path, "enet_params_list.rds"))
+	
+	return(list(
+		folds = split_folds,
+		rrda = rrda_params_list,
+		ust = ust_params_list,
+		enet = enet_params_list
+	))
+}
+
+evaluate_models_mspe <- function(X, Y, results) {
+	rrda_mspes <- numeric()
+	ust_mspes <- numeric()
+	enet_mspes <- numeric()
+	
+	for (i in seq_along(results$folds)) {
+		cat("\n=== Evaluation Split", i, "===\n")
+		
+		train_idx <- results$folds[[i]]$train_idx
+		test_idx <- results$folds[[i]]$test_idx
+		
+		X_train <- X[train_idx, ]
+		Y_train <- Y[train_idx, ]
+		X_test <- X[test_idx, ]
+		Y_test <- Y[test_idx, ]
+		
+		### --- RRDA ---
+		cat("Evaluating RRDA...\n")
+		rrda_param <- results$rrda[[i]]
+		res_rrda <- rrda.fit(Y = Y_train, X = X_train,
+												 nrank = rrda_param$K, lambda = rrda_param$lambda,
+												 scale.X = FALSE, scale.Y = FALSE)
+		Y_hat_rrda <- rrda.predict(Bhat = res_rrda, X = X_test)[[1]][[1]][[1]]
+		rrda_mspes[i] <- 100 * sum((Y_test - Y_hat_rrda)^2) / (ncol(Y_test) * nrow(Y_test))
+		
+		### --- UST ---
+		cat("Evaluating UST...\n")
+		ust_param <- results$ust[[i]]
+		multi <- ust_param$best_num > 1
+		res_ust <- sRDA(
+			predictor = X_train, predicted = Y_train,
+			nonzero = ust_param$best_nonzero, penalization = "ust",
+			nr_LVs = ust_param$best_num, multiple_LV = multi
+		)
+		if (multi) {
+			Y_hat_ust <- matrix(0, nrow = nrow(X_test), ncol = ncol(Y_test))
+			for (lv in seq_along(res_ust$ALPHA)) {
+				xi_test <- scale(X_test %*% res_ust$ALPHA[[lv]])
+				Y_hat_ust <- Y_hat_ust + xi_test %*% t(res_ust$BETA[[lv]])
+			}
+		} else {
+			xi_test <- scale(X_test %*% res_ust$ALPHA)
+			Y_hat_ust <- xi_test %*% t(res_ust$BETA)
+		}
+		ust_mspes[i] <- 100 * sum((Y_test - Y_hat_ust)^2) / (ncol(Y_test) * nrow(Y_test))
+		
+		### --- ENET ---
+		cat("Evaluating ENET...\n")
+		enet_param <- results$enet[[i]]
+		multi <- enet_param$best_num > 1
+		res_enet <- sRDA(
+			predictor = X_train, predicted = Y_train,
+			nonzero = enet_param$best_nonzero, penalization = "enet",
+			nr_LVs = enet_param$best_num, multiple_LV = multi,
+			ridge_penalty = enet_param$best_lambda, cross_validate = FALSE
+		)
+		if (multi) {
+			Y_hat_enet <- matrix(0, nrow = nrow(X_test), ncol = ncol(Y_test))
+			for (lv in seq_along(res_enet$ALPHA)) {
+				xi_test <- scale(X_test %*% res_enet$ALPHA[[lv]])
+				Y_hat_enet <- Y_hat_enet + xi_test %*% t(res_enet$BETA[[lv]])
+			}
+		} else {
+			xi_test <- scale(X_test %*% res_enet$ALPHA)
+			Y_hat_enet <- xi_test %*% t(res_enet$BETA)
+		}
+		enet_mspes[i] <- 100 * sum((Y_test - Y_hat_enet)^2) / (ncol(Y_test) * nrow(Y_test))
+	}
+	
+	# 平均と標準誤差をまとめる
+	mspe_summary <- data.frame(
+		method = c("rrda", "ust", "enet"),
+		mean_mspe = c(mean(rrda_mspes), mean(ust_mspes), mean(enet_mspes)),
+		se_mspe = c(
+			sd(rrda_mspes) / sqrt(length(rrda_mspes)),
+			sd(ust_mspes) / sqrt(length(ust_mspes)),
+			sd(enet_mspes) / sqrt(length(enet_mspes))
+		)
+	)
+	
+	return(list(
+		rrda_mspes = rrda_mspes,
+		ust_mspes = ust_mspes,
+		enet_mspes = enet_mspes,
+		mspe_summary = mspe_summary
+	))
+}
+
+summarize_times <- function(results) {
+	extract_time <- function(time_obj) {
+		if (is.null(time_obj)) return(NA)
+		return(as.numeric(time_obj$toc - time_obj$tic))
+	}
+	
+	rrda_times <- sapply(results$rrda, function(x) extract_time(x$time))
+	ust_times <- sapply(results$ust, function(x) extract_time(x$time))
+	enet_times <- sapply(results$enet, function(x) extract_time(x$time))
+	
+	time_summary <- data.frame(
+		method = c("rrda", "ust", "enet"),
+		mean_time_sec = c(mean(rrda_times, na.rm = TRUE),
+											mean(ust_times, na.rm = TRUE),
+											mean(enet_times, na.rm = TRUE)),
+		se_time_sec = c(sd(rrda_times, na.rm = TRUE) / sqrt(length(na.omit(rrda_times))),
+										sd(ust_times, na.rm = TRUE) / sqrt(length(na.omit(ust_times))),
+										sd(enet_times, na.rm = TRUE) / sqrt(length(na.omit(enet_times))))
+	)
+	
+	return(time_summary)
+}

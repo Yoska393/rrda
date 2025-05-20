@@ -1,4 +1,3 @@
-
 ---
 title: "Senario 3 : Random Splitting Process on Simulation Data with RRDA"
 output: html_document
@@ -233,6 +232,7 @@ for (s in c(3,4)){
 xtable(res)
 tp(save=dir_path)
 ```
+
 
 # session info
 check the info and environment

@@ -1,4 +1,3 @@
-
 ---
 title: "Senario 1 : Rank Estimate Evaluation on Simulation Data with RRDA"
 output: html_document
@@ -7,7 +6,7 @@ author: "Hayato Yoshioka (University of Tokyo, AgroParisTech)"
 
 # Overview. H.Yoshioka et al. (rrda package)
 
-Senario 2 
+Senario 1
 
 Here, we perform rank evaluation for simulation data sets.
 We test various n,p,q,k parameters for the data generation
@@ -42,28 +41,33 @@ if (!dir.exists(dir_path)) {
 
 
 # simulation run 
-2 types of simulations and 3 types of matrix size are tested
+2 types of simulations and 2 size of n, 2 size of p and q, 3 size of r
 ```{r,eval=F}
 set.seed(123)
 
-n_iterations=100
+n_iterations=50
 # Define your conditions
 simulations <- c("sim1","sim2")
-sizes <- c("large", "small", "mixed")
+sizes <- c("large", "small")
+
+#simulations <- c("sim1")
+#sizes <- c("small")
 
 # Loop over each combination
 for (sim in simulations) {
 
   for (size in sizes) {
     # Run your function with each combination
-    data_list <- rank_evaluate(n_iterations = n_iterations, rdasim = sim, size = size)
+    data_list <- rank_evaluate_50(n_iterations = n_iterations, rdasim = sim, size = size)
     # Save the results
-    filename <- paste0("data_list_", sim, "_", size, ".rds")
-    saveRDS(data_list, file = here("out/eval", filename))
-    data_list<-readRDS(here("out/eval", filename))
-    plot_evaluate(data_list,rdasim = sim,size=size)
+    filename <- paste0("data_list50_", sim, "_", size, ".rds")
+    saveRDS(data_list, file = here(dir_path, filename))
+    data_list<-readRDS(here(dir_path, filename))
+    pp<-plot_evaluate(data_list,rdasim = sim,size=size,n_iterations)
+    pp
   }
 }
+
 
 ```
 
@@ -71,18 +75,20 @@ for (sim in simulations) {
 Plot the results
 ```{r}
 set.seed(123)
-n_iterations=100
+n_iterations=50
 # Define your conditions
  simulations <- c("sim1", "sim2")
- sizes <- c("large", "small", "mixed")
+ #simulations <- c("sim1")
+ sizes <- c("large", "small")
 
 for (sim in simulations) {
 
   for (size in sizes) {
-  	filename <- paste0("data_list_", sim, "_", size, ".rds")
-		data_list<-readRDS(here("out/eval", filename))
-    plot_evaluate(data_list,rdasim = sim,size=size)
-    
+  	filename <- paste0("data_list50_", sim, "_", size, ".rds")
+		data_list<-readRDS(here(dir_path, filename))
+    pp<-plot_evaluate(data_list,rdasim = sim,size=size,n_iterations)
+    pp
+    data_list$perR_vec<-pp$perR_vec
   }
 }
 ```

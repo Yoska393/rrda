@@ -1,4 +1,3 @@
-
 ---
 title: "Application : Methylation / Expression"
 output: html_document
@@ -7,7 +6,7 @@ author: "Hayato Yoshioka (University of Tokyo, AgroParisTech)"
 
 # Overview. H.Yoshioka et al. (rrda package)
 
-Application of  Methylation / Expression
+Application of Methylation / Expression
 
 # functions
 ```{r}
