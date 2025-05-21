@@ -160,7 +160,7 @@ colnames(h)<- unname(new_colnames)
 ```
 
 
-```{r,fig.width=9,fig.height=7}
+```{,fig.width=9,fig.height=7}
 
 shortname<-c("Adenine", "Glycine", "Histidine", "Phenylalanine", "Tryptophane", "Sucrose", "Diethanolamine", "Diaminopropionic acid", "Asparagine", "Aspartic acid", "Glutamic acid", "Ornithine HCl", "Serine", "Methylguanidine HCl", "Lactose monohydrate", "Aminohexanoic acid", "Apigenin glucoside", "Kaempferol glucoside", "Naringenin glucoside", "Jasmonic acid", "allo-Threonine", "Aminovaleric acid", "Riboflavin", "Raffinose", "S-Methylcysteine", "Cyanidin glucosides", "Leucine (CC reagent)", "Isoleucine", "Cyanidin-3-glucoside", "Luteolin-7-glucoside", "Galactosamine HCl", "Guanosine monophosphate", "Cellobiose/Lactulose", "Melibiose hydrate", "Histamine/Cytosine", "Alanine/Sarcosine", "Norvaline/Valine", "Threonine variants", "Aminoethylphosphonic", "Indole aldehydes", "Aminoadipic acid", "Melezitose/Kestose", "Cyanidin malonylgluc", "Glycitin", "Genistin", "Daidzein", "Daidzin", "Malonylglycitin", "Hydroxydaidzein")
 

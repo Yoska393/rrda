@@ -1105,8 +1105,8 @@ rank_evaluate_50<- function(n_iterations,rdasim,size){
 		k_list <- combo$k
 	} else if (size == "large"){
 		combo <- expand.grid(
-			n = c(50, 100),
-			pq = c(200, 500),
+			n = c(100, 200),
+			pq = c(500, 1000),
 			k = c(2, 5, 10)
 		)
 		# Repeat each row 50 times
