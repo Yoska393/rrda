@@ -2,8 +2,6 @@
 
 <!-- badges: start -->
 [![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/rrda)](https://cran.r-project.org/package=rrda)
-[![Lifecycle:
-stable](https://img.shields.io/badge/lifecycle-stable-blue.svg)](https://lifecycle.r-lib.org/articles/stages.html)
 <!-- badges: end -->
 
 > The R package `rrda` provides functions for performing **ridge redundancy analysis (rrda)** 
