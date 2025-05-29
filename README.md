@@ -180,14 +180,14 @@ plot(Y,Yhat)
 </div>
 
 
-## 📊 Data
+## 📊 Application Data
 The application data of breast cancer and soybean are stored as .rds file in a folder (rrda/RDAdata). For methylation data, you can refer to the R package (MEAL, Ruiz-Arenas and González 2024)
 
 ## 📌 Please cite :)
 
 **Yoshioka, H., Aubert, J., Iwata, H., and Mary-Huard, T. (2025).**  Ridge Redundancy Analysis for High-Dimensional Omics Data. *bioRxiv*, doi: https://doi.org/10.1101/2025.04.16.649138
 
-The package is documented on CRAN (https://cran.r-project.org/package=rrda)
+The package is available on CRAN (https://cran.r-project.org/package=rrda)
 
 ## 📚 References
 - Dang, T., Fuji, Y., Kumaishi, K., Usui, E., Kobori, S., Sato, T., Toda, Y., Sakurai, K., Yamasaki, Y., Tsujimoto, H. and Hirai, M.Y., 2023. An integrative framework of stochastic variational variable selection for joint analysis of multi-omics microbiome data. *bioRxiv*, pp.2023-08.
