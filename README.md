@@ -1,20 +1,23 @@
+# rrda: Ridge Redundancy Analysis for High-Dimensional Omics Data <img src="man/figures/logo.png" align="right" width="155" height="180"/>
 
+<!-- badges: start -->
+[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/rrda)](https://cran.r-project.org/package=rrda)
+[![Lifecycle:
+stable](https://img.shields.io/badge/lifecycle-stable-blue.svg)](https://lifecycle.r-lib.org/articles/stages.html)
+<!-- badges: end -->
 
-<img src="image/rrda.jpg" width="500" >
+> The R package `rrda` provides functions for performing **ridge redundancy analysis (rrda)** 
+> for high-dimensional datasets. It is useful for modeling the relationship between a matrix
+>  of response variables (**Y**; n × q ) and a matrix of explanatory variables (**X**;  n × p ).
+>  The method is designed to handle **high-dimensional data efficiently**, allowing
+>  computation and storage optimization.
 
-# `rrda`: Ridge Redundancy Analysis for High-Dimensional Omics Data
 
 ## 🇫🇷Overview🇯🇵
-
 Hello / Bonjour / Konichiwa
-
-This R package `rrda` provides functions for performing **ridge redundancy analysis (rrda)** for high-dimensional datasets.
 
 - rrda/script_rrda:  Scripts and my own functions used in our article.
 - rrda/RDAdata:  Application data used in our article.
-
-It is useful for modeling the relationship between a matrix of response variables (**Y**; n × q ) and a matrix of explanatory variables (**X**;  n × p ). The method is designed to handle **high-dimensional data efficiently**, allowing computation and storage optimization.
-
 
 ## 📌 Please cite :)
 
