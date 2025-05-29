@@ -17,11 +17,6 @@ Hello / Bonjour / Konichiwa
 - rrda/script_rrda:  Scripts and my own functions used in our article.
 - rrda/RDAdata:  Application data used in our article.
 
-## 📌 Please cite :)
-
-**Yoshioka, H., Aubert, J., Iwata, H., and Mary-Huard, T. (2025).**  Ridge Redundancy Analysis for High-Dimensional Omics Data. *bioRxiv*, doi: https://doi.org/10.1101/2025.04.16.649138
-
-The package is documented on CRAN (https://cran.r-project.org/package=rrda)
 
 ## 🛠 Installation
 
@@ -185,29 +180,14 @@ plot(Y,Yhat)
 </div>
 
 
-
-## 📦 Dependencies
-
-- `RSpectra`
-- `furrr`
-- `dplyr`
-- `reshape2`
-- `ggplot2`
-
 ## 📊 Data
-
-For the application data, the data for breast cancer (Witten et al., 2009) and soybean data (Dang et al., 2023) are stored on this page. Also, refer to Ruiz-Arenas and González 2020) for the methylation data. 
-
 The application data of breast cancer and soybean are stored as .rds file in a folder (rrda/RDAdata). For methylation data, you can refer to the R package (MEAL, Ruiz-Arenas and González 2024)
 
-The metabolome data were downloaded from the RIKEN DropMet website (http://prime.psc.riken.jp/menta.cgi/prime/drop_index) ; ID: DM0071, DM0072.
+## 📌 Please cite :)
 
+**Yoshioka, H., Aubert, J., Iwata, H., and Mary-Huard, T. (2025).**  Ridge Redundancy Analysis for High-Dimensional Omics Data. *bioRxiv*, doi: https://doi.org/10.1101/2025.04.16.649138
 
-## 🏃‍♀️‍➡️ Author and Maintainer
-- Hayato Yoshioka (Author, University of Tokyo)
-- Julie Aubert (Author \& Maintainer, INRAE)
-- Tristan Mary-Huard (Author, INRAE)
-
+The package is documented on CRAN (https://cran.r-project.org/package=rrda)
 
 ## 📚 References
 - Dang, T., Fuji, Y., Kumaishi, K., Usui, E., Kobori, S., Sato, T., Toda, Y., Sakurai, K., Yamasaki, Y., Tsujimoto, H. and Hirai, M.Y., 2023. An integrative framework of stochastic variational variable selection for joint analysis of multi-omics microbiome data. *bioRxiv*, pp.2023-08.
