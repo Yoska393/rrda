@@ -2,6 +2,9 @@
 
 <!-- badges: start -->
 [![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/rrda)](https://cran.r-project.org/package=rrda)
+[![Lifecycle:
+stable](https://img.shields.io/badge/lifecycle-stable-blue.svg)](https://lifecycle.r-lib.org/articles/stages.html)
+[![](https://img.shields.io/github/last-commit/yoska393/rrda.svg)](https://github.com/yoska393/rrda/commits/main)
 <!-- badges: end -->
 
 > The R package `rrda` provides functions for performing **ridge redundancy analysis (rrda)** 
@@ -183,14 +186,10 @@ plot(Y,Yhat)
 ## 📊 Application Data
 The application data of breast cancer and soybean are stored as .rds file in a folder (rrda/RDAdata). For methylation data, you can refer to the R package (MEAL, Ruiz-Arenas and González 2024)
 
-## 📌 Please cite :)
 
-**Yoshioka, H., Aubert, J., Iwata, H., and Mary-Huard, T. (2025).**  Ridge Redundancy Analysis for High-Dimensional Omics Data. *bioRxiv*, doi: https://doi.org/10.1101/2025.04.16.649138
+## 📚 References 
 
-The package is available on CRAN (https://cran.r-project.org/package=rrda)
+Please cite :)
 
-## 📚 References
-- Dang, T., Fuji, Y., Kumaishi, K., Usui, E., Kobori, S., Sato, T., Toda, Y., Sakurai, K., Yamasaki, Y., Tsujimoto, H. and Hirai, M.Y., 2023. An integrative framework of stochastic variational variable selection for joint analysis of multi-omics microbiome data. *bioRxiv*, pp.2023-08.
-- Ruiz-Arenas C, Gonzalez J (2024). MEAL: Perform methylation analysis. R package version 1.34.0. MEAL: Perform methylation analysis. 
-- Witten D, Tibshirani R, Gross S, Narasimhan B (2024). PMA: Penalized Multivariate Analysis. R package version 1.2-4,
 - Yoshioka, H., Aubert, J., Iwata, H., and Mary-Huard, T., 2025. Ridge Redundancy Analysis for High-Dimensional Omics Data. *bioRxiv*, doi: 10.1101/2025.04.16.649138
+
