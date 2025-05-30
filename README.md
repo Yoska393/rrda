@@ -19,17 +19,15 @@ Hello / Bonjour / Konichiwa
 
 - rrda/script_rrda:  Scripts and my own functions used in our article.
 - rrda/RDAdata:  Application data used in our article.
-
+- rrda/src:  Source code for the package ``rrda''
 
 ## 🛠 Installation
 
-You can install the package from CRAN
+You can install the package from CRAN.
 
 ```r
 install.packages("rrda")
 ```
-
-
 
 ## 💡 Tutorial
 
