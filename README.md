@@ -2,9 +2,9 @@
 
 <!-- badges: start -->
 [![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/rrda)](https://cran.r-project.org/package=rrda)
-[![Lifecycle:
-stable](https://img.shields.io/badge/lifecycle-stable-blue.svg)](https://lifecycle.r-lib.org/articles/stages.html)
-[![](https://img.shields.io/github/last-commit/yoska393/rrda.svg)](https://github.com/yoska393/rrda/commits/main)
+[![CRAN Downloads (Last Month)](https://cranlogs.r-pkg.org/badges/last-month/rrda)](https://cranlogs.r-pkg.org/badges/last-month/rrda)
+[![CRAN Downloads](https://cranlogs.r-pkg.org/badges/grand-total/rrda)](https://cranlogs.r-pkg.org/badges/grand-total/rrda)
+
 <!-- badges: end -->
 
 > The R package `rrda` provides functions for performing **ridge redundancy analysis (rrda)** 
