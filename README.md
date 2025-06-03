@@ -9,9 +9,9 @@
 
 > The R package `rrda` provides functions for performing **ridge redundancy analysis (rrda)** 
 > for high-dimensional datasets. It is useful for modeling the relationship between a matrix
->  of response variables (**Y**; n × q ) and a matrix of explanatory variables (**X**;  n × p ).
->  The method is designed to handle **high-dimensional data efficiently**, allowing
->  computation and storage optimization.
+>  of response variables (**Y**; n × q ) and a matrix of explanatory variables (**X**;  n × p )
+>  with ridge penalty and rank restraint. The method is designed to handle **high-dimensional
+> data**, allowing efficient computation and storage optimization.
 
 
 ## 🇫🇷Overview🇯🇵
