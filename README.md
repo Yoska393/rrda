@@ -2,8 +2,8 @@
 
 <!-- badges: start -->
 [![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/rrda)](https://cran.r-project.org/package=rrda)
-[![CRAN Downloads (Last Month)](https://cranlogs.r-pkg.org/badges/last-month/rrda)]((https://cran.r-project.org/package=rrda))
-[![CRAN Downloads](https://cranlogs.r-pkg.org/badges/grand-total/rrda)]((https://cran.r-project.org/package=rrda))
+[![CRAN Downloads (Last Month)](https://cranlogs.r-pkg.org/badges/last-month/rrda)](https://cran.r-project.org/package=rrda)
+[![CRAN Downloads](https://cranlogs.r-pkg.org/badges/grand-total/rrda)](https://cran.r-project.org/package=rrda)
 
 <!-- badges: end -->
 
