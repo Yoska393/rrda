@@ -21,6 +21,8 @@ Hello / Bonjour / Konichiwa
 - rrda/RDAdata:  Application data used in our article.
 - rrda/src:  Source code for the package "rrda"
 
+**The link to our article** -> https://doi.org/10.1101/2025.04.16.649138
+
 ## 🛠 Installation
 
 You can install the package from CRAN.
