@@ -249,7 +249,7 @@ rrda.cv <- function(Y, X, maxrank=NULL, lambda=NULL, nfold=5, folds = NULL, samp
 #' @param sample.Y A number of variables sampled from Y for the lamdba range estimate. Default is 1000.
 #' @param scale.X Logical indicating if `X` is scaled. Default is `FALSE`.
 #' @return A numeric vector of the range of lambda values.
-get_lambda <- function(Y, X, scale.X = FALSE, sample.X = sample.X, sample.Y = sample.Y) {
+get_lambda <- function(Y, X, scale.X = FALSE, sample.X = 1000, sample.Y = 1000) {
   Y<-as.matrix(Y)
   X<-as.matrix(X)
   y_rate<- 1
