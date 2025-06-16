@@ -14,6 +14,7 @@ globalVariables(c("rank", "MSE","SEM","label"))
 #' @param X A numeric matrix of explanatory variables.
 #' @param maxrank A numeric vector specifying the maximum rank of the coefficient Bhat. Default is `NULL`, which sets it to `(min(15, min(dim(X), dim(Y))))`.
 #' @param lambda A numeric vector of ridge penalty values. Default is `NULL`, where the lambda values are automatically chosen.
+#' @param num.lambda A number of lambda generated (only when the lambda is not given by user). Default is 50.
 #' @param nfold The number of folds for cross-validation. Default is 5.
 #' @param folds A vector specifying the folds. Default is `NULL`, which randomly assigns folds.
 #' @param sample.X A number of variables sampled from X for the lamdba range estimate. Default is 1000.
@@ -63,7 +64,7 @@ globalVariables(c("rank", "MSE","SEM","label"))
 #' cor_Y_Yhat<-diag(cor(Y,Yhat)) # correlation
 #' summary(cor_Y_Yhat)
 
-rrda.cv <- function(Y, X, maxrank=NULL, lambda=NULL, nfold=5, folds = NULL, sample.X = 1000, sample.Y = 1000, scale.X = FALSE, scale.Y = FALSE, center.X = TRUE, center.Y = TRUE, verbose = TRUE){
+rrda.cv <- function(Y, X, maxrank=NULL, lambda=NULL, num.lambda=50, nfold=5, folds = NULL, sample.X = 1000, sample.Y = 1000, scale.X = FALSE, scale.Y = FALSE, center.X = TRUE, center.Y = TRUE, verbose = TRUE){
 
   Y_cont <- deparse(substitute(Y))
   X_cont <- deparse(substitute(X))
@@ -79,7 +80,7 @@ rrda.cv <- function(Y, X, maxrank=NULL, lambda=NULL, nfold=5, folds = NULL, samp
     warning("rank(B) must be less than or equal to rank(X) and rank(Y) \n")
   }
   if (is.null(lambda)){
-    lambda <- get_lambda(Y=Y,X=X,scale.X=scale.X, sample.X = sample.X, sample.Y = sample.Y)
+    lambda <- get_lambda(Y=Y,X=X,scale.X=scale.X, sample.X = sample.X, sample.Y = sample.Y,num.lambda=num.lambda)
   }
   if (any(lambda < 0)){
     stop("lambdas should be non-negative")
@@ -248,8 +249,9 @@ rrda.cv <- function(Y, X, maxrank=NULL, lambda=NULL, nfold=5, folds = NULL, samp
 #' @param sample.X A number of variables sampled from X for the lamdba range estimate. Default is 1000.
 #' @param sample.Y A number of variables sampled from Y for the lamdba range estimate. Default is 1000.
 #' @param scale.X Logical indicating if `X` is scaled. Default is `FALSE`.
+#' @param num.lambda A number of lambda generated. Default is 50.
 #' @return A numeric vector of the range of lambda values.
-get_lambda <- function(Y, X, scale.X = FALSE, sample.X = 1000, sample.Y = 1000) {
+get_lambda <- function(Y, X, scale.X = FALSE, sample.X = 1000, sample.Y = 1000, num.lambda = 50) {
   Y<-as.matrix(Y)
   X<-as.matrix(X)
   y_rate<- 1
@@ -273,7 +275,7 @@ get_lambda <- function(Y, X, scale.X = FALSE, sample.X = 1000, sample.Y = 1000) 
     result <- max(sqrt(tmp_sum)) / (nrow(Y) * 10^(-3))
   }
 
-  e<- 10^seq(-4,0, length.out = 50)
+  e<- 10^seq(-4,0, length.out = num.lambda)
   lambda_def<- result * e
   lambda_def<- signif(lambda_def,4)
   return(lambda_def)
