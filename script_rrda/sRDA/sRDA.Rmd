@@ -1,0 +1,234 @@
+---
+title: "sRDA vs rrda (Breast Cancer)"
+output: html_document
+author: "Hayato Yoshioka (University of Tokyo, AgroParisTech)"
+---
+
+# Overview. H.Yoshioka et al. (rrda package)
+
+sRDA vs rrda in Application of Breast Cancer 
+
+
+```{r}
+library(sRDA)
+library(ggplot2)
+library(caret)
+library(furrr)
+library(dplyr)
+library(ggplot2)
+library(reshape2)
+library(RSpectra)
+library(rrda)
+library(here)
+library(xtable)
+library(pheatmap)
+library(tictoc)
+source("script_rrda/functions_rrda_yoshioka.R")
+source("script_rrda/functions_stars_rrr_yoshioka.R")
+library(furrr)
+```
+
+To install breast cancer data from PMA (Witten et al. 2024)
+
+The data is also available on github https://github.com/Yoska393/rrda/tree/main/RDAdata)
+```{}
+library(PMA)
+da<-download_breast_data()
+```
+
+
+```{r,eval=T}
+base_path <- here("out", "sRDA")
+da<-readRDS(here("RDAdata","breast.RDS"))
+
+dir_path<-file.path(base_path, "breast")
+
+if (!dir.exists(dir_path)) {
+  dir.create(dir_path, recursive = TRUE)
+  message("Directory created: ", dir_path)
+} 
+
+dna<-t(da$dna)
+rna<-t(da$rna)
+
+X<-rna
+Y<-dna
+```
+
+
+
+# parameter search and compare with rrda
+```{r}
+set.seed(123)
+result_all <- run_parameter_selection(X, Y, split_times = 5, dir_path = dir_path,nonzero_vals = c(5,10,20,50,100),num_vals = c(1,2,3,4,5),lambda_vals = c(0.1,1,10,100))
+```
+
+
+```{r}
+mspe_result <- evaluate_models_mspe(X, Y, results = result_all)
+
+print(mspe_result$mspe_summary)
+time_result <- summarize_times(result_all)
+print(time_result)
+
+saveRDS(result_all,here(dir_path,"result_all.rds"))
+saveRDS(mspe_result ,here(dir_path,"mspe_all.rds"))
+saveRDS(time_result ,here(dir_path,"time_all.rds"))
+```
+
+
+```{r}
+result_all <- readRDS(here(dir_path, "result_all.rds"))
+mspe_result <- readRDS(here(dir_path, "mse_all.rds"))
+time_result_raw <- readRDS(here(dir_path, "time_all.rds"))
+
+print(mspe_result$mspe_summary)
+print(time_result_raw)
+```
+
+```{r}
+# Helper function to calculate mean and standard error
+mean_se <- function(x) {
+  m <- mean(x)
+  se <- sd(x) / sqrt(length(x))
+  return(c(mean = m, SE = se))
+}
+
+# Collect values from each method
+rrda_rank <- sapply(result_all$rrda[1:5], function(x) x$K)
+rrda_lambda <- sapply(result_all$rrda[1:5], function(x) x$lambda)
+
+ust_rank <- sapply(result_all$ust[1:5], function(x) x$best_num)
+ust_nonzero <- sapply(result_all$ust[1:5], function(x) x$best_nonzero)
+
+enet_rank <- sapply(result_all$enet[1:5], function(x) x$best_num)
+enet_nonzero <- sapply(result_all$enet[1:5], function(x) x$best_nonzero)
+enet_lambda <- sapply(result_all$enet[1:5], function(x) x$best_lambda)
+
+# Create summary matrix
+summary_matrix <- data.frame(
+  method = rep(c("rrda", "ust", "enet"), each = 3),
+  metric = c("rank", "nonzero", "lambda",
+             "rank", "nonzero", "lambda",
+             "rank", "nonzero", "lambda"),
+  mean = round(c(
+    mean_se(rrda_rank)[1],NA, mean_se(rrda_lambda)[1], 
+    mean_se(ust_rank)[1], mean_se(ust_nonzero)[1], NA,
+    mean_se(enet_rank)[1], mean_se(enet_nonzero)[1], mean_se(enet_lambda)[1]
+  ), 3),
+  SE = round(c(
+    mean_se(rrda_rank)[2], NA, mean_se(rrda_lambda)[2], 
+    mean_se(ust_rank)[2], mean_se(ust_nonzero)[2], NA,
+    mean_se(enet_rank)[2], mean_se(enet_nonzero)[2], mean_se(enet_lambda)[2]
+  ), 6)
+)
+
+print(summary_matrix, row.names = FALSE)
+
+
+```
+
+# sRDA ust
+
+```{r}
+results_summary <- readRDS(paste0(dir_path, "/ust.rds"))
+a <- readRDS(paste0(dir_path, "/time.rds"))
+print(a)
+
+# Sum of Absolute Correlations + Error Bar
+p1 <- ggplot(results_summary, aes(x = nonzero, y = mean_abs_corr_sum, color = factor(num))) +
+  geom_line() +
+  geom_point(size = 3) +
+  geom_errorbar(aes(ymin = mean_abs_corr_sum - se_abs_corr_sum,
+                    ymax = mean_abs_corr_sum + se_abs_corr_sum),
+                width = 0.5) +
+  labs(title = "sRDA-UST Sum of Absolute Correlations (CV=5)",
+       x = "Number of Nonzero α Coefficients",
+       y = "Mean Sum of Absolute Correlations",
+       color = "Number of LVs") +
+  theme_minimal()
+
+# Prediction MSE + Error Bar
+p2 <- ggplot(results_summary, aes(x = nonzero, y = mean_MSE, color = factor(num))) +
+  geom_line() +
+  geom_point(size = 3) +
+  geom_errorbar(aes(ymin = mean_MSE - se_mean_MSE,
+                    ymax = mean_MSE + se_mean_MSE),
+                width = 0.5) +
+  labs(title = "sRDA-UST Prediction MSE (CV=5)",
+       x = "Number of Nonzero α Coefficients",
+       y = "Mean Squared Error",
+       color = "Number of LVs") +
+  theme_minimal()
+
+# plot
+print(p1)
+print(p2)
+```
+
+
+# sRDA enet
+
+
+```{r}
+# Load sRDA-Enet results and computation time
+results_summary <- readRDS(paste0(dir_path, "/enet.rds"))
+a <- readRDS(paste0(dir_path, "/enettime.rds"))
+print(a)
+
+# Plot 1: Sum of Absolute Correlations + Error Bars
+p1 <- ggplot(results_summary, aes(x = nonzero, y = mean_abs_corr_sum,
+                                  color = factor(num), linetype = factor(lambda))) +
+  geom_line() +
+  geom_point(size = 3) +
+  geom_errorbar(aes(ymin = mean_abs_corr_sum - se_abs_corr_sum,
+                    ymax = mean_abs_corr_sum + se_abs_corr_sum),
+                width = 0.5) +
+  labs(title = "sRDA-Enet Sum of Absolute Correlations (CV=5)",
+       x = "Number of Nonzero α Coefficients",
+       y = "Mean Sum of Absolute Correlations",
+       color = "Number of LVs",
+       linetype = "Lambda") +
+  theme_minimal()
+
+# Plot 2: Prediction MSE + Error Bars
+p2 <- ggplot(results_summary, aes(x = nonzero, y = mean_MSE,
+                                  color = factor(num), linetype = factor(lambda))) +
+  geom_line() +
+  geom_point(size = 3) +
+  geom_errorbar(aes(ymin = mean_MSE - se_mean_MSE,
+                    ymax = mean_MSE + se_mean_MSE),
+                width = 0.5) +
+  labs(title = "sRDA-Enet Prediction MSE (CV=5)",
+       x = "Number of Nonzero α Coefficients",
+       y = "Mean Squared Error",
+       color = "Number of LVs",
+       linetype = "Lambda") +
+  theme_minimal()
+
+# Display plots
+print(p1)
+print(p2)
+
+```
+
+
+```{r}
+results_summary<-readRDS(paste0(dir_path, "/enet.rds"))
+
+```
+
+
+computation time for once
+```{}
+one_time <- benchmark_noCV(X, Y, repeat_times = 5, num = 3, nonzero = 100, lambda = 1)
+print(one_time)
+```
+
+
+
+# session info
+check the info and environment
+```{r}
+devtools::session_info()
+```

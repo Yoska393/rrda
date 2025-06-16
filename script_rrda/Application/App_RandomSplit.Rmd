@@ -1,0 +1,390 @@
+---
+title: "Application : Random Splitting on Application Data"
+output: html_document
+author: "Hayato Yoshioka (University of Tokyo, AgroParisTech)"
+---
+
+# Overview. H.Yoshioka et al. (rrda package)
+
+Compare the rrda and stars, and other general criteria for parameter tuning and test to compute MSPE
+For applications (Breast Cancer (ch13, ch all), Soybean, Methylation)
+
+
+# functions
+```{r}
+library(furrr)
+library(dplyr)
+library(ggplot2)
+library(reshape2)
+library(RSpectra)
+library(rrda)
+library(here)
+library(xtable)
+library(pheatmap)
+library(tictoc)
+source("script_rrda/functions_rrda_yoshioka.R")
+source("script_rrda/functions_stars_rrr_yoshioka.R")
+```
+
+
+# chrom 13 only
+```{r,eval=T}
+da<-readRDS(here("RDAdata","breast.RDS"))
+base_path <- here("out", "BreastCancer")
+dir_path <- file.path(base_path, "aic_ch13")
+
+if (!dir.exists(dir_path)) {
+  dir.create(dir_path, recursive = TRUE)
+  message("Directory created: ", dir_path)
+} 
+
+dna<-t(da$dna)
+rna<-t(da$rna)
+dch<-da$chrom
+rch<-da$genechr
+rch[is.na(rch)]<-0
+
+Y<-dna[,dch==13]
+X<-rna[,rch==13]
+```
+
+make rabdom sampling rule
+make lambda accoring to rrr (and stars)
+
+```{R,eval=F}
+set.seed(123)
+
+rn_list <- list()
+
+for (k in 1:100) {
+  rn_list[[k]] <- sample(c(1:nrow(Y)), 10, replace = FALSE)
+}
+saveRDS(rn_list,file.path(base_path, "rn_list.RDS"))
+lm<-get_lambda_stars(dir_path, rn_list, Y=Y, X=X) 
+
+```
+
+
+criteria comparison (stars included)
+```{r,eval=F}
+set.seed(123)
+
+lm<-readRDS(file.path(dir_path, "aic_lambda.RDS"))
+rn_list <-readRDS(file.path(base_path, "rn_list.RDS"))
+
+Lambda<-rrr_lambda(Y = Y, X = X)
+criteria_test_all(Y=Y,X=X,Lambda=Lambda,dir_path=dir_path,maxrank=10)
+
+criteria_test(Y=Y,X=X,num=100,Lambda=NULL,rn_list=rn_list,lm=lm,dir_path=dir_path,maxrank=10)
+#criteria_fit(Y=Y,X=X,num=100,Lambda=NULL,rn_list=rn_list,lm=lm,dir_path=dir_path,maxrank=15)
+rsbc_test(Y=Y,X=X,save=dir_path)
+tp(save=dir_path)
+```
+
+results
+```{r}
+base_path <- here("out", "BreastCancer")
+dir_path <- file.path(base_path, "aic_ch13")
+res<-readRDS(file.path(base_path,"aic_ch13", "criteria.RDS"))
+
+res<-res[c(1,2,3,4,5,7,6),c(1,4,5,6,7,11,12,8,9)]
+res<-t(res)
+res
+for (s in c(2,3,6,7)){
+	res[s,]<-rd(res[s,],2)
+}
+
+for (s in c(4,5,8,9)){
+	res[s,]<-fd(res[s,],3)
+}
+
+for (s in c(3,5,7,9)) {
+  res[s, ] <- paste0("(", res[s, ], ")")
+}
+
+xtable(res)
+
+res<-readRDS(file.path(base_path,"aic_ch13", "criteria_alldata.RDS"))
+res<-res[c(1,2,3,4,5,7,6),]
+res<-t(res)
+
+for (s in c(2)){
+	res[s,]<-rd(res[s,],2)
+}
+
+for (s in c(3,4)){
+	res[s,]<-fd(res[s,],3)
+}
+
+xtable(res)
+tp(save=dir_path)
+
+```
+
+#ch all
+
+```{R}
+da<-readRDS(here("RDAdata","breast.RDS"))
+base_path <- here("out", "BreastCancer")
+dir_path <- file.path(base_path, "aic_all")
+
+if (!dir.exists(dir_path)) {
+  dir.create(dir_path, recursive = TRUE)
+  message("Directory created: ", dir_path)
+} 
+
+dna<-t(da$dna)
+rna<-t(da$rna)
+dch<-da$chrom
+rch<-da$genechr
+rch[is.na(rch)]<-0
+
+Y<-dna
+X<-rna
+```
+
+make rabdom sampling rule
+make lambda accoring to rrr (and stars)
+```{R,eval=F}
+set.seed(123)
+
+rn_list <- list()
+
+for (k in 1:100) {
+  rn_list[[k]] <- sample(c(1:nrow(Y)), 10, replace = FALSE)
+}
+saveRDS(rn_list,file.path(base_path, "rn_list.RDS"))
+lm<-get_lambda_stars(dir_path, rn_list, Y=Y, X=X) 
+```
+
+all and rs
+```{r,eval=F}
+set.seed(123)
+
+rn_list <-readRDS(file.path(base_path, "rn_list.RDS"))
+lm<-readRDS(file.path(dir_path, "aic_lambda.RDS"))
+
+Lambda<-rrr_lambda(Y = Y, X = X)
+criteria_test_all(Y=Y,X=X,Lambda=Lambda,dir_path=dir_path,maxrank=40)
+
+#criteria_test(Y=Y,X=X,num=100,Lambda=NULL,rn_list=rn_list,lm=lm,dir_path=dir_path,maxrank=63,criteria= c("AIC", "BIC", "GIC", "BICP", "GCV","rrda"))
+criteria_test(Y=Y,X=X,num=100,Lambda=NULL,rn_list=rn_list,lm=lm,dir_path=dir_path,maxrank=63)
+#criteria_fit(Y=Y,X=X,num=100,Lambda=NULL,rn_list=rn_list,lm=lm,dir_path=dir_path,maxrank=63)
+rsbc_test(Y=Y,X=X,save=dir_path)
+tp(save=dir_path)
+```
+
+all and rs stars
+```{r}
+set.seed(123)
+
+rn_list <-readRDS(file.path(base_path, "rn_list.RDS"))
+lm<-readRDS(file.path(dir_path, "aic_lambda.RDS"))
+dir_path <- file.path(base_path, "aic_all/stars")
+
+criteria_test(Y=Y,X=X,num=100,Lambda=NULL,rn_list=rn_list,lm=lm,dir_path=dir_path,maxrank=63,criteria= c("StARS"))
+
+```
+
+table
+```{r}
+base_path <- here("out", "BreastCancer")
+dir_path <- file.path(base_path, "aic_all")
+
+res<-readRDS(file.path(base_path,"aic_all", "criteria.RDS"))
+res<-res[c(1,2,3,4,5,7,6),c(1,4,5,6,7,11,12,8,9)]
+res<-t(res)
+for (s in c(2,3,6,7)){
+	res[s,]<-rd(res[s,],2)
+}
+
+for (s in c(4,5,8,9)){
+	res[s,]<-fd(res[s,],3)
+}
+for (s in c(3,5,7,9)) {
+  res[s, ] <- paste0("(", res[s, ], ")")
+}
+
+
+xtable(res)
+
+res<-readRDS(file.path(base_path,"aic_all", "criteria_alldata.RDS"))
+#res<-res[,c(1,4,5,6,7,11,12,8,9)]
+res<-res[c(1,2,3,4,5,7,6),]
+res<-t(res)
+
+for (s in c(2)){
+	res[s,]<-rd(res[s,],2)
+}
+
+for (s in c(3,4)){
+	res[s,]<-fd(res[s,],3)
+}
+
+
+#res
+xtable(res)
+
+
+tp(save=dir_path)
+
+```
+
+
+# soybean
+
+```{r}
+base_path <- here("out", "Soy")
+dir_path <- file.path(base_path, "aic")
+
+if (!dir.exists(dir_path)) {
+  dir.create(dir_path, recursive = TRUE)
+  message("Directory created: ", dir_path)
+} 
+
+SoyData<-readRDS(here("RDAdata","Soydata.RDS"))
+met <- SoyData$metabolome
+micro <- SoyData$microbiome
+
+Y <- met
+X <- micro
+```
+
+
+```{r}
+set.seed(123)
+rn_list <- list()
+
+for (k in 1:100) {
+  rn_list[[k]] <- sample(c(1:nrow(X)), 20, replace = FALSE)
+}
+saveRDS(rn_list,file.path(base_path, "rn_list.RDS"))
+lm<-get_lambda_stars(dir_path, rn_list, Y=Y, X=X) 
+```
+
+```{r}
+set.seed(123)
+
+rn_list <-readRDS(file.path(base_path, "rn_list.RDS"))
+lm<-readRDS(file.path(dir_path, "aic_lambda.RDS"))
+
+Lambda<-rrr_lambda(Y = Y, X = X)
+criteria_test_all(Y=Y,X=X,Lambda=Lambda,dir_path=dir_path,maxrank=20)
+
+criteria_test(Y=Y,X=X,num=100,Lambda=NULL,rn_list=rn_list,lm=lm,dir_path=dir_path,maxrank=20)
+#criteria_fit(Y=Y,X=X,num=100,Lambda=NULL,rn_list=rn_list,lm=lm,dir_path=dir_path,maxrank=20)
+rsbc_test(Y=Y,X=X,save=dir_path)
+tp(save=dir_path)
+```
+
+```{r}
+base_path <- here("out", "Soy")
+res<-readRDS(file.path(base_path,"aic", "criteria.RDS"))
+dir_path <- file.path(base_path, "aic")
+
+res<-res[c(1,2,3,4,5,7,6),c(1,4,5,6,7,11,12,8,9)]
+res<-t(res)
+
+
+for (s in c(2,3,6,7)){
+	res[s,]<-rd(res[s,],2)
+}
+
+for (s in c(4,5,8,9)){
+	res[s,]<-fd(res[s,],3)
+}
+
+for (s in c(3,5,7,9)) {
+  res[s, ] <- paste0("(", res[s, ], ")")
+}
+
+
+xtable(res)
+
+res<-readRDS(file.path(base_path,"aic", "criteria_alldata.RDS"))
+#res<-res[,c(1,4,5,6,7,11,12,8,9)]
+res<-res[c(1,2,3,4,5,7,6),]
+res<-t(res)
+
+for (s in c(2)){
+	res[s,]<-rd(res[s,],2)
+}
+
+for (s in c(3,4)){
+	res[s,]<-fd(res[s,],3)
+}
+
+
+xtable(res)
+tp(save=dir_path)
+```
+
+# methylation
+
+But the rrr function (from rrpack package) or StARS dont work with this size of data because its more than memory 64GB.
+
+```{r}
+MethData<-readRDS(here("RDAdata","Methdata.RDS"))
+base_path <- here("out", "Meth")
+dir_path <- file.path(base_path, "aic")
+
+if (!dir.exists(dir_path)) {
+  dir.create(dir_path, recursive = TRUE)
+  message("Directory created: ", dir_path)
+} 
+
+gexp <- MethData$gexp
+methy <- MethData$methy
+
+Y <- gexp
+X <- methy
+```
+
+Error: vector memory limit of 64.0 Gb reached, see mem.maxVSize()
+
+```{r}
+set.seed(123)
+rn_list <- list()
+
+for (k in 1:nrow(X)) {
+  rn_list[[k]] <- k
+}
+saveRDS(rn_list,file.path(base_path, "rn_list.RDS"))
+lm<-get_lambda_stars(dir_path, rn_list, Y=Y, X=X) 
+
+```
+
+```{r}
+set.seed(123)
+
+rn_list <-readRDS(file.path(base_path, "rn_list.RDS"))
+lm<-readRDS(file.path(dir_path, "aic_lambda.RDS"))
+
+Lambda<-rrr_lambda(Y = Y, X = X)
+criteria_test_all(Y=Y,X=X,Lambda=Lambda,dir_path=dir_path,maxrank=20)
+
+criteria_test(Y=Y,X=X,num=100,Lambda=NULL,rn_list=NULL,lm=NULL,dir_path=dir_path,maxrank=15,oneout=T)
+
+```
+only rrdaworks..
+```{R}
+set.seed(123)
+save <- file.path(base_path,"RS_mm")
+
+Y<-gexp
+X<-methy
+#Lambda <- 10^seq(0, 6, length.out = 50)
+rsbc(Y=Y,X=X,num=20,maxrank=15,save=save,sample=1,Lambda=NULL,oneout = T,nfold=5)
+
+```
+
+
+```{R}
+tp(save=save)
+```
+
+# session info
+check the info and environment
+```{r}
+devtools::session_info()
+```
