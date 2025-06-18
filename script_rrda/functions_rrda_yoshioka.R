@@ -2,6 +2,61 @@
 # Functions used for analysis of rrda simulations and applications. (Yoshioka et al.)
 # These functions are used for facilitating the computation and make figures and tables.
 
+
+rrda.topheat<-function(cv_result,Y,X,mx=20,my=20){
+	# Extract optimal lambda and rank
+	L <- cv_result$opt_min$lambda
+	K <- cv_result$opt_min$rank
+	
+	# Fit the model using the optimal lambda and rank
+	b <- rrda.fit(Y = Y, X = X, lambda = L, nrank = K)
+	
+	b1<-b$Bhat_comp[[1]][[1]]
+	b2<-b$Bhat_comp[[1]][[2]]
+	
+	rownames(b1)<-colnames(X)
+	rownames(b2)<-colnames(Y)
+	
+	x_scores <- apply(b1, 1, function(row) sqrt(sum(row^2)))
+	top_x_idx <- order(x_scores, decreasing = TRUE)[1:mx]  # so that it becomes 30 variables afetr filtering
+	
+	y_scores <- apply(b2, 1, function(row) sqrt(sum(row^2)))
+	top_y_idx <- order(y_scores, decreasing = TRUE)[1:my] # so that it becomes 30 variables afetr filtering
+	
+	b1_sub <- b1[top_x_idx, , drop = FALSE]  
+	b2_sub <- b2[top_y_idx, , drop = FALSE]  
+	
+	B_sub <- b1_sub %*% t(b2_sub)
+	
+	
+	max_value <- max(h, na.rm = TRUE)
+	min_value <- min(h, na.rm = TRUE)
+	
+	custom_colors <- colorRampPalette(c("blue", "white", "red"))(200)
+	max_abs_value <- max(abs(c(min_value, max_value)))
+	breaks <- seq(-max_abs_value, max_abs_value, length.out = 201)
+	
+	h<-B_sub 
+	
+	pheatmap(h,
+					 color = custom_colors,
+					 breaks = breaks,
+					 border_color = NA,
+					 #scale = "row",
+					 clustering_distance_rows = "euclidean",
+					 clustering_distance_cols = "euclidean",
+					 clustering_method = "complete",
+					 show_rownames = TRUE,
+					 show_colnames = TRUE,
+					 fontsize_row = 8,
+					 fontsize_col =8,
+					 width = 10,
+					 height = 15
+	)
+	
+}
+
+
 rsbc_test <- function(Y,X,save,oneout=F){
 	
 	file_path <- file.path(save, "cv.RDS")
@@ -1505,6 +1560,67 @@ plot_evaluate_by_true_rank2 <- function(data_list, rdasim, size, n_iterations) {
 }
 
 
+plot_evaluate_by_true_rank3 <- function(data_list, rdasim, size, n_iterations) {
+	results_list <- data_list$esR_vector
+	methods <- names(results_list[[1]])
+	
+	k_list <- data_list$k_list
+	unique_k <- sort(unique(k_list))
+	
+	# Initialize accuracy matrix with extra column for "Overall"
+	accuracy_matrix <- matrix(NA, nrow = length(methods), ncol = length(unique_k) + 1)
+	rownames(accuracy_matrix) <- methods
+	colnames(accuracy_matrix) <- c(paste0("k=", unique_k), "Overall")
+	
+	for (method in methods) {
+
+		esR_vector <- sapply(results_list, function(x) x[[method]]$rank)
+		esR_vector[is.na(esR_vector)] <- 0
+		
+		# Per-k accuracy
+		for (j in seq_along(unique_k)) {
+			true_k <- unique_k[j]
+			idx <- which(k_list == true_k)
+			predmean <- mean(esR_vector[idx])
+			accuracy_matrix[method, j] <- round(predmean , 1)
+			
+		}
+		
+		# Overall accuracy
+		overall_predmean <- mean(esR_vector) 
+		accuracy_matrix[method, length(unique_k) + 1] <- round(overall_predmean, 1)
+	}
+	
+	# Return as data frame for easy viewing
+	accuracy_df <- as.data.frame(accuracy_matrix)
+	return(accuracy_df)
+}
+
+plot_evaluate_by_true_rank4 <- function(data_list, rdasim, size, n_iterations) {
+	results_list <- data_list$esR_vector
+	methods <- names(results_list[[1]])
+	
+	k_list <- data_list$k_list
+	unique_k <- sort(unique(k_list))
+	
+	# Initialize output list
+	output_list <- list()
+	
+	for (k_val in unique_k) {
+		idx <- which(k_list == k_val)
+		output_list[[paste0("k=", k_val)]] <- list()
+		
+		for (method in methods) {
+			# extract ranks predicted by current method at this k
+			ranks <- sapply(results_list[idx], function(x) x[[method]]$rank)
+			ranks[is.na(ranks)] <- 0  # optional: replace NA with 0 or keep as NA
+			output_list[[paste0("k=", k_val)]][[method]] <- ranks
+		}
+	}
+	
+	return(output_list)
+}
+
 plot_all <- function(data_list, rdasim, size, n_iterations) {
 	# pull out your list of per-simulation results
 	results_list <- data_list$esR_vector
@@ -2050,4 +2166,3 @@ benchmark_noCV <- function(X, Y, repeat_times = 5, num = 3, nonzero = 100, lambd
 	
 	return(summary_df)
 }
-
