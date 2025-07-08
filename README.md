@@ -66,11 +66,10 @@ When you see the Bhat, you will see the list composed of each lambda. In each la
 If you want to plot X and Y matrix in two-dimensional space (like classic RDA approach) :
 
 ```r
-# You want to specify one lambda in `rrda.fit` to visualize (if not, you can also specify the location afterward)
-Bhat <- rrda.fit(Y = Y, X = X, nrank = c(1:5), lambda = c(0.1,1,10,100))
+# You want to specify one lambda in `rrda.fit` to visualize
 
-ud<-Bhat$Bhat_comp$lambda100[[1]] #you can also specify the location if you have multiple lambda
-v <-Bhat$Bhat_comp$lambda100[[2]] #you can also specify the location if you have multiple lambda
+ud<-Bhat$Bhat_comp$lambda100[[1]] # SVD component of B (UD)
+v <-Bhat$Bhat_comp$lambda100[[2]] # SVD component of B (V)
 
 ud12 <- ud[, 1:2]
 v12 <- v[, 1:2]
