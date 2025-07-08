@@ -89,7 +89,7 @@ arrows(0, 0, ud12[,1], ud12[,2], col = "blue3", length = 0.1)
 text(ud12, labels = paste0("X", 1:nrow(ud12)), pos = 3, col = "blue3", cex = 0.6)
 text(v12, labels = paste0("Y", 1:nrow(v12)), pos = 3, col = "darkgreen", cex = 0.6)
 ```
-<img src="image/rrda_two.png" width="500" >
+<img src="image/rrda_2dim.png" width="500" >
 
 If you want to have a matrix form of B, you can perform:
 
