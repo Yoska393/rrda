@@ -67,28 +67,28 @@ If you want to plot X and Y matrix in two-dimensional space (like classic RDA ap
 
 ```r
 # You want to specify one lambda in `rrda.fit` to visualize (if not, you can also specify the location afterward)
-Bhat_lambda0.1 <- rrda.fit(Y = Y, X = X, nrank = c(1:5), lambda = c(0.1))
+Bhat <- rrda.fit(Y = Y, X = X, nrank = c(1:5), lambda = c(0.1,1,10,100))
 
-ud<-Bhat[[1]][[1]][[1]] #you can also specify the location if you have multiple lambda
-v<-Bhat[[1]][[1]][[2]]  #you can also specify the location if you have multiple lambda
+ud<-Bhat$Bhat_comp$lambda100[[1]] #you can also specify the location if you have multiple lambda
+v <-Bhat$Bhat_comp$lambda100[[2]] #you can also specify the location if you have multiple lambda
 
 ud12 <- ud[, 1:2]
 v12 <- v[, 1:2]
 
 # Base plot: ud (e.g., site scores)
-plot(ud12, 
-     xlab = "RRDA1", ylab = "RRDA2", 
+plot(v12, 
+     xlab = "RDA1", ylab = "RDA2", 
      xlim = range(c(ud12[,1], v12[,1])) * 1.1, 
      ylim = range(c(ud12[,2], v12[,2])) * 1.1, 
-     pch = 19, col = "blue", 
-     main = "rrda results (2 dimensions)")
+     pch = 19, col = "darkgreen", 
+     main = "RDA")
 
 # Add v (e.g., species scores) as arrows from origin
-arrows(0, 0, v12[,1], v12[,2], col = "red", length = 0.1)
+arrows(0, 0, ud12[,1], ud12[,2], col = "blue3", length = 0.1)
 
 # Optionally add text labels
-text(ud12, labels = paste0("X", 1:nrow(ud12)), pos = 3, col = "blue", cex = 0.8)
-text(v12, labels = paste0("Y", 1:nrow(v12)), pos = 3, col = "red", cex = 0.8)
+text(ud12, labels = paste0("X", 1:nrow(ud12)), pos = 3, col = "blue3", cex = 0.6)
+text(v12, labels = paste0("Y", 1:nrow(v12)), pos = 3, col = "darkgreen", cex = 0.6)
 ```
 <img src="image/rrda_two.png" width="500" >
 
