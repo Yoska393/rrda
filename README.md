@@ -76,7 +76,7 @@ v12 <- v[, 1:2]
 
 # Base plot: ud (e.g., site scores)
 plot(v12, 
-     xlab = "RDA1", ylab = "RDA2", 
+     xlab = "RRDA1", ylab = "RRDA2", 
      xlim = range(c(ud12[,1], v12[,1])) * 1.1, 
      ylim = range(c(ud12[,2], v12[,2])) * 1.1, 
      pch = 19, col = "darkgreen", 
