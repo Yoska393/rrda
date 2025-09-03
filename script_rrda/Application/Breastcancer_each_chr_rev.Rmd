@@ -1,0 +1,243 @@
+---
+title: "Application : Breast Cancer (Model comparison of All to each chromosome and each to each chromosome)"
+output: html_document
+author: "Hayato Yoshioka (University of Tokyo, AgroParisTech)"
+---
+
+# Overview. H.Yoshioka et al. (rrda package)
+
+Breast cancer data
+Model comparison of All to each chromosome and each to each chromosome
+
+# functions
+```{r}
+library(furrr)
+library(dplyr)
+library(ggplot2)
+library(reshape2)
+library(RSpectra)
+library(rrda)
+library(PMA)
+library(here)
+library(xtable)
+library(pheatmap)
+library(tictoc)
+source("script_rrda/functions_rrda_yoshioka.R")
+source("script_rrda/functions_stars_rrr_yoshioka.R")
+```
+To install breast cancer data from PMA (Witten et al. 2024)
+
+The data is also available on github https://github.com/Yoska393/rrda/tree/main/RDAdata)
+```{}
+library(PMA)
+da<-download_breast_data()
+```
+
+
+# data
+```{r,eval=T}
+
+da<-readRDS(here("RDAdata","breast.RDS"))
+
+dna<-t(da$dna)
+rna<-t(da$rna)
+dch<-da$chrom
+rch<-da$genechr
+table(is.na(rch))
+table(is.na(dch))
+rch[is.na(rch)]<-0
+
+dim(dna)
+dim(rna)
+length(dch)
+length(rch)
+
+```
+
+The model comparison
+Whole genome to each chromosome model vs Each cheromosome to each chromosome.
+Tested for 100 times by random splitting process (10 sampling for test)
+Performed for 23 chromosomes
+
+```{r,warning=F,eval=F}
+set.seed(123)
+chr_numbers <- 1:23
+
+# Base path for saving results
+base_path <- here("out", "BreastCancer_rev")
+
+for (chr in chr_numbers) {
+	print(chr)
+  # Paths for the current chromosome
+  path_allto_chr <- file.path(base_path, paste0("allto_chr", chr))
+  path_chr <- file.path(base_path, paste0("chr", chr))
+  
+  if (!dir.exists(path_allto_chr)) {
+    dir.create(path_allto_chr, recursive = TRUE)
+  }
+  if (!dir.exists(path_chr)) {
+    dir.create(path_chr, recursive = TRUE)
+  }
+  
+  # Execute rsbc function for each dynamic path
+  rsbc_quick(X = dna, Y = rna[, rch == chr], num = 100, maxrank = 15, save = path_allto_chr,sample=10)
+  rsbc_quick(X = dna[, dch == chr], Y = rna[, rch == chr], num = 100, maxrank = 15, save = path_chr,sample=10)
+
+  # Compare the results from both paths
+  compare(path_allto_chr, path_chr, num=100,chr = chr)
+}
+```
+
+
+Results details
+```{r,warning=FALSE,fig.width=6,fig.height=6}
+set.seed(123)
+chr_numbers <- 1:23
+num<-100
+
+base_path <- here("out", "BreastCancer_rev")
+chm<-matrix(NA,num,max(chr_numbers))
+cham<-matrix(NA,num,max(chr_numbers))
+chm_mspe<-matrix(NA,num,max(chr_numbers))
+cham_mspe<-matrix(NA,num,max(chr_numbers))
+for (chr in chr_numbers) {
+  # Paths for the current chromosome
+  path_allto_chr <- file.path(base_path, paste0("allto_chr", chr))
+  path_chr <- file.path(base_path, paste0("chr", chr))
+  
+  if (!dir.exists(path_allto_chr)) {
+    dir.create(path_allto_chr, recursive = TRUE)
+  }
+  if (!dir.exists(path_chr)) {
+    dir.create(path_chr, recursive = TRUE)
+  }
+  tp(path_allto_chr)
+  f<- compare(path_allto_chr, path_chr, num=num,chr = chr,model = 1)
+  #print(f)
+  chm[,chr]<- f$ch
+  cham[,chr]<-f$ch_all
+  
+  chm_mspe[,chr]<- f$ch_mspe
+  cham_mspe[,chr]<-f$ch_all_mspe
+  
+}
+```
+
+Boxplot of results. Only chromosome 7 was better with the whole genome data.
+In general, the model is better when trained and tested within the chromosome.
+```{r,fig.width=10,fig.height=5}
+df_chm <- as.data.frame(chm)
+df_cham <- as.data.frame(cham)
+names(df_chm) <- paste0(1:23)
+names(df_cham) <- paste0(1:23)
+df_chm$group <- 'Chr to Chr'
+df_cham$group <- 'Whole to Chr'
+combined_df <- rbind(df_chm, df_cham)
+melted_df <- melt(combined_df, id.vars='group')
+ggplot(melted_df, aes(x=variable, y=value, fill=group)) +
+  geom_boxplot(outlier.shape = NA) +
+  theme_minimal() +
+  labs(title="COR (Chr all vs Chr each)", x="Chromosome", y="COR") +
+  scale_fill_manual(values=c("gray85", "#228B22"))
+
+```
+MSPE
+
+```{r,fig.width=10,fig.height=5}
+df_chm <- as.data.frame(chm_mspe)
+df_cham <- as.data.frame(cham_mspe)
+names(df_chm) <- paste0(1:23)
+names(df_cham) <- paste0(1:23)
+df_chm$group <- 'Chr-Chr'
+df_cham$group <- 'All-Chr'
+combined_df <- rbind(df_chm, df_cham)
+combined_df$group <- factor(combined_df$group, levels = c("Chr-Chr", "All-Chr"))
+melted_df <- melt(combined_df, id.vars='group')
+ggplot(melted_df, aes(x=variable, y=value, fill=group)) +
+  geom_boxplot(outlier.shape = NA) +
+  theme_minimal() +
+	#coord_cartesian(ylim = c(-5, 15)) + 
+  labs(title="", x="Chromosome", y="MSPE") +
+  scale_fill_manual(values=c("gray85", "#228B22"))
+
+```
+
+```{r}
+chm_mspe_2<-chm_mspe
+cham_mspe_2<-cham_mspe
+```
+
+`
+```{r,fig.width=13,fig.height=5}
+library(ggplot2)
+library(reshape2)
+library(patchwork)
+
+
+df_chm <- as.data.frame(chm_mspe_1)
+df_cham <- as.data.frame(cham_mspe_1)
+names(df_chm) <- paste0(1:23)
+names(df_cham) <- paste0(1:23)
+df_chm$group <- 'Chr-Chr'
+df_cham$group <- 'All-Chr'
+combined_df <- rbind(df_chm, df_cham)
+combined_df$group <- factor(combined_df$group, levels = c("Chr-Chr", "All-Chr"))
+melted_df <- melt(combined_df, id.vars = 'group')
+
+p1 <- ggplot(melted_df, aes(x = variable, y = value, fill = group)) +
+  geom_boxplot(outlier.shape = NA) +
+  theme_minimal() +
+  coord_cartesian(ylim = c(0, 0.16)) + 
+  labs(title = "Expression-to-CNV", x = "Chromosome", y = "MSPE") +
+  scale_fill_manual(values = c("gray85", "#228B22")) +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    axis.title.x = element_text(size = 14),
+    axis.title.y = element_text(size = 14),
+    axis.text.x = element_text(size = 12),
+    axis.text.y = element_text(size = 12),
+    legend.text = element_text(size = 14),
+    legend.title = element_text(size = 0),
+     legend.position = "bottom"  # ← レジェンド非表示
+  )
+
+
+df_chm <- as.data.frame(chm_mspe_2)
+df_cham <- as.data.frame(cham_mspe_2)
+names(df_chm) <- paste0(1:23)
+names(df_cham) <- paste0(1:23)
+df_chm$group <- 'Chr-Chr'
+df_cham$group <- 'All-Chr'
+combined_df <- rbind(df_chm, df_cham)
+combined_df$group <- factor(combined_df$group, levels = c("Chr-Chr", "All-Chr"))
+melted_df <- melt(combined_df, id.vars = 'group')
+
+p2 <- ggplot(melted_df, aes(x = variable, y = value, fill = group)) +
+  geom_boxplot(outlier.shape = NA) +
+  theme_minimal() +
+  labs(title = "CNV-to-Expression", x = "Chromosome", y = "MSPE") +
+  scale_fill_manual(values = c("gray85", "#228B22")) +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    axis.title.x = element_text(size = 14),
+    axis.title.y = element_text(size = 14),
+    axis.text.x = element_text(size = 12),
+    axis.text.y = element_text(size = 12),
+    legend.text = element_text(size = 14),
+    legend.title = element_text(size =0),
+    legend.position = "bottom" 
+  )
+
+#p1
+
+#p2
+
+p1 + p2 
+
+```
+
+# session info
+check the info and environment
+```{r}
+devtools::session_info()
+```

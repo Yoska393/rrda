@@ -1,0 +1,1137 @@
+---
+title: "Senario 2 : Rank Estimate Evaluation on Simulation Data with RRDA"
+output: html_document
+author: "Hayato Yoshioka (University of Tokyo, AgroParisTech)"
+---
+
+# Overview. H.Yoshioka et al. (rrda package)
+
+Senario 2
+
+Here, we perform rank evaluation for simulation data sets.
+We test various n,p,q,k parameters for the data generation
+
+We evaluate the model by checking the percentage of the right rank estimation and the correlation between true and estimated rank.
+
+Test all combinations of
+n = c(100,200),
+pq = c(50, 100, 200,500),
+k = c(2, 5, 10)
+
+For each, 20 iterations.
+
+# package
+```{r}
+library(furrr)
+library(dplyr)
+library(ggplot2)
+library(reshape2)
+library(RSpectra)
+library(rrda)
+library(xtable)
+library(purrr) 
+library(here)
+library(progress)
+source("script_rrda/functions_rrda_yoshioka.R")
+source("script_rrda/functions_stars_rrr_yoshioka.R")
+library(furrr)
+library(dplyr)
+library(ggplot2)
+library(reshape2)
+library(RSpectra)
+library(rrda)
+library(here)
+library(xtable)
+library(pheatmap)
+library(tictoc)
+library(tidyr)
+library(tibble)
+library(here)
+library(xtable)
+library(rrpack)
+
+```
+
+# s2n 1 (mid noise)
+Create the folder for saving
+```{r}
+dir_path<- here("out/eval_1")
+
+if (!dir.exists(dir_path)) {
+  dir.create(dir_path, recursive = TRUE)
+  message("Directory created: ", dir_path)
+}
+
+```
+
+```{r}
+rdasim1<- function(n,p,q,k,s2n = c(1, 1)){
+  H  <- matrix(stats::rnorm(n = n*k, mean = 0, sd = 1),n,k)
+  
+  theta.x  <- matrix(stats::rnorm(n = k*p, mean = 0, sd = 1),k,p)
+  noise.x <-  matrix(stats::rnorm(n = n*p, mean = 0, sd = 1),n,p)
+  
+  signal.x <- H %*% theta.x
+  sigma.x <- sqrt(sum(signal.x^2) / (sum(noise.x^2) * s2n[1]))
+  noise.x <- sigma.x * noise.x
+
+  X  <- signal.x + noise.x
+  
+  theta.y  <- matrix(stats::rnorm(n = k*q, mean = 0, sd = 1),k,q)
+  noise.y  <- matrix(stats::rnorm(n = n*q, mean = 0, sd = 1),n,q)
+  
+  signal.y <- H %*% theta.y
+  sigma.y <- sqrt(sum(signal.y^2) / (sum(noise.y^2) * s2n[2]))
+  noise.y <- sigma.y * noise.y
+
+
+  Y  <- signal.y + noise.y
+
+  return(list(X=X,Y=Y,H=H,theta.y=theta.y))
+}
+
+rdasim2<- function(n,p,q,k,s2n=1,xofd=0){
+  cov <- matrix(xofd, nrow = p, ncol = p)
+  diag(cov) <- 1
+  X  <- MASS::mvrnorm(n, rep(0, p), cov)
+
+  A <- matrix(stats::rnorm(n = p * k, mean = 0, sd = 1), p, k)
+  A <- apply(A, 2, function(col) col / sqrt(sum(col^2)))
+  C <- matrix(stats::rnorm(n = k * q, mean = 0, sd = 1), k, q)
+  C <- apply(C, 2, function(col) col / sqrt(sum(col^2)))
+
+  B  <- crossprod(t(A),C)
+  E  <- matrix(stats::rnorm(n = n*q, mean = 0, sd = 1),n,q)
+  XB <- crossprod(t(X),B)
+  sigma <- sqrt(sum(XB^2) / (sum(E^2) * s2n))
+  E  <- E * sigma
+  Y <- XB + E
+  return(list(X=X,Y=Y,B=B,E=E))
+}
+
+
+```
+
+# simulation run 
+2 types of simulations and 2 size of n, 3 size of p and q, 3 size of r
+
+```{r,eval=F}
+set.seed(123)
+
+n_iterations=20
+# Define your conditions
+simulations <- c("sim1","sim2")
+sizes <- c( "small","large")
+
+#simulations <- c("sim2")
+#sizes <- c("large")
+
+# Loop over each combination
+for (sim in simulations) {
+
+  for (size in sizes) {
+    # Run your function with each combination
+    data_list <- rank_evaluate_50_allcriteria_200(n_iterations = n_iterations, rdasim = sim, size = size)
+    # Save the results
+    filename <- paste0("data_list50_", sim, "_", size, "_all200.rds")
+    saveRDS(data_list, file = here(dir_path, filename))
+    data_list<-readRDS(here(dir_path, filename))
+    pp<-plot_evaluate_all(data_list,rdasim = sim,size=size,n_iterations)
+    pp
+  }
+}
+
+```
+
+# get result
+
+```{r}
+simulations <- c("sim1","sim2")
+sizes <- c("large", "small")
+n_iterations<-20
+#sizes <- c("large")
+ 
+for (sim in simulations) {
+  cat("Simulation:", sim, "\n")
+  
+  emat_list <- list()  # List to store emat for each size
+  
+  for (size in sizes) {
+    #cat("Size:", size, "\n")
+    
+    filename <- paste0("data_list50_", sim, "_", size, "_all200.rds")
+    data_list <- readRDS(here(dir_path, filename))
+    
+    # Compute accuracy matrix
+    emat <- plot_evaluate_by_true_rank4(data_list, rdasim = sim, size = size, n_iterations)
+    
+    # Store as matrix
+    emat_list[[as.character(size)]] <- as.matrix(emat)
+
+  }
+combined_emat <- list()
+
+for (k_name in rownames(emat_list$large)) {
+  combined_emat[[k_name]] <- list()
+  
+  method_names <- names(emat_list$large[k_name, ][[1]])
+  
+  for (method in method_names) {
+    vec_large <- emat_list$large[k_name, ][[1]][[method]]
+    vec_small <- emat_list$small[k_name, ][[1]][[method]]
+    combined_vec <- c(vec_small, vec_large)
+
+    combined_emat[[k_name]][[method]] <- combined_vec
+  }
+}
+
+# Prepare summary data frame
+summary_df <- data.frame()
+
+for (k_name in names(combined_emat)) {
+  for (method in names(combined_emat[[k_name]])) {
+    values <- combined_emat[[k_name]][[method]]
+    n <- length(values)
+    mean_val <- round(mean(values, na.rm = TRUE),2)
+    se_val <- round(sd(values, na.rm = TRUE) / sqrt(n),2)
+
+    summary_df <- rbind(summary_df, data.frame(
+      Method = method,
+      k = k_name,
+      Mean = mean_val,
+      SE = se_val
+    ))
+  }
+}
+
+# Convert to wide format
+mean_table <- summary_df %>%
+  select(Method, k, Mean) %>%
+  pivot_wider(names_from = k, values_from = Mean)
+
+se_table <- summary_df %>%
+  select(Method, k, SE) %>%
+  pivot_wider(names_from = k, values_from = SE)
+
+# Add Overall column
+mean_table$Overall <- round(rowMeans(mean_table[,-1], na.rm = TRUE),2)
+se_table$Overall <- round(rowMeans(se_table[,-1], na.rm = TRUE),2)
+
+# Display results
+print(mean_table[,c(1:4)])
+print(se_table[,c(1:4)])
+}
+
+
+```
+
+
+
+```{r}
+
+for (sim in simulations) {
+  #cat("Simulation:", sim, "\n")
+  
+  emat_list <- list()  # List to store emat for each size
+  
+  for (size in sizes) {
+    #cat("Size:", size, "\n")
+    
+    filename <- paste0("data_list50_", sim, "_", size, "_all200.rds")
+    data_list <- readRDS(here(dir_path, filename))
+    
+    # Compute accuracy matrix
+    emat <- plot_evaluate_by_true_rank4(data_list, rdasim = sim, size = size, n_iterations)
+    
+    # Store as matrix
+    emat_list[[as.character(size)]] <- as.matrix(emat)
+
+  }
+combined_emat <- list()
+
+for (k_name in rownames(emat_list$large)) {
+  combined_emat[[k_name]] <- list()
+  
+  method_names <- names(emat_list$large[k_name, ][[1]])
+  
+  for (method in method_names) {
+    vec_large <- emat_list$large[k_name, ][[1]][[method]]
+    vec_small <- emat_list$small[k_name, ][[1]][[method]]
+    combined_vec <- c(vec_small, vec_large)
+
+    combined_emat[[k_name]][[method]] <- combined_vec
+  }
+}
+
+
+combo <- expand.grid(
+  n = c(100,200),
+  pq = c(50, 100, 200,500),
+  k = c(2, 5, 10)
+)
+
+results_df <- combo
+method_names <- names(combined_emat[[1]])
+
+for (k_name in names(combined_emat)) {
+  k_val <- as.numeric(sub("k=", "", k_name))
+  combo_idx <- which(combo$k == k_val)
+  n_combo_k <- length(combo_idx)
+
+  for (method in method_names) {
+    values <- combined_emat[[k_name]][[method]]
+
+    mat <- matrix(values, nrow = n_iterations, ncol =n_combo_k , byrow = FALSE)
+
+    # 平均と SE を計算
+    mean_vals <- colMeans(mat)
+    se_vals <- round(apply(mat, 2, sd) / sqrt(n_iterations),2)
+
+    # 列名を設定
+    mean_colname <- paste0(method, "_mean")
+    se_colname <- paste0(method, "_se")
+
+    # 必要なら列を初期化
+    if (!mean_colname %in% colnames(results_df)) {
+      results_df[[mean_colname]] <- NA
+    }
+    if (!se_colname %in% colnames(results_df)) {
+      results_df[[se_colname]] <- NA
+    }
+
+    # 結果を代入
+    results_df[combo_idx, mean_colname] <- mean_vals
+    results_df[combo_idx, se_colname] <- se_vals
+  }
+}
+
+print(results_df)
+
+saveRDS(results_df,file = here(dir_path, paste0(sim,"rdf200.rds")))
+
+}
+
+```
+
+
+
+# s2n 10 (low noise)
+Create the folder for saving
+```{r}
+dir_path<- here("out/eval_10")
+
+if (!dir.exists(dir_path)) {
+  dir.create(dir_path, recursive = TRUE)
+  message("Directory created: ", dir_path)
+}
+
+```
+
+
+
+```{r}
+rdasim1<- function(n,p,q,k,s2n = c(10, 10)){
+  H  <- matrix(stats::rnorm(n = n*k, mean = 0, sd = 1),n,k)
+  
+  theta.x  <- matrix(stats::rnorm(n = k*p, mean = 0, sd = 1),k,p)
+  noise.x <-  matrix(stats::rnorm(n = n*p, mean = 0, sd = 1),n,p)
+  
+  signal.x <- H %*% theta.x
+  sigma.x <- sqrt(sum(signal.x^2) / (sum(noise.x^2) * s2n[1]))
+  noise.x <- sigma.x * noise.x
+
+  X  <- signal.x + noise.x
+  
+  theta.y  <- matrix(stats::rnorm(n = k*q, mean = 0, sd = 1),k,q)
+  noise.y  <- matrix(stats::rnorm(n = n*q, mean = 0, sd = 1),n,q)
+  
+  signal.y <- H %*% theta.y
+  sigma.y <- sqrt(sum(signal.y^2) / (sum(noise.y^2) * s2n[2]))
+  noise.y <- sigma.y * noise.y
+
+
+  Y  <- signal.y + noise.y
+
+  return(list(X=X,Y=Y,H=H,theta.y=theta.y))
+}
+
+rdasim2<- function(n,p,q,k,s2n=10,xofd=0){
+  cov <- matrix(xofd, nrow = p, ncol = p)
+  diag(cov) <- 1
+  X  <- MASS::mvrnorm(n, rep(0, p), cov)
+
+  A <- matrix(stats::rnorm(n = p * k, mean = 0, sd = 1), p, k)
+  A <- apply(A, 2, function(col) col / sqrt(sum(col^2)))
+  C <- matrix(stats::rnorm(n = k * q, mean = 0, sd = 1), k, q)
+  C <- apply(C, 2, function(col) col / sqrt(sum(col^2)))
+
+  B  <- crossprod(t(A),C)
+  E  <- matrix(stats::rnorm(n = n*q, mean = 0, sd = 1),n,q)
+  XB <- crossprod(t(X),B)
+  sigma <- sqrt(sum(XB^2) / (sum(E^2) * s2n))
+  E  <- E * sigma
+  Y <- XB + E
+  return(list(X=X,Y=Y,B=B,E=E))
+}
+
+
+```
+
+
+# simulation run 
+2 types of simulations and 2 size of n, 3 size of p and q, 3 size of r
+
+```{r,eval=F}
+set.seed(123)
+
+n_iterations=20
+# Define your conditions
+simulations <- c("sim1","sim2")
+sizes <- c("large", "small")
+
+#simulations <- c("sim1")
+#sizes <- c("small")
+
+# Loop over each combination
+for (sim in simulations) {
+
+  for (size in sizes) {
+    # Run your function with each combination
+    data_list <- rank_evaluate_50_allcriteria_200(n_iterations = n_iterations, rdasim = sim, size = size)
+    # Save the results
+    filename <- paste0("data_list50_", sim, "_", size, "_all200.rds")
+    saveRDS(data_list, file = here(dir_path, filename))
+    data_list<-readRDS(here(dir_path, filename))
+    pp<-plot_evaluate_all(data_list,rdasim = sim,size=size,n_iterations)
+    pp
+  }
+}
+
+```
+
+# get result
+```{r}
+simulations <- c("sim1","sim2")
+#sizes <- c("large")
+ 
+for (sim in simulations) {
+  cat("Simulation:", sim, "\n")
+  
+  emat_list <- list()  # List to store emat for each size
+  
+  for (size in sizes) {
+    cat("Size:", size, "\n")
+    
+    filename <- paste0("data_list50_", sim, "_", size, "_all200.rds")
+    data_list <- readRDS(here(dir_path, filename))
+    
+    # Compute accuracy matrix
+    emat <- plot_evaluate_by_true_rank4(data_list, rdasim = sim, size = size, n_iterations)
+    
+    # Store as matrix
+    emat_list[[as.character(size)]] <- as.matrix(emat)
+
+  }
+combined_emat <- list()
+
+for (k_name in rownames(emat_list$large)) {
+  combined_emat[[k_name]] <- list()
+  
+  method_names <- names(emat_list$large[k_name, ][[1]])
+  
+  for (method in method_names) {
+    vec_large <- emat_list$large[k_name, ][[1]][[method]]
+    vec_small <- emat_list$small[k_name, ][[1]][[method]]
+    combined_vec <- c(vec_small, vec_large)
+
+    combined_emat[[k_name]][[method]] <- combined_vec
+  }
+}
+
+# Prepare summary data frame
+summary_df <- data.frame()
+
+for (k_name in names(combined_emat)) {
+  for (method in names(combined_emat[[k_name]])) {
+    values <- combined_emat[[k_name]][[method]]
+    n <- length(values)
+    mean_val <- round(mean(values, na.rm = TRUE),2)
+    se_val <- round(sd(values, na.rm = TRUE) / sqrt(n),2)
+
+    summary_df <- rbind(summary_df, data.frame(
+      Method = method,
+      k = k_name,
+      Mean = mean_val,
+      SE = se_val
+    ))
+  }
+}
+
+# Convert to wide format
+mean_table <- summary_df %>%
+  select(Method, k, Mean) %>%
+  pivot_wider(names_from = k, values_from = Mean)
+
+se_table <- summary_df %>%
+  select(Method, k, SE) %>%
+  pivot_wider(names_from = k, values_from = SE)
+
+# Add Overall column
+mean_table$Overall <- round(rowMeans(mean_table[,-1], na.rm = TRUE),2)
+se_table$Overall <- round(rowMeans(se_table[,-1], na.rm = TRUE),2)
+
+# Display results
+print(mean_table[,c(1:4)])
+print(se_table[,c(1:4)])
+}
+
+
+```
+
+
+
+```{r}
+
+for (sim in simulations) {
+  #cat("Simulation:", sim, "\n")
+  
+  emat_list <- list()  # List to store emat for each size
+  
+  for (size in sizes) {
+    #cat("Size:", size, "\n")
+    
+    filename <- paste0("data_list50_", sim, "_", size, "_all200.rds")
+    data_list <- readRDS(here(dir_path, filename))
+    
+    # Compute accuracy matrix
+    emat <- plot_evaluate_by_true_rank4(data_list, rdasim = sim, size = size, n_iterations)
+    
+    # Store as matrix
+    emat_list[[as.character(size)]] <- as.matrix(emat)
+
+  }
+combined_emat <- list()
+
+for (k_name in rownames(emat_list$large)) {
+  combined_emat[[k_name]] <- list()
+  
+  method_names <- names(emat_list$large[k_name, ][[1]])
+  
+  for (method in method_names) {
+    vec_large <- emat_list$large[k_name, ][[1]][[method]]
+    vec_small <- emat_list$small[k_name, ][[1]][[method]]
+    combined_vec <- c(vec_small, vec_large)
+
+    combined_emat[[k_name]][[method]] <- combined_vec
+  }
+}
+
+
+combo <- expand.grid(
+  n = c(100,200),
+  pq = c(50, 100, 200,500),
+  k = c(2, 5, 10)
+)
+
+results_df <- combo
+method_names <- names(combined_emat[[1]])
+
+for (k_name in names(combined_emat)) {
+  k_val <- as.numeric(sub("k=", "", k_name))
+  combo_idx <- which(combo$k == k_val)
+  n_combo_k <- length(combo_idx)
+
+  for (method in method_names) {
+    values <- combined_emat[[k_name]][[method]]
+
+    mat <- matrix(values, nrow = n_iterations, ncol =n_combo_k , byrow = FALSE)
+
+    # 平均と SE を計算
+    mean_vals <- colMeans(mat)
+    se_vals <- round(apply(mat, 2, sd) / sqrt(n_iterations),2)
+
+    # 列名を設定
+    mean_colname <- paste0(method, "_mean")
+    se_colname <- paste0(method, "_se")
+
+    # 必要なら列を初期化
+    if (!mean_colname %in% colnames(results_df)) {
+      results_df[[mean_colname]] <- NA
+    }
+    if (!se_colname %in% colnames(results_df)) {
+      results_df[[se_colname]] <- NA
+    }
+
+    # 結果を代入
+    results_df[combo_idx, mean_colname] <- mean_vals
+    results_df[combo_idx, se_colname] <- se_vals
+  }
+}
+
+print(results_df)
+
+saveRDS(results_df,file = here(dir_path, paste0(sim,"rdf200.rds")))
+
+}
+
+```
+
+# s2n 0.1 (high noise)
+
+Create the folder for saving
+```{r}
+dir_path<- here("out/eval_01")
+
+if (!dir.exists(dir_path)) {
+  dir.create(dir_path, recursive = TRUE)
+  message("Directory created: ", dir_path)
+}
+
+```
+
+
+```{r}
+rdasim1<- function(n,p,q,k,s2n = c(0.1, 0.1)){
+  H  <- matrix(stats::rnorm(n = n*k, mean = 0, sd = 1),n,k)
+  
+  theta.x  <- matrix(stats::rnorm(n = k*p, mean = 0, sd = 1),k,p)
+  noise.x <-  matrix(stats::rnorm(n = n*p, mean = 0, sd = 1),n,p)
+  
+  signal.x <- H %*% theta.x
+  sigma.x <- sqrt(sum(signal.x^2) / (sum(noise.x^2) * s2n[1]))
+  noise.x <- sigma.x * noise.x
+
+  X  <- signal.x + noise.x
+  
+  theta.y  <- matrix(stats::rnorm(n = k*q, mean = 0, sd = 1),k,q)
+  noise.y  <- matrix(stats::rnorm(n = n*q, mean = 0, sd = 1),n,q)
+  
+  signal.y <- H %*% theta.y
+  sigma.y <- sqrt(sum(signal.y^2) / (sum(noise.y^2) * s2n[2]))
+  noise.y <- sigma.y * noise.y
+
+
+  Y  <- signal.y + noise.y
+
+  return(list(X=X,Y=Y,H=H,theta.y=theta.y))
+}
+
+rdasim2<- function(n,p,q,k,s2n=0.1,xofd=0){
+  cov <- matrix(xofd, nrow = p, ncol = p)
+  diag(cov) <- 1
+  X  <- MASS::mvrnorm(n, rep(0, p), cov)
+
+  A <- matrix(stats::rnorm(n = p * k, mean = 0, sd = 1), p, k)
+  A <- apply(A, 2, function(col) col / sqrt(sum(col^2)))
+  C <- matrix(stats::rnorm(n = k * q, mean = 0, sd = 1), k, q)
+  C <- apply(C, 2, function(col) col / sqrt(sum(col^2)))
+
+  B  <- crossprod(t(A),C)
+  E  <- matrix(stats::rnorm(n = n*q, mean = 0, sd = 1),n,q)
+  XB <- crossprod(t(X),B)
+  sigma <- sqrt(sum(XB^2) / (sum(E^2) * s2n))
+  E  <- E * sigma
+  Y <- XB + E
+  return(list(X=X,Y=Y,B=B,E=E))
+}
+
+
+```
+
+# simulation run 
+2 types of simulations and 2 size of n, 3 size of p and q, 3 size of r
+
+```{r,eval=F}
+set.seed(123)
+
+n_iterations=20
+# Define your conditions
+simulations <- c("sim1","sim2")
+sizes <- c("large", "small")
+
+#simulations <- c("sim1")
+#sizes <- c("small")
+
+# Loop over each combination
+for (sim in simulations) {
+
+  for (size in sizes) {
+    # Run your function with each combination
+    data_list <- rank_evaluate_50_allcriteria_200(n_iterations = n_iterations, rdasim = sim, size = size)
+    # Save the results
+    filename <- paste0("data_list50_", sim, "_", size, "_all200.rds")
+    saveRDS(data_list, file = here(dir_path, filename))
+    data_list<-readRDS(here(dir_path, filename))
+    pp<-plot_evaluate_all(data_list,rdasim = sim,size=size,n_iterations)
+    pp
+  }
+}
+
+```
+
+# get result
+Plot the results
+
+```{r}
+
+n_iterations=20
+#sizes <- c("large")
+simulations <- c("sim1","sim2")
+for (sim in simulations) {
+  cat("Simulation:", sim, "\n")
+  
+  emat_list <- list()  # List to store emat for each size
+  
+  for (size in sizes) {
+    cat("Size:", size, "\n")
+    
+    filename <- paste0("data_list50_", sim, "_", size, "_all200.rds")
+    data_list <- readRDS(here(dir_path, filename))
+    
+    # Compute accuracy matrix
+    emat <- plot_evaluate_by_true_rank4(data_list, rdasim = sim, size = size, n_iterations)
+    
+    # Store as matrix
+    emat_list[[as.character(size)]] <- as.matrix(emat)
+
+  }
+combined_emat <- list()
+
+for (k_name in rownames(emat_list$large)) {
+  combined_emat[[k_name]] <- list()
+  
+  method_names <- names(emat_list$large[k_name, ][[1]])
+  
+  for (method in method_names) {
+    vec_large <- emat_list$large[k_name, ][[1]][[method]]
+    vec_small <- emat_list$small[k_name, ][[1]][[method]]
+    combined_vec <- c(vec_small, vec_large)
+
+    combined_emat[[k_name]][[method]] <- combined_vec
+  }
+}
+
+# Prepare summary data frame
+summary_df <- data.frame()
+
+for (k_name in names(combined_emat)) {
+  for (method in names(combined_emat[[k_name]])) {
+    values <- combined_emat[[k_name]][[method]]
+    n <- length(values)
+    mean_val <- round(mean(values, na.rm = TRUE),2)
+    se_val <- round(sd(values, na.rm = TRUE) / sqrt(n),2)
+
+    summary_df <- rbind(summary_df, data.frame(
+      Method = method,
+      k = k_name,
+      Mean = mean_val,
+      SE = se_val
+    ))
+  }
+}
+
+# Convert to wide format
+mean_table <- summary_df %>%
+  select(Method, k, Mean) %>%
+  pivot_wider(names_from = k, values_from = Mean)
+
+se_table <- summary_df %>%
+  select(Method, k, SE) %>%
+  pivot_wider(names_from = k, values_from = SE)
+
+# Add Overall column
+mean_table$Overall <- round(rowMeans(mean_table[,-1], na.rm = TRUE),2)
+se_table$Overall <- round(rowMeans(se_table[,-1], na.rm = TRUE),2)
+
+# Display results
+print(mean_table[,c(1:4)])
+print(se_table[,c(1:4)])
+}
+
+
+```
+
+
+
+```{r}
+
+for (sim in simulations) {
+  #cat("Simulation:", sim, "\n")
+  
+  emat_list <- list()  # List to store emat for each size
+  
+  for (size in sizes) {
+    #cat("Size:", size, "\n")
+    
+    filename <- paste0("data_list50_", sim, "_", size, "_all200.rds")
+    data_list <- readRDS(here(dir_path, filename))
+    
+    # Compute accuracy matrix
+    emat <- plot_evaluate_by_true_rank4(data_list, rdasim = sim, size = size, n_iterations)
+    
+    # Store as matrix
+    emat_list[[as.character(size)]] <- as.matrix(emat)
+
+  }
+combined_emat <- list()
+
+for (k_name in rownames(emat_list$large)) {
+  combined_emat[[k_name]] <- list()
+  
+  method_names <- names(emat_list$large[k_name, ][[1]])
+  
+  for (method in method_names) {
+    vec_large <- emat_list$large[k_name, ][[1]][[method]]
+    vec_small <- emat_list$small[k_name, ][[1]][[method]]
+    combined_vec <- c(vec_small, vec_large)
+
+    combined_emat[[k_name]][[method]] <- combined_vec
+  }
+}
+
+
+combo <- expand.grid(
+  n = c(100,200),
+  pq = c(50, 100, 200,500),
+  k = c(2, 5, 10)
+)
+
+results_df <- combo
+method_names <- names(combined_emat[[1]])
+
+for (k_name in names(combined_emat)) {
+  k_val <- as.numeric(sub("k=", "", k_name))
+  combo_idx <- which(combo$k == k_val)
+  n_combo_k <- length(combo_idx)
+
+  for (method in method_names) {
+    values <- combined_emat[[k_name]][[method]]
+
+    mat <- matrix(values, nrow = n_iterations, ncol =n_combo_k , byrow = FALSE)
+
+    # 平均と SE を計算
+    mean_vals <- colMeans(mat)
+    se_vals <- round(apply(mat, 2, sd) / sqrt(n_iterations),2)
+
+    # 列名を設定
+    mean_colname <- paste0(method, "_mean")
+    se_colname <- paste0(method, "_se")
+
+    # 必要なら列を初期化
+    if (!mean_colname %in% colnames(results_df)) {
+      results_df[[mean_colname]] <- NA
+    }
+    if (!se_colname %in% colnames(results_df)) {
+      results_df[[se_colname]] <- NA
+    }
+
+    # 結果を代入
+    results_df[combo_idx, mean_colname] <- mean_vals
+    results_df[combo_idx, se_colname] <- se_vals
+  }
+}
+
+print(results_df)
+
+saveRDS(results_df,file = here(dir_path, paste0(sim,"rdf200.rds")))
+
+}
+
+```
+# table
+```{r}
+
+print("s2n 01")
+dir_path<- here("out/eval_01")
+mod<-c("Model 1","Model 2")
+
+
+all_results <- list()
+i=1
+for (sim in simulations) {
+  a<- readRDS( file = here(dir_path, paste0(sim, "rdf200.rds")))
+  ar <- readRDS( file = here(dir_path, paste0(sim, "rdf200_rrda.rds")))[,c(4:5)]
+  #ac <- readRDS( file = here(dir_path, paste0(sim, "rdf200naive_cv.rds")))
+  ac <- readRDS( file = here(dir_path, paste0(sim, "rdf200naive.rds")))[,c(1:3,14,15)]
+  a<-cbind(a,ac,ar)
+  a <- a[, c(1:13, 16, 17,21:24 )]
+  a$sim <- mod[i] 
+  all_results[[sim]] <- a
+    i<-i+1
+}
+
+combined <- do.call(rbind, all_results)
+combined <- combined[, c(ncol(combined), 1:(ncol(combined)-1))]
+num_cols <- ncol(combined)
+digits_vec <- c(0, 0, 0, 0,0, rep(2, num_cols - 4))
+addtorow <- list()
+addtorow$pos <- list(24)
+addtorow$command <- "\\midrule \n"
+
+print(
+  xtable(combined, digits = digits_vec),
+  include.rownames = FALSE,
+  add.to.row = addtorow,
+  booktabs = TRUE  # \midrule を使うためには必要
+)
+
+print("s2n 1")
+dir_path<- here("out/eval_1")
+
+
+
+all_results <- list()
+i=1
+for (sim in simulations) {
+  a<- readRDS( file = here(dir_path, paste0(sim, "rdf200.rds")))
+  ar <- readRDS( file = here(dir_path, paste0(sim, "rdf200_rrda.rds")))[,c(4:5)]
+  #ac <- readRDS( file = here(dir_path, paste0(sim, "rdf200naive_cv.rds")))
+  ac <- readRDS( file = here(dir_path, paste0(sim, "rdf200naive.rds")))[,c(1:3,14,15)]
+  a<-cbind(a,ac,ar)
+  a <- a[, c(1:13, 16, 17,21:24 )]
+  a$sim <- mod[i] 
+  all_results[[sim]] <- a
+    i<-i+1
+}
+combined <- do.call(rbind, all_results)
+combined <- combined[, c(ncol(combined), 1:(ncol(combined)-1))]
+num_cols <- ncol(combined)
+digits_vec <- c(0, 0, 0, 0,0, rep(2, num_cols - 4))
+addtorow <- list()
+addtorow$pos <- list(24)
+addtorow$command <- "\\midrule \n"
+
+print(
+  xtable(combined, digits = digits_vec),
+  include.rownames = FALSE,
+  add.to.row = addtorow,
+  booktabs = TRUE  # \midrule を使うためには必要
+)
+print("s2n 10")
+dir_path<- here("out/eval_10")
+
+
+all_results <- list()
+i=1
+for (sim in simulations) {
+  a<- readRDS( file = here(dir_path, paste0(sim, "rdf200.rds")))
+  ar <- readRDS( file = here(dir_path, paste0(sim, "rdf200_rrda.rds")))[,c(4:5)]
+  #ac <- readRDS( file = here(dir_path, paste0(sim, "rdf200naive_cv.rds")))
+  ac <- readRDS( file = here(dir_path, paste0(sim, "rdf200naive.rds")))[,c(1:3,14,15)]
+  a<-cbind(a,ac,ar)
+  a <- a[, c(1:13, 16, 17,21:24 )]
+  a$sim <- mod[i] 
+  all_results[[sim]] <- a
+    i<-i+1
+}
+combined <- do.call(rbind, all_results)
+combined <- combined[, c(ncol(combined), 1:(ncol(combined)-1))]
+num_cols <- ncol(combined)
+digits_vec <- c(0, 0, 0, 0,0, rep(2, num_cols - 4))
+
+addtorow <- list()
+addtorow$pos <- list(24)
+addtorow$command <- "\\midrule \n"
+
+print(
+  xtable(combined, digits = digits_vec),
+  include.rownames = FALSE,
+  add.to.row = addtorow,
+  booktabs = TRUE  # \midrule を使うためには必要
+)
+```
+
+
+```{r}
+simulations <- c("sim1","sim2")
+
+print("s2n 01")
+dir_path<- here("out/eval_01")
+mod<-c("Model1","Model2")
+
+all_results <- list()
+i=1
+for (sim in simulations) {
+  a<- readRDS( file = here(dir_path, paste0(sim, "rdf200.rds")))
+  ar <- readRDS(file = here(dir_path, paste0(sim, "rdf200_rrda.rds")))[,c(4:5)]
+  #ac <- readRDS(file = here(dir_path, paste0(sim, "rdf200naive_cv.rds")))
+  ac <- readRDS( file = here(dir_path, paste0(sim, "rdf200naive.rds")))[,c(1:3,14,15)]
+  a<-cbind(a,ac,ar)
+  a <- a[, c(1:13, 16, 17,21:24 )]
+  
+  a$sim <- mod[i] 
+  all_results[[sim]] <- a
+    i<-i+1
+}
+
+
+combined <- do.call(rbind, all_results)
+combined <- combined[, c(ncol(combined), 1:(ncol(combined)-1))]
+num_cols <- ncol(combined)
+
+combined<-combined[c(5,13,21,29,37,45),]
+
+
+digits_vec <- c(0, 0, 0, 0,0, rep(2, num_cols - 4))
+
+print(
+  xtable(combined, digits = digits_vec),
+  include.rownames = FALSE,
+  booktabs = TRUE  # \midrule を使うためには必要
+)
+
+print("s2n 1")
+dir_path<- here("out/eval_1")
+mod<-c("Model1","Model2")
+all_results <- list()
+i=1
+for (sim in simulations) {
+  a<- readRDS( file = here(dir_path, paste0(sim, "rdf200.rds")))
+  ar <- readRDS( file = here(dir_path, paste0(sim, "rdf200_rrda.rds")))[,c(4:5)]
+  #ac <- readRDS( file = here(dir_path, paste0(sim, "rdf200naive_cv.rds")))
+  ac <- readRDS( file = here(dir_path, paste0(sim, "rdf200naive.rds")))[,c(1:3,14,15)]
+  a<-cbind(a,ac,ar)
+  a <- a[, c(1:13, 16, 17,21:24 )]
+  
+  a$sim <- mod[i] 
+  all_results[[sim]] <- a
+    i<-i+1
+}
+
+
+
+combined <- do.call(rbind, all_results)
+combined <- combined[, c(ncol(combined), 1:(ncol(combined)-1))]
+num_cols <- ncol(combined)
+
+combined<-combined[c(5,13,21,29,37,45),]
+
+
+digits_vec <- c(0, 0, 0, 0,0, rep(2, num_cols - 4))
+
+print(
+  xtable(combined, digits = digits_vec),
+  include.rownames = FALSE,
+  booktabs = TRUE  # \midrule を使うためには必要
+)
+
+
+
+print("s2n 10")
+dir_path<- here("out/eval_10")
+mod<-c("Model1","Model2")
+all_results <- list()
+i=1
+for (sim in simulations) {
+  a<- readRDS( file = here(dir_path, paste0(sim, "rdf200.rds")))
+  ar <- readRDS( file = here(dir_path, paste0(sim, "rdf200_rrda.rds")))[,c(4:5)]
+  #ac <- readRDS( file = here(dir_path, paste0(sim, "rdf200naive_cv.rds")))
+  ac <- readRDS( file = here(dir_path, paste0(sim, "rdf200naive.rds")))[,c(1:3,14,15)]
+  a<-cbind(a,ac,ar)
+  a <- a[, c(1:13, 16, 17,21:24 )]
+  
+  a$sim <- mod[i] 
+  all_results[[sim]] <- a
+    i<-i+1
+}
+
+
+combined <- do.call(rbind, all_results)
+combined <- combined[, c(ncol(combined), 1:(ncol(combined)-1))]
+num_cols <- ncol(combined)
+
+combined<-combined[c(5,13,21,29,37,45),]
+
+
+digits_vec <- c(0, 0, 0, 0,0, rep(2, num_cols - 4))
+
+print(
+  xtable(combined, digits = digits_vec),
+  include.rownames = FALSE,
+  booktabs = TRUE  # \midrule を使うためには必要
+)
+
+```
+
+```{r,warning=T}
+library(xtable)
+library(here)
+
+# ノイズレベル（ディレクトリ名と表示用s2n値）
+s2n_levels <- c("01", "1", "10")
+s2n_labels <- c("0.1", "1", "10")
+mod <- c("Model1", "Model2")
+simulations <- c("sim1", "sim2")  # 適宜シミュレーション名に変更
+results_list <- list()
+
+# --- 各s2nディレクトリからデータを収集 ---
+for (i_s2n in seq_along(s2n_levels)) {
+  s2n <- s2n_levels[i_s2n]
+  dir_path <- here(paste0("out/eval_", s2n))
+all_results <- list()
+i=1
+for (sim in simulations) {
+  a<- readRDS( file = here(dir_path, paste0(sim, "rdf200.rds")))
+  ar <- readRDS( file = here(dir_path, paste0(sim, "rdf200_rrda.rds")))[,c(4:5)]
+  #ac <- readRDS( file = here(dir_path, paste0(sim, "rdf200naive_cv.rds")))
+  ac <- readRDS( file = here(dir_path, paste0(sim, "rdf200naive.rds")))[,c(1:3,14,15)]
+  a<-cbind(a,ac,ar)
+  a <- a[, c(1:13, 16, 17,21:24 )]
+  
+  a$sim <- mod[i] 
+  all_results[[sim]] <- a
+    i<-i+1
+}
+
+  combined <- do.call(rbind, all_results)
+  combined <- combined[, c(ncol(combined), 1:(ncol(combined)-1))]
+  combined <- combined[c(5,13,21,29,37,45), ]  # 特定の行のみ抽出
+  combined$s2n <- s2n_labels[i_s2n]
+  results_list[[i_s2n]] <- combined
+}
+
+# 全て結合
+final_table <- do.call(rbind, results_list)
+
+# --- LaTeXテーブルとして出力 ---
+cat("\\begin{tabular}{lcl|cccccccc}\n")
+cat("    \\toprule\n")
+cat("    \\textbf{s2n} & \\textbf{Model} & \\textbf{rank ($k$)} & \\textbf{ANN.AIC} & \\textbf{ANN.BIC} & \\textbf{ANN.GIC} & \\textbf{ANN.BICP} & \\textbf{ANN.GCV} & \\textbf{StARS} & \\textbf{RRR.CV} & \\textbf{rrda.cv} \\\\\n")
+cat("    \\midrule\n")
+
+row_idx <- 1
+for (i_s2n in seq_along(s2n_labels)) {
+  s2n_group <- results_list[[i_s2n]]
+  cat(sprintf("    \\multirow{6}{*}{\\textbf{%s}} \n", s2n_labels[i_s2n]))
+  for (model in mod) {
+    model_group <- s2n_group[s2n_group$sim == model, ]
+    for (j in 1:nrow(model_group)) {
+      row <- model_group[j, ]
+      prefix <- if (j == 1 && model == mod[1]) "        & \\multirow{3}{*}{Model 1}" else if (j == 1 && model == mod[2]) "        & \\multirow{3}{*}{Model 2}" else "        &"
+      line <- sprintf("%s & %2d & %.2f (%.2f) & %.2f (%.2f) & %.2f (%.2f) & %.2f (%.2f) & %.2f (%.2f) & %.2f (%.2f) & %.2f (%.2f) & %.2f (%.2f) \\\\",
+                prefix, row$k,
+                row$AIC_mean, row$AIC_se,
+                row$BIC_mean, row$BIC_se,
+                row$GIC_mean, row$GIC_se,
+                row$BICP_mean, row$BICP_se,
+                row$GCV_mean, row$GCV_se,
+                row$StARS_mean, row$StARS_se,
+                row$CV_mean, row$CV_se,        # ← RRR.CV
+                row$rrda_mean, row$rrda_se)    # ← rrda.cv
+      cat(line, "\n")
+    }
+  }
+  if (i_s2n < length(s2n_labels)) cat("    \\midrule\n")
+}
+cat("    \\bottomrule\n")
+cat("\\end{tabular}\n")
+
+```
+
+
+
+# session info
+check the info and environment
+```{r}
+devtools::session_info()
+```

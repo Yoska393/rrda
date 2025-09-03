@@ -1,0 +1,1637 @@
+---
+title: "Rank Estimate Tracking by All criteria"
+author: "Hayato Yoshioka"
+date: "2025-07-28"
+output: html_document
+---
+
+
+Draw the path to predict the rank in all criteria, StARS, and CV (by rrda)
+
+```{r}
+library(furrr)
+library(dplyr)
+library(ggplot2)
+library(reshape2)
+library(RSpectra)
+library(rrda)
+library(PMA)
+library(here)
+library(xtable)
+library(pheatmap)
+library(tictoc)
+library(rrpack)
+library(ggplot2)
+library(patchwork)
+source("script_rrda/functions_rrda_yoshioka.R")
+source("script_rrda/functions_stars_rrr_yoshioka.R")
+```
+
+
+# ANN based trucking 
+
+(ANN -> rank grid generate -> check SSE and apply IC -> plot over the ANN rank grid)
+
+```{r,fig.height=17,fig.width=14}
+
+
+library(patchwork)
+
+# 各 final_plot を保存するリストを初期化
+final_plot_list <- list()
+
+for (count in c(1:3)){
+	
+plist <- c(50,100,200,500)
+
+p<-plist[count]
+k<-5
+
+set.seed(123)
+simdata<-rdasim1(n = 100,p = p,q = p,k = k,s2n = c(1,1))
+X <- simdata$X
+Y <- simdata$Y
+
+minrank<-min(dim(X),dim(Y))
+
+# 各プロットをリストで保存する
+plot_list <- list()
+
+
+
+
+##ic
+
+motlist <- c("AIC", "BIC", "GIC", "BICP", "GCV")
+
+Lambda <- rrr_lambda(Y = Y, X = X, penaltySVD = c("ann"))
+
+for (mot in motlist){
+	#rrr_result <- rrr(Y = Y, X = X, penaltySVD = c("ann"), ic.type = mot, maxrank = 100 )
+	
+	#saveRDS(rrr_result,here("out",paste0("rrda",count,mot,"_s2n1_naive.rds")))
+	rrr_result <- readRDS(here("out",paste0("rrda",count,mot,"_s2n1.rds")))
+	
+	idx_min <- which.min(rrr_result$ic)
+	optimized_rank <- rrr_result$rank
+	
+	optimized_lambda <- rrr_result$lambda[idx_min]
+	
+	rank_estimates <- colSums(rrr_result$Spath != 0)
+	
+	bic_table <- data.frame(
+		lambda = Lambda,
+		rank = rank_estimates,
+		IC = rrr_result$ic
+	)
+	
+	y_min <- min(bic_table$IC)
+y_max <- max(bic_table$IC)
+y_range <- y_max - y_min
+	
+	
+	g <- ggplot(bic_table, aes(x = rank, y = IC)) +
+		geom_line(color = "black") +
+		#geom_point(size=0.05) +
+		  geom_vline(xintercept = optimized_rank, color = "red", linetype = "dashed") +
+		　annotate("text", x = optimized_rank, y = max(bic_table$IC), 
+         label = "\u25BC", color = "red", size =4) +
+	geom_vline(xintercept = k, color = "blue", linetype = "dashed") +
+			　annotate("text", x = k, y = min(bic_table$IC), 
+         label = "\u25B2", color = "blue", size =4, vjust = 1) +
+		labs(title = paste(paste0("ANN.",mot),"vs Estimated Rank"), x = "Rank", y = paste0("ANN.",mot)) +
+		coord_cartesian(ylim = c(y_min - 0.07 * y_range, y_max),xlim = c(0,minrank)) +
+		theme_minimal()
+	
+	plot_list[[mot]] <- g
+}
+
+
+# sse (from rrr)
+
+
+
+	rrr_result <- readRDS(here("out",paste0("rrda",count,"AIC","_s2n1.rds")))
+	
+	rank_estimates <- colSums(rrr_result$Spath != 0)
+	
+	
+	mot<- "ANN.sse"
+
+	bic_table <- data.frame(
+		#lambda = Lambda,
+		rank = rank_estimates,
+		IC = rrr_result$sse
+	)
+	
+	y_min <- min(bic_table$IC)
+y_max <- max(bic_table$IC)
+y_range <- y_max - y_min
+	
+
+	g <- ggplot(bic_table, aes(x = rank, y = IC)) +
+		geom_line(color = "black") +
+		labs(title = paste(paste0(mot),"vs Estimated Rank"), x = "Rank", y = paste0(mot)) +
+		coord_cartesian(ylim = c(y_min - 0.07 * y_range, y_max),xlim = c(0,minrank)) +
+		theme_minimal()
+
+
+  # リストに保存
+  plot_list[[mot]] <- g
+  
+  	
+  mot<- "ANN.logsse"
+  
+  	bic_table <- data.frame(
+		#lambda = Lambda,
+		rank = rank_estimates,
+		IC = log(rrr_result$sse)
+	)
+	
+	y_min <- min(bic_table$IC)
+y_max <- max(bic_table$IC)
+y_range <- y_max - y_min
+	
+
+	g <- ggplot(bic_table, aes(x = rank, y = IC)) +
+		geom_line(color = "black") +
+		labs(title = paste(paste0(mot),"vs Estimated Rank"), x = "Rank", y = paste0(mot)) +
+		coord_cartesian(ylim = c(y_min - 0.07 * y_range, y_max),xlim = c(0,minrank)) +
+		theme_minimal()
+
+
+  # リストに保存
+  plot_list[[mot]] <- g
+  
+  
+  
+# # StARS
+
+# 
+#saveRDS(result,here("out",paste0("stars",count,"_s2n1.rds")))
+result <- readRDS(here("out",paste0("stars",count,"_s2n1.rds")))
+
+result$optlam <- result$lambda_path[which(result$instability < 1e-4)]
+
+#rrr2(response, X, penaltySVD = "ann",modstr = list(gamma = 2, lambda = opt_lam))
+#result$bestrank <- colSums(result$rank != 0)[which(result$instability < 1e-4)[1]]
+
+result$bestrank <- result$mean_rank[which(result$instability < 1e-4)]
+
+stars_df <- data.frame(
+  MeanRank = result$mean_rank,
+  IC = result$instability,
+  Lambda=result$lambda_path
+)
+
+y_min <- min(stars_df$IC)
+y_max <- max(stars_df$IC)
+y_range <- y_max - y_min
+
+g_stars <- ggplot(stars_df, aes(x = MeanRank, y = IC)) +
+  geom_line(color = "black") +
+  #geom_point(size=0.05) +
+		geom_vline(xintercept = result$bestrank, color = "red", linetype = "dashed") +
+	　annotate("text", x = result$bestrank, y = max(stars_df$IC), 
+         label = "\u25BC", color = "red", size =4) +
+	geom_vline(xintercept = k, color = "blue", linetype = "dashed") +
+	　annotate("text", x = k, y = min(stars_df$IC), 
+         label = "\u25B2", color = "blue", size =4, vjust = 1) +
+  #geom_hline(yintercept = 1e-4, color = "red", linetype = "dashed") +
+  labs(title = "StARS Instability vs Estimated Rank",
+       x = "Rank", y = "Instability (StARS)") +
+	coord_cartesian(ylim = c(y_min - 0.07 * y_range, y_max),xlim = c(0,minrank)) +
+  theme_minimal()
+
+plot_list[["StARS"]]<- g_stars
+
+
+y_min <- min(stars_df$Lambda)
+y_max <- max(stars_df$Lambda)
+y_range <- y_max - y_min
+
+
+g_stars <- ggplot(stars_df, aes(x = MeanRank, y = Lambda)) +
+  geom_line(color = "black") +
+  #geom_point(size=0.05) +
+  geom_vline(xintercept = result$bestrank, color = "red", linetype = "dashed") +
+	　annotate("text", x = result$bestrank, y = max(stars_df$Lambda), 
+         label = "\u25BC", color = "red", size =4) +
+	geom_vline(xintercept = k, color = "blue", linetype = "dashed") +
+	　annotate("text", x = k, y = min(stars_df$Lambda), 
+         label = "\u25B2", color = "blue", size =4, vjust = 1) +
+  labs(title = expression("StARS" ~ tau ~ "vs" ~ "Estimated Rank"),
+       x = "Rank", y = expression( tau ~ "(StARS)" )) +
+	coord_cartesian(ylim = c(y_min - 0.07 * y_range, y_max),xlim = c(0,minrank)) +
+  theme_minimal()
+plot_list[["StARS2"]]<- g_stars
+
+
+### CV lambda 0
+
+
+#rrda_result <- rrda.cv(Y = Y, X = X, maxrank =c(40,80,80,80)[count] , lambda = 0)
+
+#saveRDS(rrda_result,here("out",paste0("rrda",count,"_s2n1_l0.rds")))
+rrda_result<-readRDS(here("out",paste0("rrda",count,"_s2n1_l0.rds")))
+
+optimized_rank<- rrda_result$opt_min$rank
+rank_estimates <- apply(rrda_result$MSE, 1, min)
+bic_table <- data.frame(
+	rank = rrda_result$rank,
+	IC = rank_estimates
+)
+
+y_min <- min(bic_table$IC)
+y_max <- max(bic_table$IC)
+y_range <- y_max - y_min
+
+g_cv <- ggplot(bic_table, aes(x = rank, y = IC)) +
+	geom_line(color = "black") +
+	#geom_point(size=0.05) +
+	geom_vline(xintercept = optimized_rank, color = "red", linetype = "dashed") +
+　annotate("text", x = optimized_rank, y = max(bic_table$IC), 
+         label = "\u25BC", color = "red", size =4) +
+	geom_vline(xintercept = k, color = "blue", linetype = "dashed") +
+	annotate("text", x = k, y = min(bic_table$IC), 
+         label = "\u25B2", color = "blue", size =4, vjust = 1) +
+		labs(title = "5-fold c-rda.CV vs Estimated Rank", x = "Rank", y = "C-RDA.CV (MSE)") +
+	coord_cartesian(ylim = c(y_min - 0.07 * y_range, y_max),xlim = c(0,minrank)) +
+	theme_minimal()
+
+plot_list[["rrrCV"]] <- g_cv
+
+
+##
+
+#rrda_result <- rrda.cv(Y = Y, X = X, maxrank =c(40,80,80,80)[count] , lambda = Lambda)
+
+#saveRDS(rrda_result,here("out",paste0("rrda",count,"_s2n1.rds")))
+rrda_result<-readRDS(here("out",paste0("rrda",count,"_s2n1.rds")))
+
+optimized_rank<- rrda_result$opt_min$rank
+rank_estimates <- apply(rrda_result$MSE, 1, min)
+bic_table <- data.frame(
+	rank = rrda_result$rank,
+	IC = rank_estimates
+)
+
+y_min <- min(bic_table$IC)
+y_max <- max(bic_table$IC)
+y_range <- y_max - y_min
+
+g_cv <- ggplot(bic_table, aes(x = rank, y = IC)) +
+	geom_line(color = "black") +
+	#geom_point(size=0.05) +
+	geom_vline(xintercept = optimized_rank, color = "red", linetype = "dashed") +
+　annotate("text", x = optimized_rank, y = max(bic_table$IC), 
+         label = "\u25BC", color = "red", size =4) +
+	geom_vline(xintercept = k, color = "blue", linetype = "dashed") +
+	annotate("text", x = k, y = min(bic_table$IC), 
+         label = "\u25B2", color = "blue", size =4, vjust = 1) +
+		labs(title = "5-fold rrda.CV vs Estimated Rank", x = "Rank", y = "RRDA.CV (MSE)") +
+	coord_cartesian(ylim = c(y_min - 0.07 * y_range, y_max),xlim = c(0,minrank)) +
+	theme_minimal()
+
+plot_list[["rrdaCV"]] <- g_cv
+
+
+# patchwork で結合（例: 3列 × 3行）
+combined_plot <- (plot_list[["ANN.sse"]] / plot_list[["ANN.logsse"]] / plot_list[["AIC"]]) /
+	plot_list[["BIC"]] / plot_list[["GIC"]] / 	plot_list[["BICP"]] / plot_list[["GCV"]] /
+	plot_list[["StARS"]] / #plot_list[["StARS2"]] /
+  plot_list[["rrrCV"]] / plot_list[["rrdaCV"]] 
+
+tl<-c("n = 100 > p = q = 50",   "n = p = q = 100",   "n = 100 < p = q = 200","n = 100 < p = q = 500")
+
+final_plot <- combined_plot + 
+  plot_annotation(
+    title = tl[count],
+    theme = theme(plot.title = element_text(hjust = 0.5, size = 16, face = "bold"))
+  )
+# 表示
+#print(final_plot)
+
+final_plot_list[[count]] <- final_plot
+}
+
+wrapped_final_plots <- lapply(final_plot_list, wrap_elements)
+
+# 横に並べて表示
+all_combined_plot <- wrap_plots(wrapped_final_plots, nrow = 1)
+
+print(all_combined_plot)
+
+```
+
+```{}
+#result
+instability <- result$instability
+mean_rank <- result$mean_rank
+tau_path <- result$lambda_path
+
+df <- data.frame(
+	instability1 = instability,
+	mean_rank = mean_rank,
+	tau_path = result$lambda_path
+)
+
+write.csv(df, file = "stars_n100pq200k5.csv", row.names = FALSE)
+```
+
+
+# Naive criteria trucking (Simply applied IC for rank selection)
+
+(naive rank grid generate (1:min(n,p,q)) -> check SSE and apply IC -> plot over the naive rank grid)
+
+```{r,fig.height=14,fig.width=12}
+
+library(patchwork)
+
+# 各 final_plot を保存するリストを初期化
+final_plot_list <- list()
+
+for (count in c(1:3)){
+	
+plist <- c(50,100,200,500)
+
+p<-plist[count]
+q<-plist[count]
+k<-5
+n<-100
+
+set.seed(123)
+simdata<-rdasim1(n = n,p = p,q = q,k = k,s2n = c(1,1))
+X <- simdata$X
+Y <- simdata$Y
+
+minrank<-min(dim(X),dim(Y))
+
+# 各プロットをリストで保存する
+plot_list <- list()
+
+motlist <- c("AIC", "BIC", "GIC", "BICP", "GCV")
+
+
+Lambda <- rrr_lambda(Y = Y, X = X, penaltySVD = c("ann"))
+
+f <- rrda.fit(Y = Y, X = X, nrank = 1:minrank, lambda = 0)
+p_list <- rrda.predict(f, X)
+
+pr<-length(p_list$rank)
+pl<-length(p_list$lambda)
+# Initialize matrix to store AIC values
+AIC_matrix <- matrix(NA, nrow = pl, ncol = pr+1)
+BIC_matrix <- matrix(NA, nrow = pl, ncol = pr+1)
+GIC_matrix <- matrix(NA, nrow = pl, ncol = pr+1)
+BICP_matrix <- matrix(NA, nrow = pl, ncol = pr+1)
+GCV_matrix <- matrix(NA, nrow = pl, ncol = pr+1)
+sse_matrix <- matrix(NA, nrow = pl, ncol = pr+1)
+
+qrX <- qr(X)
+rX <- qrX$rank
+							
+# Loop over all l and r values
+for (l in 1:pl) {
+	for (r in 0:pr) {
+		if (r==0){
+			sse <- sum(Y^2)
+		}else{
+			tempYhat <- p_list[[1]][[l]][[r]]
+			sse <- sum((Y - tempYhat)^2)
+		}
+		
+		
+		df <- r * (rX + q - r)
+		AIC_matrix[l, r+1] <- n * q * log(sse / (n * q)) + 2 * df
+		BIC_matrix[l, r+1] <- n * q * log(sse / (n * q)) + log(n * q) * df
+		GIC_matrix[l, r+1] <- n * q * log(sse / (n * q)) + log(log(n * q)) * log(p * q) * df
+		BICP_matrix[l, r+1] <- n * q * log(sse / (n * q)) + 2 * log(p * q) * df
+		GCV_matrix[l, r+1] <- n * q * sse / (n * q - df)^2
+		sse_matrix[l, r+1] <- sse
+	}
+}
+
+get_best_indices <- function(mat, name) {
+	min_val <- min(mat, na.rm = TRUE)
+	idx <- which(mat == min_val, arr.ind = TRUE)
+	cat(name, "→ min:", min_val, "at l =", idx[1], ", r =", idx[2]-1, "\n")
+	
+	return(idx[2]-1)
+}
+
+# 各指標ごとに最良の (l, r) を表示
+
+get_best_indices(AIC_matrix, "AIC")
+get_best_indices(BIC_matrix, "BIC")
+get_best_indices(GIC_matrix, "GIC")
+get_best_indices(BICP_matrix, "BICP")
+get_best_indices(GCV_matrix, "GCV")
+get_best_indices(sse_matrix, "sse")
+
+criteria_list <- list(
+	sse =sse_matrix,
+	logsse =log(sse_matrix),
+	AIC = AIC_matrix,
+	BIC = BIC_matrix,
+	GIC = GIC_matrix,
+	BICP = BICP_matrix,
+	GCV = GCV_matrix
+
+)
+for (crit_name in names(criteria_list)) {
+  mat <- criteria_list[[crit_name]]
+  mot<-crit_name
+  
+  optimized_rank <- get_best_indices(mat, crit_name)
+  
+  # 安全に最小値を取得（全NA列の処理も含む）
+  col_min <- sapply(1:ncol(mat), function(j) {
+    col_vals <- mat[, j]
+    if (all(is.na(col_vals))) {
+      return(NA)
+    } else {
+      return(min(col_vals, na.rm = TRUE))
+    }
+  })
+  
+  # データフレーム化
+  bic_table <- data.frame(
+    rank = 0:(pr),
+    IC = col_min
+  )
+  
+#bic_table<-bic_table[1:100,]
+finite_IC <- bic_table$IC[is.finite(bic_table$IC)]  # Inf, -Inf, NA を除外
+
+y_min <- min(finite_IC, na.rm = TRUE)
+y_max <- max(finite_IC, na.rm = TRUE)
+y_range <- y_max - y_min
+
+
+	
+	
+	g <- ggplot(bic_table, aes(x = rank, y = IC)) +
+		geom_line(color = "black") +
+		#geom_point(size=0.05) +
+		  geom_vline(xintercept = optimized_rank, color = "red", linetype = "dashed") +
+		　annotate("text", x = optimized_rank, y = max(bic_table$IC), 
+         label = "\u25BC", color = "red", size =4) +
+	geom_vline(xintercept = k, color = "blue", linetype = "dashed") +
+			　annotate("text", x = k, y = min(bic_table$IC), 
+         label = "\u25B2", color = "blue", size =4, vjust = 1) +
+		#labs(title = paste(mot,"vs Estimated Rank"), x = "Rank", y = mot) +
+		labs(title = paste(paste0("naive.",mot),"vs Rank"), x = "Rank", y = paste0("naive.",mot)) +
+		coord_cartesian(ylim = c(y_min - 0.07 * y_range, y_max),xlim = c(0,minrank)) +
+		theme_minimal()
+
+  
+  # リストに保存
+  plot_list[[crit_name]] <- g
+}
+	
+
+#rrda_result <- rrda.cv(Y = Y, X = X, maxrank =c(40,80,80,80)[count] , lambda = Lambda)
+
+#saveRDS(rrda_result,here("out",paste0("rrda",count,"_s2n1.rds")))
+rrda_result<-readRDS(here("out",paste0("rrda",count,"_s2n1.rds")))
+
+optimized_rank<- rrda_result$opt_min$rank
+rank_estimates <- apply(rrda_result$MSE, 1, min)
+bic_table <- data.frame(
+	rank = rrda_result$rank,
+	IC = rank_estimates
+)
+
+y_min <- min(bic_table$IC)
+y_max <- max(bic_table$IC)
+y_range <- y_max - y_min
+
+g_cv <- ggplot(bic_table, aes(x = rank, y = IC)) +
+	geom_line(color = "black") +
+	#geom_point(size=0.05) +
+	geom_vline(xintercept = optimized_rank, color = "red", linetype = "dashed") +
+　annotate("text", x = optimized_rank, y = max(bic_table$IC), 
+         label = "\u25BC", color = "red", size =4) +
+	geom_vline(xintercept = k, color = "blue", linetype = "dashed") +
+	annotate("text", x = k, y = min(bic_table$IC), 
+         label = "\u25B2", color = "blue", size =4, vjust = 1) +
+	#labs(title = "5-fold CV vs Estimated Rank", x = "Rank", y = "CV-MSE") +
+	labs(title = "5-fold rrda.CV vs Rank", x = "Rank", y = "RRDA.CV (MSE)") +
+	coord_cartesian(ylim = c(y_min - 0.07 * y_range, y_max),xlim = c(0,minrank)) +
+	theme_minimal()
+
+plot_list[["CV"]] <- g_cv
+
+
+# patchwork で結合（例: 3列 × 3行）
+combined_plot <- (  plot_list[[1]] / plot_list[[2]] / plot_list[[3]]) /
+	plot_list[[4]] / plot_list[[5]]  / plot_list[[6]]  / plot_list[[7]] /	plot_list[["CV"]] 
+ #/ plot_list[["StARS"]] / plot_list[["StARS2"]] 
+
+tl<-c("n = 100 > p = q = 50",   "n = p = q = 100",   "n = 100 < p = q = 200","n = 100 < p = q = 500")
+
+final_plot <- combined_plot + 
+  plot_annotation(
+    title = tl[count],
+    theme = theme(plot.title = element_text(hjust = 0.5, size = 16, face = "bold"))
+  )
+# 表示
+#print(final_plot)
+
+final_plot_list[[count]] <- final_plot
+}
+
+wrapped_final_plots <- lapply(final_plot_list, wrap_elements)
+
+# 横に並べて表示
+all_combined_plot <- wrap_plots(wrapped_final_plots, nrow = 1)
+
+print(all_combined_plot)
+
+```
+
+
+
+```{r,fig.height=8,fig.width=10}
+
+library(patchwork)
+
+# 各 final_plot を保存するリストを初期化
+final_plot_list <- list()
+
+for (count in c(1:3)){
+	
+plist <- c(50,100,200,500)
+
+p<-plist[count]
+q<-plist[count]
+k<-5
+n<-100
+
+set.seed(123)
+simdata<-rdasim1(n = n,p = p,q = q,k = k,s2n = c(1,1))
+X <- simdata$X
+Y <- simdata$Y
+
+minrank<-min(dim(X),dim(Y))
+
+# 各プロットをリストで保存する
+plot_list <- list()
+
+f <- rrda.fit(Y = Y, X = X, nrank = 1:minrank, lambda = 0)
+p_list <- rrda.predict(f, X)
+
+pr<-length(p_list$rank)
+pl<-length(p_list$lambda)
+# Initialize matrix to store AIC values
+sse_matrix <- matrix(NA, nrow = pl, ncol = pr+1)
+
+							
+# Loop over all l and r values
+for (l in 1:pl) {
+	for (r in 0:pr) {
+		if (r==0){
+			sse <- sum(Y^2)
+		}else{
+			tempYhat <- p_list[[1]][[l]][[r]]
+			sse <- sum((Y - tempYhat)^2)
+		}
+
+		sse_matrix[l, r+1] <- sse 
+		
+	}
+}
+
+criteria_list <- list(
+	sse = sse_matrix,
+	logsse = log(sse_matrix)
+)
+
+for (crit_name in names(criteria_list)) {
+  mat <- criteria_list[[crit_name]]
+  mot<-crit_name
+  
+  optimized_rank <- get_best_indices(mat, crit_name)
+  
+  # 安全に最小値を取得（全NA列の処理も含む）
+  col_min <- sapply(1:ncol(mat), function(j) {
+    col_vals <- mat[, j]
+    if (all(is.na(col_vals))) {
+      return(NA)
+    } else {
+      return(min(col_vals, na.rm = TRUE))
+    }
+  })
+  
+  # データフレーム化
+  bic_table <- data.frame(
+    rank = 0:(pr),
+    IC = col_min
+  )
+  
+#bic_table<-bic_table[1:100,]
+finite_IC <- bic_table$IC[is.finite(bic_table$IC)]  # Inf, -Inf, NA を除外
+
+y_min <- min(finite_IC, na.rm = TRUE)
+y_max <- max(finite_IC, na.rm = TRUE)
+y_range <- y_max - y_min
+
+
+	g <- ggplot(bic_table, aes(x = rank, y = IC)) +
+		geom_line(color = "black") +
+		labs(title = paste(paste0(mot),"vs Estimated Rank"), x = "Rank", y = paste0(mot)) +
+		coord_cartesian(ylim = c(y_min - 0.07 * y_range, y_max),xlim = c(0,minrank)) +
+		theme_minimal()
+
+  
+  # リストに保存
+  plot_list[[crit_name]] <- g
+}
+
+# patchwork で結合（例: 3列 × 3行）
+combined_plot <- (plot_list[[1]] / plot_list[[2]])
+ #/ plot_list[["StARS"]] / plot_list[["StARS2"]] 
+
+tl<-c("n = 100 > p = q = 50",   "n = p = q = 100",   "n = 100 < p = q = 200","n = 100 < p = q = 500")
+
+final_plot <- combined_plot + 
+  plot_annotation(
+    title = tl[count],
+    theme = theme(plot.title = element_text(hjust = 0.5, size = 16, face = "bold"))
+  )
+# 表示
+#print(final_plot)
+
+final_plot_list[[count]] <- final_plot
+}
+
+wrapped_final_plots <- lapply(final_plot_list, wrap_elements)
+
+# 横に並べて表示
+all_combined_plot <- wrap_plots(wrapped_final_plots, nrow = 1)
+
+print(all_combined_plot)
+```
+
+```{,fig.height=14,fig.width=4}
+
+
+for (count in c(1:4)){
+	
+pqlist <- c(50,100,200,500)
+
+p<-pqlist[count]
+q<-pqlist[count]
+
+set.seed(123)
+simdata<-rdasim1(n = 100,p = p,q = q,k = 5,s2n = c(1,1) )
+X <- simdata$X
+Y <- simdata$Y
+
+
+# 各プロットをリストで保存する
+plot_list <- list()
+
+motlist <- c("AIC", "BIC", "GIC", "BICP", "GCV")
+
+Lambda <- rrr_lambda(Y = Y, X = X, penaltySVD = c("ann"))
+
+f <- rrda.fit(Y = Y, X = X, nrank = 1:min(dim(X),dim(Y)), lambda = Lambda)
+p_list <- rrda.predict(f, X)
+
+pr<-length(p_list$rank)
+pl<-length(p_list$lambda)
+# Initialize matrix to store AIC values
+AIC_matrix <- matrix(NA, nrow = pl, ncol = pr)
+BIC_matrix <- matrix(NA, nrow = pl, ncol = pr)
+GIC_matrix <- matrix(NA, nrow = pl, ncol = pr)
+BICP_matrix <- matrix(NA, nrow = pl, ncol = pr)
+GCV_matrix <- matrix(NA, nrow = pl, ncol = pr)
+
+qrX <- qr(X)
+rX <- qrX$rank
+
+# Loop over all l and r values
+for (l in 1:pl) {
+	for (r in 1:pr) {
+		tempYhat <- p_list[[1]][[l]][[r]]
+		sse <- sum((Y - tempYhat)^2)
+		df <- r * (rX + q - r)
+		AIC_matrix[l, r] <- n * q * log(sse / (n * q)) + 2 * df
+		BIC_matrix[l, r] <- n * q * log(sse / (n * q)) + log(n * q) * df
+		GIC_matrix[l, r] <- n * q * log(sse / (n * q)) + log(log(n * q)) * log(p * q) * df
+		BICP_matrix[l, r] <- n * q * log(sse / (n * q)) + 2 * log(p * q) * df
+		GCV_matrix[l, r] <- n * q * sse / (n * q - df)^2
+		
+	}
+}
+
+get_best_indices <- function(mat, name) {
+	min_val <- min(mat, na.rm = TRUE)
+	idx <- which(mat == min_val, arr.ind = TRUE)
+	cat(name, "→ min:", min_val, "at l =", idx[1], ", r =", idx[2], "\n")
+	return(idx)
+}
+
+# 各指標ごとに最良の (l, r) を表示
+get_best_indices(AIC_matrix, "AIC")
+get_best_indices(BIC_matrix, "BIC")
+get_best_indices(GIC_matrix, "GIC")
+get_best_indices(BICP_matrix, "BICP")
+get_best_indices(GCV_matrix, "GCV")
+
+criteria_list <- list(
+	AIC = AIC_matrix,
+	BIC = BIC_matrix,
+	GIC = GIC_matrix,
+	BICP = BICP_matrix,
+	GCV = GCV_matrix
+)
+for (crit_name in names(criteria_list)) {
+  mat <- criteria_list[[crit_name]]
+  
+  # 安全に最小値を取得（全NA列の処理も含む）
+  col_min <- sapply(1:ncol(mat), function(j) {
+    col_vals <- mat[, j]
+    if (all(is.na(col_vals))) {
+      return(NA)
+    } else {
+      return(min(col_vals, na.rm = TRUE))
+    }
+  })
+  
+  # データフレーム化
+  crit_df <- data.frame(
+    rank = 1:pr,
+    IC = col_min
+  )
+  
+  # ggplotで描画
+  g <- ggplot(crit_df, aes(x = rank, y = IC)) +
+    geom_line(color = "blue") +
+    geom_point() +
+    labs(
+      title = paste(crit_name, "vs Estimated Rank"),
+      x = "Rank",
+      y = crit_name
+    ) +
+    theme_minimal()
+  
+  # リストに保存
+  plot_list[[crit_name]] <- g
+}
+	
+
+# 
+# # StARS
+
+#result <- rrr_ann_stars2_track(Y, X, lambda = Lambda)
+# 
+#saveRDS(result,here("out",paste0("stars",count,".rds")))
+result <- readRDS(here("out",paste0("stars",count,".rds")))
+
+
+stars_df <- data.frame(
+  MeanRank = result$mean_rank,
+  Instability = result$instability
+)
+
+g_stars <- ggplot(stars_df, aes(x = MeanRank, y = Instability)) +
+  geom_line(color = "blue") +
+  geom_point() +
+  #geom_hline(yintercept = 1e-4, color = "red", linetype = "dashed") +
+  labs(title = "StARS Instability vs Estimated Rank",
+       x = "Rank", y = "StARS") +
+  theme_minimal()
+
+plot_list[["StARS"]]<- g_stars
+
+
+
+#rrda_result <- rrda.cv(Y = Y, X = X, maxrank =c(40,80,80,80)[count] , lambda = Lambda)
+
+#saveRDS(rrda_result,here("out",paste0("rrda",count,".rds")))
+rrda_result<-readRDS(here("out",paste0("rrda",count,".rds")))
+
+rank_estimates <- apply(rrda_result$MSE, 1, min)
+bic_table <- data.frame(
+	rank = rrda_result$rank,
+	MSE = rank_estimates
+)
+
+g_cv <- ggplot(bic_table, aes(x = rank, y = MSE)) +
+	geom_line(color = "blue") +
+	geom_point() +
+	labs(title = "CV vs Estimated Rank", x = "Rank", y = "CV-MSE") +
+	theme_minimal()
+
+plot_list[["CV"]] <- g_cv
+
+# patchwork で結合（例: 3列 × 3行）
+combined_plot <- (plot_list[[1]] / plot_list[[2]] / plot_list[[3]]) /
+	plot_list[[4]] / plot_list[[5]] / plot_list[["StARS"]] /
+	plot_list[["CV"]] 
+
+tl<-c("n = 100 > p = q = 50",   "n = p = q = 100",   "n = 100 < p = q = 200","n = 100 < p = q = 500")
+
+final_plot <- combined_plot + 
+  plot_annotation(
+    title = tl[count],
+    theme = theme(plot.title = element_text(hjust = 0.5, size = 16, face = "bold"))
+  )
+
+# 表示
+print(final_plot)
+
+}
+```
+
+
+
+rrpack
+```{,fig.height=17,fig.width=5}
+
+
+for (count in c(1:3)){
+	
+plist <- c(50,100,200,500)
+
+p<-plist[count]
+
+
+set.seed(123)
+simdata<-rdasim1(n = 100,p = p,q = p,k = 5,s2n = c(1,1))
+X <- simdata$X
+Y <- simdata$Y
+
+
+# 各プロットをリストで保存する
+plot_list <- list()
+
+motlist <- c("AIC", "BIC", "GIC", "BICP", "GCV")
+
+Lambda <- rrr_lambda(Y = Y, X = X, penaltySVD = c("ann"))
+
+for (mot in motlist){
+	rrr_result <- rrr(Y = Y, X = X, penaltySVD = c("ann"), ic.type = mot, maxrank = 100)
+	idx_min <- which.min(rrr_result$ic)
+	optimized_rank <- rrr_result$rank
+	
+	optimized_lambda <- rrr_result$lambda[idx_min]
+	
+	rank_estimates <- colSums(rrr_result$Spath != 0)
+	
+	bic_table <- data.frame(
+		lambda = Lambda,
+		rank = rank_estimates,
+		IC = rrr_result$ic
+	)
+	
+	g <- ggplot(bic_table, aes(x = rank, y = IC)) +
+		geom_line(color = "blue") +
+		geom_point() +
+		labs(title = paste(mot,"vs Estimated Rank"), x = "Rank", y = mot) +
+		theme_minimal()
+	
+	plot_list[[mot]] <- g
+}
+# 
+# # StARS
+
+#result <- rrr_ann_stars2_track(Y, X, lambda = Lambda)
+# 
+#saveRDS(result,here("out",paste0("stars",count,"_s2n1.rds")))
+result <- readRDS(here("out",paste0("stars",count,"_s2n1.rds")))
+
+
+stars_df <- data.frame(
+  MeanRank = result$mean_rank,
+  Instability = result$instability,
+  Lambda=result$lambda_path
+)
+
+g_stars <- ggplot(stars_df, aes(x = MeanRank, y = Instability)) +
+  geom_line(color = "blue") +
+  geom_point() +
+  #geom_hline(yintercept = 1e-4, color = "red", linetype = "dashed") +
+  labs(title = "StARS Instability vs Estimated Rank",
+       x = "Rank", y = "Instability (StARS)") +
+  theme_minimal()
+
+plot_list[["StARS"]]<- g_stars
+
+g_stars <- ggplot(stars_df, aes(x = MeanRank, y = Lambda)) +
+  geom_line(color = "blue") +
+  geom_point() +
+  #geom_hline(yintercept = 1e-4, color = "red", linetype = "dashed") +
+  labs(title = "StARS Lambda vs Estimated Rank",
+       x = "Rank", y = "lambda (StARS)") +
+  theme_minimal()
+
+plot_list[["StARS2"]]<- g_stars
+
+
+
+#rrda_result <- rrda.cv(Y = Y, X = X, maxrank =c(40,80,80,80)[count] , lambda = Lambda)
+
+#saveRDS(rrda_result,here("out",paste0("rrda",count,"_s2n1.rds")))
+rrda_result<-readRDS(here("out",paste0("rrda",count,"_s2n1.rds")))
+
+rank_estimates <- apply(rrda_result$MSE, 1, min)
+bic_table <- data.frame(
+	rank = rrda_result$rank,
+	MSE = rank_estimates
+)
+
+g_cv <- ggplot(bic_table, aes(x = rank, y = MSE)) +
+	geom_line(color = "blue") +
+	geom_point() +
+	labs(title = "CV vs Estimated Rank", x = "Rank", y = "CV-MSE") +
+	theme_minimal()
+
+plot_list[["CV"]] <- g_cv
+
+# patchwork で結合（例: 3列 × 3行）
+combined_plot <- (plot_list[[1]] / plot_list[[2]] / plot_list[[3]]) /
+	plot_list[[4]] / plot_list[[5]] / plot_list[["StARS"]] / plot_list[["StARS2"]] /
+	plot_list[["CV"]] 
+
+tl<-c("n = 100 > p = q = 50",   "n = p = q = 100",   "n = 100 < p = q = 200","n = 100 < p = q = 500")
+
+final_plot <- combined_plot + 
+  plot_annotation(
+    title = tl[count],
+    theme = theme(plot.title = element_text(hjust = 0.5, size = 16, face = "bold"))
+  )
+
+# 表示
+print(final_plot)
+
+
+
+}
+```
+
+
+
+
+
+
+```{,fig.height=17,fig.width=12}
+
+
+library(patchwork)
+
+# 各 final_plot を保存するリストを初期化
+final_plot_list <- list()
+
+for (count in c(1:3)){
+	
+plist <- c(50,100,200,500)
+
+p<-plist[count]
+k<-5
+
+set.seed(123)
+simdata<-rdasim1(n = 100,p = p,q = p,k = k,s2n = c(1,1))
+X <- simdata$X
+Y <- simdata$Y
+
+minrank<-min(dim(X),dim(Y))
+
+# 各プロットをリストで保存する
+plot_list <- list()
+
+
+
+#SSE
+
+
+f <- rrda.fit(Y = Y, X = X, nrank = 1:minrank, lambda = 0)
+p_list <- rrda.predict(f, X)
+
+pr<-length(p_list$rank)
+pl<-length(p_list$lambda)
+# Initialize matrix to store AIC values
+sse_matrix <- matrix(NA, nrow = pl, ncol = pr+1)
+
+							
+# Loop over all l and r values
+for (l in 1:pl) {
+	for (r in 0:pr) {
+		if (r==0){
+			sse <- sum(Y^2)
+		}else{
+			tempYhat <- p_list[[1]][[l]][[r]]
+			sse <- sum((Y - tempYhat)^2)
+		}
+
+		sse_matrix[l, r+1] <- sse 
+		
+	}
+}
+
+criteria_list <- list(
+	sse = sse_matrix,
+	logsse = log(sse_matrix)
+)
+
+for (crit_name in names(criteria_list)) {
+  mat <- criteria_list[[crit_name]]
+  mot<-crit_name
+  
+  optimized_rank <- get_best_indices(mat, crit_name)
+  
+  # 安全に最小値を取得（全NA列の処理も含む）
+  col_min <- sapply(1:ncol(mat), function(j) {
+    col_vals <- mat[, j]
+    if (all(is.na(col_vals))) {
+      return(NA)
+    } else {
+      return(min(col_vals, na.rm = TRUE))
+    }
+  })
+  
+  # データフレーム化
+  bic_table <- data.frame(
+    rank = 0:(pr),
+    IC = col_min
+  )
+  
+#bic_table<-bic_table[1:100,]
+finite_IC <- bic_table$IC[is.finite(bic_table$IC)]  # Inf, -Inf, NA を除外
+
+y_min <- min(finite_IC, na.rm = TRUE)
+y_max <- max(finite_IC, na.rm = TRUE)
+y_range <- y_max - y_min
+
+
+	g <- ggplot(bic_table, aes(x = rank, y = IC)) +
+		geom_line(color = "black") +
+		labs(title = paste(paste0(mot),"vs Estimated Rank"), x = "Rank", y = paste0(mot)) +
+		coord_cartesian(ylim = c(y_min - 0.07 * y_range, y_max),xlim = c(0,minrank)) +
+		theme_minimal()
+
+  
+  # リストに保存
+  plot_list[[crit_name]] <- g
+}
+
+
+##ic
+
+motlist <- c("AIC", "BIC", "GIC", "BICP", "GCV")
+
+Lambda <- rrr_lambda(Y = Y, X = X, penaltySVD = c("ann"))
+
+for (mot in motlist){
+	#rrr_result <- rrr(Y = Y, X = X, penaltySVD = c("ann"), ic.type = mot, maxrank = 100 )
+	
+	#saveRDS(rrr_result,here("out",paste0("rrda",count,mot,"_s2n1_naive.rds")))
+	rrr_result <- readRDS(here("out",paste0("rrda",count,mot,"_s2n1.rds")))
+	
+	idx_min <- which.min(rrr_result$ic)
+	optimized_rank <- rrr_result$rank
+	
+	optimized_lambda <- rrr_result$lambda[idx_min]
+	
+	rank_estimates <- colSums(rrr_result$Spath != 0)
+	
+	bic_table <- data.frame(
+		lambda = Lambda,
+		rank = rank_estimates,
+		IC = rrr_result$ic
+	)
+	
+	y_min <- min(bic_table$IC)
+y_max <- max(bic_table$IC)
+y_range <- y_max - y_min
+	
+	
+	g <- ggplot(bic_table, aes(x = rank, y = IC)) +
+		geom_line(color = "black") +
+		#geom_point(size=0.05) +
+		  geom_vline(xintercept = optimized_rank, color = "red", linetype = "dashed") +
+		　annotate("text", x = optimized_rank, y = max(bic_table$IC), 
+         label = "\u25BC", color = "red", size =4) +
+	geom_vline(xintercept = k, color = "blue", linetype = "dashed") +
+			　annotate("text", x = k, y = min(bic_table$IC), 
+         label = "\u25B2", color = "blue", size =4, vjust = 1.1) +
+		labs(title = paste(paste0("ANN.",mot),"vs Estimated Rank"), x = "Rank", y = paste0("ANN.",mot)) +
+		coord_cartesian(ylim = c(y_min - 0.07 * y_range, y_max),xlim = c(0,minrank)) +
+		theme_minimal()
+	
+	plot_list[[mot]] <- g
+}
+
+
+# # StARS
+
+# 
+#saveRDS(result,here("out",paste0("stars",count,"_s2n1.rds")))
+result <- readRDS(here("out",paste0("stars",count,"_s2n1.rds")))
+
+result$optlam <- result$lambda_path[which(result$instability < 1e-4)[1]]
+
+#rrr2(response, X, penaltySVD = "ann",modstr = list(gamma = 2, lambda = opt_lam))
+#result$bestrank <- colSums(result$rank != 0)[which(result$instability < 1e-4)[1]]
+
+result$bestrank <- result$mean_rank[which(result$instability < 1e-4)[1]]
+
+stars_df <- data.frame(
+  MeanRank = result$mean_rank,
+  IC = result$instability,
+  Lambda=result$lambda_path
+)
+
+y_min <- min(stars_df$IC)
+y_max <- max(stars_df$IC)
+y_range <- y_max - y_min
+
+g_stars <- ggplot(stars_df, aes(x = MeanRank, y = IC)) +
+  geom_line(color = "black") +
+  #geom_point(size=0.05) +
+		geom_vline(xintercept = result$bestrank, color = "red", linetype = "dashed") +
+	　annotate("text", x = result$bestrank, y = max(stars_df$IC), 
+         label = "\u25BC", color = "red", size =4) +
+	geom_vline(xintercept = k, color = "blue", linetype = "dashed") +
+	　annotate("text", x = k, y = min(stars_df$IC), 
+         label = "\u25B2", color = "blue", size =4, vjust = 1.1) +
+  #geom_hline(yintercept = 1e-4, color = "red", linetype = "dashed") +
+  labs(title = "StARS Instability vs Estimated Rank",
+       x = "Rank", y = "Instability (StARS)") +
+	coord_cartesian(ylim = c(y_min - 0.07 * y_range, y_max),xlim = c(0,minrank)) +
+  theme_minimal()
+
+plot_list[["StARS"]]<- g_stars
+
+
+y_min <- min(stars_df$Lambda)
+y_max <- max(stars_df$Lambda)
+y_range <- y_max - y_min
+
+
+g_stars <- ggplot(stars_df, aes(x = MeanRank, y = Lambda)) +
+  geom_line(color = "black") +
+  #geom_point(size=0.05) +
+  geom_vline(xintercept = result$bestrank, color = "red", linetype = "dashed") +
+	　annotate("text", x = result$bestrank, y = max(stars_df$Lambda), 
+         label = "\u25BC", color = "red", size =4) +
+	geom_vline(xintercept = k, color = "blue", linetype = "dashed") +
+	　annotate("text", x = k, y = min(stars_df$Lambda), 
+         label = "\u25B2", color = "blue", size =4, vjust = 1.1) +
+  labs(title = expression("StARS" ~ tau ~ "vs" ~ "Estimated Rank"),
+       x = "Rank", y = expression( tau ~ "(StARS)" )) +
+	coord_cartesian(ylim = c(y_min - 0.07 * y_range, y_max),xlim = c(0,minrank)) +
+  theme_minimal()
+plot_list[["StARS2"]]<- g_stars
+
+
+### CV lambda 0
+
+
+#rrda_result <- rrda.cv(Y = Y, X = X, maxrank =c(40,80,80,80)[count] , lambda = 0)
+
+#saveRDS(rrda_result,here("out",paste0("rrda",count,"_s2n1_l0.rds")))
+rrda_result<-readRDS(here("out",paste0("rrda",count,"_s2n1_l0.rds")))
+
+optimized_rank<- rrda_result$opt_min$rank
+rank_estimates <- apply(rrda_result$MSE, 1, min)
+bic_table <- data.frame(
+	rank = rrda_result$rank,
+	IC = rank_estimates
+)
+
+y_min <- min(bic_table$IC)
+y_max <- max(bic_table$IC)
+y_range <- y_max - y_min
+
+g_cv <- ggplot(bic_table, aes(x = rank, y = IC)) +
+	geom_line(color = "black") +
+	#geom_point(size=0.05) +
+	geom_vline(xintercept = optimized_rank, color = "red", linetype = "dashed") +
+　annotate("text", x = optimized_rank, y = max(bic_table$IC), 
+         label = "\u25BC", color = "red", size =4) +
+	geom_vline(xintercept = k, color = "blue", linetype = "dashed") +
+	annotate("text", x = k, y = min(bic_table$IC), 
+         label = "\u25B2", color = "blue", size =4, vjust = 1.1) +
+		labs(title = "5-fold rrr.CV vs Estimated Rank", x = "Rank", y = "RRR CV-MSE") +
+	coord_cartesian(ylim = c(y_min - 0.07 * y_range, y_max),xlim = c(0,minrank)) +
+	theme_minimal()
+
+plot_list[["rrrCV"]] <- g_cv
+
+
+##
+
+#rrda_result <- rrda.cv(Y = Y, X = X, maxrank =c(40,80,80,80)[count] , lambda = Lambda)
+
+#saveRDS(rrda_result,here("out",paste0("rrda",count,"_s2n1.rds")))
+rrda_result<-readRDS(here("out",paste0("rrda",count,"_s2n1.rds")))
+
+optimized_rank<- rrda_result$opt_min$rank
+rank_estimates <- apply(rrda_result$MSE, 1, min)
+bic_table <- data.frame(
+	rank = rrda_result$rank,
+	IC = rank_estimates
+)
+
+y_min <- min(bic_table$IC)
+y_max <- max(bic_table$IC)
+y_range <- y_max - y_min
+
+g_cv <- ggplot(bic_table, aes(x = rank, y = IC)) +
+	geom_line(color = "black") +
+	#geom_point(size=0.05) +
+	geom_vline(xintercept = optimized_rank, color = "red", linetype = "dashed") +
+　annotate("text", x = optimized_rank, y = max(bic_table$IC), 
+         label = "\u25BC", color = "red", size =4) +
+	geom_vline(xintercept = k, color = "blue", linetype = "dashed") +
+	annotate("text", x = k, y = min(bic_table$IC), 
+         label = "\u25B2", color = "blue", size =4, vjust = 1.1) +
+		labs(title = "5-fold rrda.CV vs Estimated Rank", x = "Rank", y = "RRDA CV-MSE") +
+	coord_cartesian(ylim = c(y_min - 0.07 * y_range, y_max),xlim = c(0,minrank)) +
+	theme_minimal()
+
+plot_list[["rrdaCV"]] <- g_cv
+
+
+# patchwork で結合（例: 3列 × 3行）
+combined_plot <- (plot_list[[1]] / plot_list[[2]] / plot_list[[3]]) /
+	plot_list[[4]] / plot_list[[5]] / 	plot_list[[6]] / plot_list[[7]] /
+	plot_list[["StARS"]] / plot_list[["StARS2"]] /
+  plot_list[["rrrCV"]] / plot_list[["rrdaCV"]] 
+
+tl<-c("n = 100 > p = q = 50",   "n = p = q = 100",   "n = 100 < p = q = 200","n = 100 < p = q = 500")
+
+final_plot <- combined_plot + 
+  plot_annotation(
+    title = tl[count],
+    theme = theme(plot.title = element_text(hjust = 0.5, size = 16, face = "bold"))
+  )
+# 表示
+#print(final_plot)
+
+final_plot_list[[count]] <- final_plot
+}
+
+wrapped_final_plots <- lapply(final_plot_list, wrap_elements)
+
+# 横に並べて表示
+all_combined_plot <- wrap_plots(wrapped_final_plots, nrow = 1)
+
+print(all_combined_plot)
+
+```
+
+
+
+
+```{,fig.height=17,fig.width=15}
+
+library(ggplot2)
+library(patchwork)
+
+# 各 final_plot を保存するリストを初期化
+final_plot_list <- list()
+
+plist <- c(50, 100, 200)
+qlist <- c(50, 100, 200)
+k <- 5
+motlist <- c("AIC", "BIC")
+
+count <- 1  # plot_list のインデックス用
+
+for (p in plist) {
+  for (q in qlist) {
+    
+    set.seed(123)
+    simdata <- rdasim1(n = 100, p = p, q = q, k = k, s2n = c(1, 1))
+    X <- simdata$X
+    Y <- simdata$Y
+    
+    # ラムダ系列の生成
+    Lambda <- rrr_lambda(Y = Y, X = X, penaltySVD = c("ann"))
+    
+    # 各モード（ICタイプ）のプロットをここに保存
+    plot_list <- list()
+    
+    for (mot in motlist) {
+      
+      rrr_result <- rrr(Y = Y, X = X, penaltySVD = c("ann"), ic.type = mot, maxrank = 100, df.type = "exact")
+      
+      idx_min <- which.min(rrr_result$ic)
+      optimized_rank <- rrr_result$rank
+      optimized_lambda <- rrr_result$lambda[idx_min]
+      rank_estimates <- colSums(rrr_result$Spath != 0)
+      
+      bic_table <- data.frame(
+        lambda = Lambda,
+        rank = rank_estimates,
+        IC = rrr_result$ic
+      )
+      
+      y_min <- min(bic_table$IC)
+      y_max <- max(bic_table$IC)
+      y_range <- y_max - y_min
+      
+      g <- ggplot(bic_table, aes(x = rank, y = IC)) +
+        geom_line(color = "black") +
+        geom_point(size = 0.5) +
+        geom_vline(xintercept = optimized_rank, color = "red", linetype = "dashed") +
+        annotate("text", x = optimized_rank, y = y_max, label = "\u25BC", color = "red", size = 4, vjust = 0.5) +
+        geom_vline(xintercept = k, color = "blue", linetype = "dashed") +
+        annotate("text", x = k, y = y_min, label = "\u25B2", color = "blue", size = 4, vjust = 1.1) +
+        labs(title = paste0("p=", p, ", q=", q, ", ", paste0("ANN.",mot)), x = "Rank", y = mot) +
+        coord_cartesian(ylim = c(y_min - 0.07 * y_range, y_max)) +
+        theme_minimal()
+      
+      plot_list[[mot]] <- g
+    }
+    
+    # AIC, BIC 両方のプロットを横に並べる
+    final_plot <- wrap_plots(plot_list, nrow = 1)
+    final_plot_list[[count]] <- final_plot
+    count <- count + 1
+  }
+}
+
+# 全体を縦に並べて表示
+all_combined_plot <- wrap_plots(final_plot_list, ncol = 1)
+print(all_combined_plot)
+
+
+```
+
+
+
+
+```{}
+
+for (count in c(1:4)){
+	
+plist <- c(50,100,200,500)
+
+p<-plist[count]
+
+
+set.seed(123)
+simdata<-rdasim1(n = 100,p = p,q = p,k = 5,s2n = c(1,1))
+X <- simdata$X
+Y <- simdata$Y
+result <- readRDS(here("out",paste0("stars",count,"_s2n1.rds")))
+
+
+stars_df <- data.frame(
+  MeanRank = result$mean_rank,
+  Instability = result$instability,
+  Lambda=result$lambda_path
+  
+)
+
+g_stars <- ggplot(stars_df, aes(x = MeanRank, y = Instability)) +
+  geom_line(color = "black") +
+  #geom_point(size=0.05) +
+  #geom_hline(yintercept = 1e-4, color = "red", linetype = "dashed") +
+  labs(title = "StARS Instability vs Estimated Rank",
+       x = "Rank", y = "StARS") +
+  theme_minimal()
+
+print(g_stars)
+
+g_stars <- ggplot(stars_df, aes(x = MeanRank, y = Lambda)) +
+  geom_line(color = "black") +
+  #geom_point(size=0.05) +
+  #geom_hline(yintercept = 1e-4, color = "red", linetype = "dashed") +
+  labs(title = "StARS Instability vs Estimated Rank",
+       x = "Rank", y = "Lambda") +
+  theme_minimal()
+
+print(g_stars)
+
+g_stars <- ggplot(stars_df, aes(x = Lambda, y = MeanRank)) +
+  geom_line(color = "black") +
+  #geom_point(size=0.05) +
+  #geom_hline(yintercept = 1e-4, color = "red", linetype = "dashed") +
+  labs(title = "StARS Lambda vs Estimated Rank",
+       x = "Lambda", y = "Rank") +
+  theme_minimal()
+
+print(g_stars)
+
+}
+
+```
+
+
+
+```{}
+Lambda<-rrr_lambda(Y=Y, X=X, penaltySVD = c("ann"))
+
+
+motlist<- c("AIC", "BIC", "GIC", "BICP", "GCV")
+
+for (mot in motlist){
+
+rrr_result <- rrr(Y = Y, X = X, penaltySVD = c("ann"),
+									ic.type = mot,maxrank = 40)
+idx_min <- which.min(rrr_result$ic)
+optimized_rank <- rrr_result$rank
+optimized_lambda <- rrr_result$lambda[idx_min]
+print(optimized_rank)
+
+
+bic_values <- rrr_result$ic
+ranks <- rrr_result$rankall
+lambdas <- rrr_result$lambda
+
+rank_estimates <- colSums(rrr_result$Spath != 0)
+
+
+bic_table <- data.frame(
+	lambda = Lambda,
+	rank = rank_estimates,
+	IC = rrr_result$ic
+)
+
+
+g<-ggplot(bic_table, aes(x = rank, y = IC)) +
+	geom_line(color = "blue") +
+	geom_point() +
+	#geom_vline(xintercept = 80, linetype = "dashed", color = "red") +
+	labs(title = paste(mot," vs Estimated Rank"), x = "Rank", y = mot) +
+	theme_minimal()
+
+print(g)
+
+}
+```
+
+
+```{}
+
+
+Lambda<-rrr_lambda(Y=Y, X=X, penaltySVD = c("ann"))
+
+
+mot<- c("StARS")
+
+bags <- 100      # サブサンプルの数
+subset <- 0.7       # サブサンプルの割合
+n <- nrow(X)
+nsample <- ceiling(subset * n)
+
+rank_mean_list <- numeric(length(Lambda))
+
+for (j in seq_along(Lambda)) {
+  ranks <- numeric(bags)
+  for (i in 1:bags) {
+    idx <- sample(n, nsample)
+    Y_sub <- Y[idx, , drop = FALSE]
+    X_sub <- X[idx, , drop = FALSE]
+    ranks[i] <- rrr(Y_sub, X_sub, penaltySVD = "ann", modstr = rrr.modstr(lambda = Lambda[j]))$rank
+  }
+  rank_mean_list[j] <- mean(ranks)
+  instability_list[j] <- var(ranks) * (bags - 1) / bags
+}
+
+result_df <- data.frame(
+  lambda = Lambda,
+  mean_rank = rank_mean_list,
+  instability = instability_list
+)
+
+
+
+# データフレーム化
+bic_table <- data.frame(
+	lambda = result_df$lambda,
+	rank = result_df$mean_rank,
+	Instability = result_df$instability
+)
+
+
+
+# g<-ggplot(bic_table, aes(x = lambda, y = rank)) +
+# 	geom_line(color = "blue") +
+# 	geom_point() +
+# 	#geom_vline(xintercept = 80, linetype = "dashed", color = "red") +
+# 	#labs(title = paste(mot," vs Estimated Rank"), x = "Rank", y = mot) +
+# 	theme_minimal()
+# 
+# print(g)
+
+g<-ggplot(bic_table, aes(x = lambda, y = Instability)) +
+	geom_line(color = "blue") +
+	geom_point() +
+	#geom_vline(xintercept = 80, linetype = "dashed", color = "red") +
+	#labs(title = paste(mot," vs Estimated Rank"), x = "Rank", y = mot) +
+	theme_minimal()
+
+print(g)
+
+
+g<-ggplot(bic_table, aes(x = rank, y = Instability)) +
+	geom_line(color = "blue") +
+	geom_point() +
+	#geom_vline(xintercept = 80, linetype = "dashed", color = "red") +
+	#labs(title = paste(mot," vs Estimated Rank"), x = "Rank", y = mot) +
+	theme_minimal()
+
+print(g)
+```
+
+```{}
+for (count in c(1,2)){
+	
+plist <- c(50,100,200)
+
+p<-plist[count]
+
+
+set.seed(123)
+simdata<-rdasim1(n = 100,p = p,q = p,k = 5)
+X <- simdata$X
+Y <- simdata$Y
+
+Lambda<-rrr_lambda(Y=Y, X=X, penaltySVD = c("ann"))
+
+
+result <- rrr_ann_stars2_track(Y, X, lambda = Lambda)
+
+saveRDS(result,here("out",paste0("stars",count,".rds")))
+readRDS(here("out",paste0("stars",count,".rds")))
+
+plot(result$lambda_path, result$mean_rank, type = "b", log = "x",
+		 ylab = "Mean Estimated Rank", xlab = "Lambda (log scale)",
+		 main = "Mean Rank vs Lambda")
+abline(h = 5, col = "red", lty = 2)
+
+plot(result$lambda_path, result$instability, type = "b", log = "x",
+		 ylab = "Instability", xlab = "Lambda (log scale)",
+		 main = "Instability vs Lambda")
+abline(h = 1e-4, col = "red", lty = 2)
+
+plot(result$mean_rank, result$instability, type = "b",
+		 xlab = "Mean Estimated Rank", ylab = "StARS-Instability",
+		 main = "StARS vs Estimated Rank")
+abline(h = 1e-4, col = "red", lty = 2)
+
+
+
+
+}
+```
+
+```{}
+set.seed(123)
+simdata<-rdasim1(n = 100,p = 100,q = 100,k = 5)
+X <- simdata$X
+Y <- simdata$Y
+Lambda<-rrr_lambda(Y=Y, X=X, penaltySVD = c("ann"))
+
+rrr_ann_stars2(Y,X,lambda=Lambda)
+```
+
+
+```{}
+Lambda<-rrr_lambda(Y=Y, X=X, penaltySVD = c("ann"))
+
+mot<- c("CV")
+
+rrda_result <- rrda.cv(Y = Y, X = X,maxrank = 200,lambda = Lambda)
+rrda.plot(rrda_result)
+
+# 結果を取り出す
+bic_values <- rrda_result$MSE
+ranks <- rrda_result$rank
+lambdas <- rrda_result$lambda
+
+MSE <- apply(bic_values, 2, min)
+
+rank_estimates <-apply(bic_values, 2, function(col) {
+  rownames(bic_values)[which.min(col)]
+})
+
+
+# データフレーム化
+bic_table <- data.frame(
+	#lambda = Lambda,
+	rank = rank_estimates,
+	MSE = MSE 
+)
+
+
+g<-ggplot(bic_table, aes(x = rank, y = MSE)) +
+	geom_line(color = "blue") +
+	geom_point() +
+	#geom_vline(xintercept = 80, linetype = "dashed", color = "red") +
+	labs(title = paste(mot," vs Estimated Rank"), x = "Rank", y = "CV-MSE") +
+	theme_minimal()
+
+print(g)
+
+
+```
+		
