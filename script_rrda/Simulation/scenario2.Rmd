@@ -839,7 +839,7 @@ saveRDS(results_df,file = here(dir_path, paste0(sim,"rdf200.rds")))
 
 ```
 # table
-```{r}
+```{}
 
 print("s2n 01")
 dir_path<- here("out/eval_01")
@@ -942,7 +942,7 @@ print(
 ```
 
 
-```{r}
+```{}
 simulations <- c("sim1","sim2")
 
 print("s2n 01")
@@ -1053,18 +1053,18 @@ print(
 
 ```
 
-```{r,warning=T}
+```{,warning=T}
 library(xtable)
 library(here)
 
-# ノイズレベル（ディレクトリ名と表示用s2n値）
+
 s2n_levels <- c("01", "1", "10")
 s2n_labels <- c("0.1", "1", "10")
 mod <- c("Model1", "Model2")
-simulations <- c("sim1", "sim2")  # 適宜シミュレーション名に変更
+simulations <- c("sim1", "sim2")  
 results_list <- list()
 
-# --- 各s2nディレクトリからデータを収集 ---
+
 for (i_s2n in seq_along(s2n_levels)) {
   s2n <- s2n_levels[i_s2n]
   dir_path <- here(paste0("out/eval_", s2n))
@@ -1085,7 +1085,7 @@ for (sim in simulations) {
 
   combined <- do.call(rbind, all_results)
   combined <- combined[, c(ncol(combined), 1:(ncol(combined)-1))]
-  combined <- combined[c(5,13,21,29,37,45), ]  # 特定の行のみ抽出
+  combined <- combined[c(5,13,21,29,37,45), ]  
   combined$s2n <- s2n_labels[i_s2n]
   results_list[[i_s2n]] <- combined
 }
@@ -1093,7 +1093,7 @@ for (sim in simulations) {
 # 全て結合
 final_table <- do.call(rbind, results_list)
 
-# --- LaTeXテーブルとして出力 ---
+# --- LaTeX ---
 cat("\\begin{tabular}{lcl|cccccccc}\n")
 cat("    \\toprule\n")
 cat("    \\textbf{s2n} & \\textbf{Model} & \\textbf{rank ($k$)} & \\textbf{ANN.AIC} & \\textbf{ANN.BIC} & \\textbf{ANN.GIC} & \\textbf{ANN.BICP} & \\textbf{ANN.GCV} & \\textbf{StARS} & \\textbf{RRR.CV} & \\textbf{rrda.cv} \\\\\n")
@@ -1127,7 +1127,6 @@ cat("    \\bottomrule\n")
 cat("\\end{tabular}\n")
 
 ```
-
 
 
 # session info

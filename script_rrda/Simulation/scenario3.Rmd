@@ -440,7 +440,6 @@ tp(save=dir_path)
 rn_list <-readRDS(file.path(base_path, "rn_list.RDS"))
 lm<-readRDS(file.path(dir_path, "aic_lambda.RDS"))
 criteria_fit_ann(Y=Y,X=X,num=100,Lambda=NULL,rn_list=rn_list,lm=lm,dir_path=dir_path,maxrank=10)
-
 ```
 
 

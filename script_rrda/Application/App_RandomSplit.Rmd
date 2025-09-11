@@ -595,7 +595,7 @@ for (s in c(3,4)){
 
 
 # xtable(res)
-# tp(save=dir_path)
+ tp(save=dir_path)
 ```
 
 # methylation
@@ -660,6 +660,7 @@ rsbc(Y=Y,X=X,num=20,maxrank=15,save=save,sample=1,Lambda=NULL,oneout = T,nfold=5
 
 ```{R}
 tp(save=save)
+res<-readRDS(file.path(save, "cv.RDS"))
 ```
 
 # session info

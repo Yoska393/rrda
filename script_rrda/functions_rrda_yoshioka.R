@@ -914,7 +914,7 @@ tp<-function(save,stars=F){
 	rs<- c(sd(b_r),sd(b_r.1se),sd(b_r),0,sd(b_r),0) /sqrt(num)
 	ls<- c(sd(b_l),sd(b_l),sd(b_l.1se),sd(b_l),0,0) /sqrt(num)
 	
-	Rank <- paste0(round(r, 2), " (", round(rs, 2), ")")
+	Rank <- paste0(round(r, 4), " (", round(rs, 4), ")")
 	Lambda <- paste0(round(l, 2), " (", round(ls, 2), ")")
 	# Assuming 'm' is your matrix with PMSE values
 	# PMSE Calculation
