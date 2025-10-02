@@ -1,0 +1,174 @@
+---
+title: "rrda_lecture"
+author: "Hayato Yoshioka"
+date: "2025-10-02"
+output: html_document
+---
+
+# setup
+
+package
+```{r}
+library(rrda)
+library(pheatmap)
+library(stringr)
+```
+
+function for top feature representation
+```{r}
+
+rrda.top<-function(cv_result,Y,X,mx=20,my=20){
+	
+  if (mx > ncol(X)) {
+    warning("mx is larger than ncol(X). Setting mx = ncol(X).")
+    mx <- ncol(X)
+  }
+  if (my > ncol(Y)) {
+    warning("my is larger than ncol(Y). Setting my = ncol(Y).")
+    my <- ncol(Y)
+  }
+  
+	#Extract optimal lambda and rank
+	L <- cv_result$opt_min$lambda
+	K <- cv_result$opt_min$rank
+	
+	# Fit the model using the optimal lambda and rank
+	b <- rrda.fit(Y = Y, X = X, lambda = L, nrank = K)
+	
+	b1<-b$Bhat_comp[[1]][[1]]
+	b2<-b$Bhat_comp[[1]][[2]]
+	
+	rownames(b1)<-colnames(X)
+	rownames(b2)<-colnames(Y)
+	
+	x_scores <- apply(b1, 1, function(row) sqrt(sum(row^2)))
+	top_x_idx <- order(x_scores, decreasing = TRUE)[1:mx]  # so that it becomes 30 variables afetr filtering
+	
+	y_scores <- apply(b2, 1, function(row) sqrt(sum(row^2)))
+	top_y_idx <- order(y_scores, decreasing = TRUE)[1:my] # so that it becomes 30 variables afetr filtering
+	
+	b1_sub <- b1[top_x_idx, , drop = FALSE]  
+	b2_sub <- b2[top_y_idx, , drop = FALSE]  
+	
+	B_sub <- b1_sub %*% t(b2_sub)
+	
+	h<-B_sub 
+	max_value <- max(h, na.rm = TRUE)
+	min_value <- min(h, na.rm = TRUE)
+	
+	custom_colors <- colorRampPalette(c("blue", "white", "red"))(200)
+	max_abs_value <- max(abs(c(min_value, max_value)))
+	breaks <- seq(-max_abs_value, max_abs_value, length.out = 201)
+	
+
+	
+	pheatmap(h,
+					 color = custom_colors,
+					 breaks = breaks,
+					 border_color = NA,
+					 #scale = "row",
+					 clustering_distance_rows = "euclidean",
+					 clustering_distance_cols = "euclidean",
+					 clustering_method = "complete",
+					 show_rownames = TRUE,
+					 show_colnames = TRUE,
+					 fontsize_row = 8,
+					 fontsize_col =8,
+					 width = 10,
+					 height = 15
+	)
+	
+}
+
+```
+
+
+# simulation
+
+example 
+```{r}
+set.seed(10)
+simdata<-rdasim1(n = 50,p = 100,q = 100,k = 5)
+X <- simdata$X
+Y <- simdata$Y
+
+colnames(X) <- paste0("X", 1:ncol(X))
+colnames(Y) <- paste0("Y", 1:ncol(Y))
+
+cv_result<- rrda.cv(Y = Y, X = X,nfold = 5)
+rrda.summary(cv_result = cv_result)
+
+p <- rrda.plot(cv_result) # cv result plot
+print(p)
+h <- rrda.heatmap(cv_result) # cv result heatmao
+print(h)
+
+estimated_lambda<-cv_result$opt_min$lambda  # selected parameter
+estimated_rank<-cv_result$opt_min$rank # selected parameter
+
+Bhat <- rrda.fit(Y = Y, X = X, nrank = estimated_rank,lambda = estimated_lambda) # fitting
+Bhat_mat<-rrda.coef(Bhat)
+Yhat_mat <- rrda.predict(Bhat = Bhat, X = X) # prediction
+Yhat<-Yhat_mat[[1]][[1]][[1]] # predicted values
+
+cor_Y_Yhat<-diag(cor(Y,Yhat)) # correlation
+summary(cor_Y_Yhat)
+
+plot(Yhat, Y)
+abline(0, 1, col = "red") 
+```
+
+## top feature heatmap
+```{r}
+rrda.top(cv_result=cv_result,Y=Y,X=X,mx=20,my=20)
+```
+# Application
+
+```{r}
+SoyData <- readRDS("RDAdata/Soydata.RDS")
+met <- SoyData$metabolome
+micro <- SoyData$microbiome
+
+metname<-substr(SoyData$metname, 1, 30)
+microname<-str_extract(SoyData$microname, "(?<=f__)[^;]+(?=; g__)")
+
+Y <- met
+X <- micro
+
+colnames(Y)<-metname
+colnames(X)<-microname
+
+dim(Y)
+dim(X)
+```
+
+```{r}
+
+cv_result<- rrda.cv(Y = Y, X = X, nfold = 5)
+rrda.summary(cv_result = cv_result)
+
+p <- rrda.plot(cv_result) # cv result plot
+print(p)
+h <- rrda.heatmap(cv_result) # cv result heatmao
+print(h)
+
+estimated_lambda<-cv_result$opt_min$lambda  # selected parameter
+estimated_rank<-cv_result$opt_min$rank # selected parameter
+
+Bhat <- rrda.fit(Y = Y, X = X, nrank = estimated_rank,lambda = estimated_lambda) # fitting
+Bhat_mat<-rrda.coef(Bhat)
+Yhat_mat <- rrda.predict(Bhat = Bhat, X = X) # prediction
+Yhat<-Yhat_mat[[1]][[1]][[1]] # predicted values
+
+cor_Y_Yhat<-diag(cor(Y,Yhat)) # correlation
+summary(cor_Y_Yhat)
+
+plot(Yhat, Y)
+abline(0, 1, col = "red") 
+```
+
+## top feature heatmap
+```{r}
+rrda.top(cv_result=cv_result,Y=Y,X=X,mx=30,my=30)
+```
+
