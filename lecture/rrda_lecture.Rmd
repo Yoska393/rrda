@@ -1,23 +1,35 @@
 ---
-title: "rrda_lecture"
+title: "Ridge Redundancy Analysis for High-Dimensional Omics Data"
 author: "Hayato Yoshioka"
 date: "2025-10-02"
 output: html_document
 ---
 
-# setup
+# R package **rrda** Workshop
 
-package
+This page is designed for a workshop on the R package **rrda** (Ridge Redundancy Analysis for High-Dimensional Omics Data), available on [CRAN](https://CRAN.R-project.org/package=rrda).  
+
+The **rrda** package is designed for analyzing **two matrices**, exploring how one may **influence or explain** the other.
+
+While conventional methods of RDA (or RRDA) are restricted to relatively small matrices, **rrda** extends these computations to **high-dimensional data**—including datasets with more than **100,000 features**.  
+
+This capability makes it especially valuable in modern **omics sciences** and other fields where analyzing extremely large datasets is essential.
+
+# Setup
+
+Required package
 ```{r}
 library(rrda)
 library(pheatmap)
 library(stringr)
+library(grid)
 ```
 
 function for top feature representation
 ```{r}
 
-rrda.top<-function(cv_result,Y,X,mx=20,my=20){
+rrda.top<-function(cv_result,Y,X,mx=20,my=20,rank=NULL,lambda=NULL,title=NULL){
+	
 	
   if (mx > ncol(X)) {
     warning("mx is larger than ncol(X). Setting mx = ncol(X).")
@@ -27,11 +39,21 @@ rrda.top<-function(cv_result,Y,X,mx=20,my=20){
     warning("my is larger than ncol(Y). Setting my = ncol(Y).")
     my <- ncol(Y)
   }
+	
+	K <- rank
+	L <- lambda
   
 	#Extract optimal lambda and rank
-	L <- cv_result$opt_min$lambda
+	if (is.null(K)) {
 	K <- cv_result$opt_min$rank
+	message(paste("K is set as the best rank", K, "selected by CV"))
+	}
 	
+	if (is.null(L)) {
+	  L <- cv_result$opt_min$lambda
+	  message(paste("L is set as the best lambda", L, "selected by CV"))
+	}
+
 	# Fit the model using the optimal lambda and rank
 	b <- rrda.fit(Y = Y, X = X, lambda = L, nrank = K)
 	
@@ -60,9 +82,20 @@ rrda.top<-function(cv_result,Y,X,mx=20,my=20){
 	max_abs_value <- max(abs(c(min_value, max_value)))
 	breaks <- seq(-max_abs_value, max_abs_value, length.out = 201)
 	
-
+	main_title <- NULL
+  if (isFALSE(title)) {
+    main_title <- NULL
+  } else if (is.null(title)) {
+    main_title <- sprintf("RRDA (rank = %s, lambda = %s)", K, L)
+  } else if (is.character(title) && length(title) == 1) {
+    main_title <- title
+  } else {
+    warning("`title` must be a single string, NULL, or FALSE. Falling back to default.")
+    main_title <- sprintf("Ridge RDA (rank = %s, lambda = %s)", K, L)
+  }
 	
-	pheatmap(h,
+	
+	hp<-pheatmap(h,
 					 color = custom_colors,
 					 breaks = breaks,
 					 border_color = NA,
@@ -75,17 +108,27 @@ rrda.top<-function(cv_result,Y,X,mx=20,my=20){
 					 fontsize_row = 8,
 					 fontsize_col =8,
 					 width = 10,
-					 height = 15
-	)
+					 height = 15,
+					 main = main_title
+	) 
+	#grid.text(title, x = 0.5, y = 0.98,
+   #       gp = gpar(fontsize = 14, fontface = "bold"))
+	
+	
+	print(hp)
+	
 	
 }
 
 ```
 
 
-# simulation
+# Simulation
 
-example 
+## Data generation 
+
+Here we generate two matrices, **X** and **Y**, with a chosen rank constraint **k**.
+
 ```{r}
 set.seed(10)
 simdata<-rdasim1(n = 50,p = 100,q = 100,k = 5)
@@ -94,10 +137,19 @@ Y <- simdata$Y
 
 colnames(X) <- paste0("X", 1:ncol(X))
 colnames(Y) <- paste0("Y", 1:ncol(Y))
+```
 
+## Cross validation for parameter tuning
+```{r}
 cv_result<- rrda.cv(Y = Y, X = X,nfold = 5)
 rrda.summary(cv_result = cv_result)
+```
 
+## Visualize and Select the Best Parameter
+
+Here we illustrate the parameter tuning process (regularization path), which helps identify the optimal parameter for maximizing prediction accuracy from **X** to **Y**.
+
+```{r}
 p <- rrda.plot(cv_result) # cv result plot
 print(p)
 h <- rrda.heatmap(cv_result) # cv result heatmao
@@ -118,19 +170,61 @@ plot(Yhat, Y)
 abline(0, 1, col = "red") 
 ```
 
-## top feature heatmap
+
+## Two-Dimensional Plot
+
+Traditionally, (Ridge) RDA is visualized in **two dimensions**.  
+However, in omics studies, this approach can sometimes represent **too much information at once**, making interpretation challenging.
+
+
+```{r}
+# You want to specify one lambda in `rrda.fit` to visualize
+
+ud<-Bhat$Bhat_comp[[1]][[1]] # SVD component of B (UD)
+v <-Bhat$Bhat_comp[[1]][[2]] # SVD component of B (V)
+
+ud12 <- ud[, 1:2]
+v12 <- v[, 1:2]
+
+# Base plot: ud (e.g., site scores)
+plot(v12, 
+     xlab = "RRDA1", ylab = "RRDA2", 
+     xlim = range(c(ud12[,1], v12[,1])) * 1.1, 
+     ylim = range(c(ud12[,2], v12[,2])) * 1.1, 
+     pch = 19, col = "darkgreen", 
+     main = "RDA")
+
+# Add v (e.g., species scores) as arrows from origin
+arrows(0, 0, ud12[,1], ud12[,2], col = "blue3", length = 0.1)
+
+# Optionally add text labels
+text(ud12, labels = paste0("X", 1:nrow(ud12)), pos = 3, col = "blue3", cex = 0.6)
+text(v12, labels = paste0("Y", 1:nrow(v12)), pos = 3, col = "darkgreen", cex = 0.6)
+```
+
+## Top Feature Heatmap
+
+For better interpretability, we visualize the **feature–feature matrix** using a selected dimensionality, highlighting the most informative features.
+
 ```{r}
 rrda.top(cv_result=cv_result,Y=Y,X=X,mx=20,my=20)
 ```
+
 # Application
 
+As an application, we analyze **microbiome** and **metabolome** data from soybean grown under drought conditions.  
+The dataset comes from a 2019 field experiment at Tottori University (Yoshioka et al. 2025).
+
+## Read data
+
+Data is available on [GitHub](https://raw.githubusercontent.com/Yoska393/rrda/main/RDAdata/SoyData.RDS). 
 ```{r}
 SoyData <- readRDS("RDAdata/Soydata.RDS")
 met <- SoyData$metabolome
 micro <- SoyData$microbiome
 
 metname<-substr(SoyData$metname, 1, 30)
-microname<-str_extract(SoyData$microname, "(?<=f__)[^;]+(?=; g__)")
+microname<-str_extract(SoyData$microname, "(?<=o__)[^;]+(?=; f__)")
 
 Y <- met
 X <- micro
@@ -142,11 +236,14 @@ dim(Y)
 dim(X)
 ```
 
+## Cross validation for parameter tuning
 ```{r}
-
 cv_result<- rrda.cv(Y = Y, X = X, nfold = 5)
 rrda.summary(cv_result = cv_result)
+```
 
+## Visusalize and extract best parameter
+```{r}
 p <- rrda.plot(cv_result) # cv result plot
 print(p)
 h <- rrda.heatmap(cv_result) # cv result heatmao
@@ -155,7 +252,13 @@ print(h)
 estimated_lambda<-cv_result$opt_min$lambda  # selected parameter
 estimated_rank<-cv_result$opt_min$rank # selected parameter
 
-Bhat <- rrda.fit(Y = Y, X = X, nrank = estimated_rank,lambda = estimated_lambda) # fitting
+Bhat <- rrda.fit(Y = Y, X = X, nrank = estimated_rank,lambda = estimated_lambda)
+```
+
+
+## Fittitng
+```{r}
+# fitting
 Bhat_mat<-rrda.coef(Bhat)
 Yhat_mat <- rrda.predict(Bhat = Bhat, X = X) # prediction
 Yhat<-Yhat_mat[[1]][[1]][[1]] # predicted values
@@ -167,8 +270,20 @@ plot(Yhat, Y)
 abline(0, 1, col = "red") 
 ```
 
-## top feature heatmap
-```{r}
-rrda.top(cv_result=cv_result,Y=Y,X=X,mx=30,my=30)
+## Top Feature Heatmap
+
+In the lower-dimensional space, we observe several **interesting interactions** among the top features.
+
+```{r,fig.height=7,fig.width=7}
+rrda.top(cv_result=cv_result,Y=Y,X=X,mx=20,my=20)
 ```
+
+
+
+# References
+Yoshioka H, Aubert J, and Mary-Huard T (2025). rrda: Ridge Redundancy Analysis for High-Dimensional Omics Data.  https://CRAN.R-project.org/package=rrda (CRAN R Package) 
+
+Yoshioka, H., Aubert, J., Iwata, H., and Mary-Huard, T., 2025. Ridge Redundancy Analysis for High-Dimensional Omics Data. bioRxiv, https://doi.org/10.1101/2025.04.16.649138
+
+
 
