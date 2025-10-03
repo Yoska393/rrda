@@ -182,6 +182,11 @@ plot(Y,Yhat)
 </div>
 
 
+## For high-dimensional tutorial
+
+Go to Rpubs (https://rpubs.com/Yoska393/1351133).
+
+
 ## 📊 Application Data
 The application data of breast cancer and soybean are stored as .rds file in a folder (rrda/RDAdata). For methylation data, you can refer to the R package (MEAL, Ruiz-Arenas and González 2024)
 
