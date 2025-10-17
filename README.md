@@ -120,16 +120,6 @@ abline(0, 1, col = "red")
 
 #### Visualize and Select the Best Parameter
 
-For the interpretation, we visualize the **feature–feature matrix** using a selected dimensionality, highlighting the most informative features.
-
-```{r}
-best_lambda<-cv_result$opt_min$lambda  
-best_rank<-cv_result$opt_min$rank
-rrda.top(Y=Y,X=X,nrank=best_rank,lambda=best_lambda,mx=20,my=20)
-```
-<img src="image/rrda_heat.png" width="500" >
-
-
 If you want to plot X and Y matrix in two-dimensional space (like classic RDA approach) :
 
 ```{r}
@@ -157,6 +147,14 @@ text(v12, labels = paste0("Y", 1:nrow(v12)), pos = 3, col = "darkgreen", cex = 0
 <img src="image/rrda_2dim.png" width="500" >
 However, this classic two-dimensional visualization is hard to interpret because of too many features..
 
+For better interpretations, we visualize the **feature–feature matrix** using a selected dimensionality, highlighting the most informative features based on L2 norm.
+
+```{r}
+best_lambda<-cv_result$opt_min$lambda  
+best_rank<-cv_result$opt_min$rank
+rrda.top(Y=Y,X=X,nrank=best_rank,lambda=best_lambda,mx=20,my=20)
+```
+<img src="image/rrda_heat.png" width="500" >
 
 
 ## For more exercises with application data
