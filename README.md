@@ -115,7 +115,7 @@ abline(0, 1, col = "red")
 ```
 
 <div style="display: flex; align-items: center; gap: 10px;">
-  <img src="image/fit.png" width="300" >
+  <img src="image/fit.png" width="500" >
 </div>
 
 #### Visualize and Select the Best Parameter
