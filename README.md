@@ -14,7 +14,7 @@
 > data**, allowing efficient computation and storage optimization.
 
 
-## 🇫🇷Overview🇯🇵
+## Overview
 Hello / Bonjour / Konichiwa
 
 - rrda/script_rrda:  Scripts and my own functions used in our article.
@@ -27,7 +27,7 @@ Hello / Bonjour / Konichiwa
 
 You can install the package from CRAN.
 
-```r
+```{}
 install.packages("rrda")
 ```
 
@@ -37,10 +37,10 @@ install.packages("rrda")
 
 `rdasim1` function generates rank-restricted matrices X and Y. 
 
-```r
+```{r}
 library(rrda)
-set.seed(123)
-simdata <- rdasim1(n = 10, p = 20, q = 20, k = 5)
+set.seed(10)
+simdata<-rdasim1(n = 50,p = 100,q = 100,k = 5)
 X <- simdata$X
 Y <- simdata$Y
 ```
@@ -51,10 +51,10 @@ This is equivalent to the prediction from X to Y, where Y = XB + E.
 
 `lambda` indicates the ridge penalty for the model. Here, it is the value of 0.1, 1, 10.   
 
-The model solves several ranks and lambdas efficiently. In this case, the model returns all the combinations of ranks and lambdas (3 times 5 = 15).
+The model solves several ranks and lambdas efficiently. In the default setting, the model returns all the combinations of 15 ranks and 50 lambda grid.
 
-```r
-Bhat <- rrda.fit(Y = Y, X = X, nrank = c(1:5), lambda = c(0.1,1,10))
+```{r}
+Bhat <- rrda.fit(Y = Y, X = X)
 names(Bhat)
 ```
 
@@ -62,81 +62,22 @@ When you see the Bhat, you will see the list composed of each lambda. In each la
 
 (Note! The Bhat is stored in a decomposed form. This is because the function is designed for high-dimensional settings.)
 
-
-If you want to plot X and Y matrix in two-dimensional space (like classic RDA approach) :
-
-```r
-# You want to specify one lambda in `rrda.fit` to visualize
-
-ud<-Bhat$Bhat_comp$lambda100[[1]] # SVD component of B (UD)
-v <-Bhat$Bhat_comp$lambda100[[2]] # SVD component of B (V)
-
-ud12 <- ud[, 1:2]
-v12 <- v[, 1:2]
-
-# Base plot: ud (e.g., site scores)
-plot(v12, 
-     xlab = "RRDA1", ylab = "RRDA2", 
-     xlim = range(c(ud12[,1], v12[,1])) * 1.1, 
-     ylim = range(c(ud12[,2], v12[,2])) * 1.1, 
-     pch = 19, col = "darkgreen", 
-     main = "RDA")
-
-# Add v (e.g., species scores) as arrows from origin
-arrows(0, 0, ud12[,1], ud12[,2], col = "blue3", length = 0.1)
-
-# Optionally add text labels
-text(ud12, labels = paste0("X", 1:nrow(ud12)), pos = 3, col = "blue3", cex = 0.6)
-text(v12, labels = paste0("Y", 1:nrow(v12)), pos = 3, col = "darkgreen", cex = 0.6)
-```
-<img src="image/rrda_2dim.png" width="500" >
-
-If you want to have a matrix form of B, you can perform:
-
-```r
-Bhat_mat_all <- rrda.coef(Bhat = Bhat)
-```
-
-If you want to specify the rank or lambda, you may indicate as below
-```r
-Bhat_mat <- rrda.coef(Bhat = Bhat, nrank = 5, lambda= 1)
-```
-
-Maybe a heatmap can explain the variable relationships
-
-```r
-h5<-Bhat_mat$lambda1$rank5
-#h5<-Bhat_mat[[1]][[1]] #same result
-rownames(h5) <- paste0("Y", 1:nrow(h5))
-colnames(h5) <- paste0("X", 1:ncol(h5))
-
-heatmap(h5, main = "rrda results (5 dimensions)")
-```
-<img src="image/rrda_heat.png" width="500" >
-
 #### Example 2: Parameter Tuning by Cross-Validation
 
-How do we know the best lambda and rank ??
+Here we illustrate the parameter tuning process (regularization path), which helps identify the optimal parameter for maximizing prediction accuracy from **X** to **Y**.
 
+How do we know the best lambda and rank for the model??
 -> Cross-validation by `rrda.cv` function
 
-```r
-set.seed(123)
-simdata <- rdasim1(n = 10, p = 20, q = 20, k = 5)
-X <- simdata$X
-Y <- simdata$Y
+```{r}
+cv_result<- rrda.cv(Y = Y, X = X)
+rrda.summary(cv_result = cv_result)
 
-cv_result <- rrda.cv(Y = Y, X = X, maxrank = 10) # cv
-rrda.summary(cv_result = cv_result) # cv result
-
-# Plot the CV result
-p <- rrda.plot(cv_result)
+p <- rrda.plot(cv_result) # cv result plot
 print(p)
-
-# Heatmap of the CV result
-h <- rrda.heatmap(cv_result)
-print(h)
 ```
+
+
 `rrda.summary` tells you the parameters suggested via CV. 
 
 ```
@@ -155,34 +96,70 @@ Also, `rrda.plot` and `rrda.heatmap` show you the figures to select the paramete
   <img src="image/path.png" width="420" >
 </div>
 
-```r
-# Extract optimal parameters
-estimated_lambda <- cv_result$opt_min$lambda
-estimated_rank <- cv_result$opt_min$rank
+```{r}
 
-# Fit the model with the optimal parameters
-Bhat <- rrda.fit(Y = Y, X = X, nrank = estimated_rank, lambda = estimated_lambda)
-Bhat_mat <- rrda.coef(Bhat)
+# Choose the best parameter sets which gives the minimum MSE
 
-# Make predictions
-Yhat_mat <- rrda.predict(Bhat = Bhat, X = X)
-Yhat <- Yhat_mat[[1]][[1]][[1]]
+best_lambda<-cv_result$opt_min$lambda  # selected parameter
+best_rank<-cv_result$opt_min$rank # selected parameter
 
-# Correlation
-cor_Y_Yhat <- diag(cor(Y, Yhat))
-summary(cor_Y_Yhat)
+# Fitting with the best parameters
+Bhat <- rrda.fit(Y = Y, X = X, nrank = best_rank,lambda = best_lambda) 
 
-# Plot
-plot(Y,Yhat)
+# Prediction
+Yhat_mat <- rrda.predict(Bhat = Bhat, X = X) 
+Yhat<-Yhat_mat[[1]][[1]][[1]] # predicted values
 
+plot(Yhat, Y)
+abline(0, 1, col = "red") 
 ```
 
 <div style="display: flex; align-items: center; gap: 10px;">
   <img src="image/fit.png" width="300" >
 </div>
 
+#### Visualize and Select the Best Parameter
 
-## For high-dimensional tutorial
+For the interpretation, we visualize the **feature–feature matrix** using a selected dimensionality, highlighting the most informative features.
+
+```{r}
+best_lambda<-cv_result$opt_min$lambda  
+best_rank<-cv_result$opt_min$rank
+rrda.top(Y=Y,X=X,nrank=best_rank,lambda=best_lambda,mx=20,my=20)
+```
+<img src="image/rrda_heat.png" width="500" >
+
+
+If you want to plot X and Y matrix in two-dimensional space (like classic RDA approach) :
+
+```{r}
+ud<-Bhat$Bhat_comp[[1]][[1]] # SVD component of B (UD) for lambda=0.1
+v <-Bhat$Bhat_comp[[1]][[2]] # SVD component of B (V). for lambda=0.1
+
+ud12 <- ud[, 1:2]
+v12  <- v[, 1:2]
+
+# Base plot: ud (e.g., site scores)
+plot(v12, 
+     xlab = "RRDA1", ylab = "RRDA2", 
+     xlim = range(c(ud12[,1], v12[,1])) * 1.1, 
+     ylim = range(c(ud12[,2], v12[,2])) * 1.1, 
+     pch = 19, col = "darkgreen", 
+     main = "RRDA")
+
+# Add v (e.g., species scores) as arrows from origin
+arrows(0, 0, ud12[,1], ud12[,2], col = "blue3", length = 0.1)
+
+# Optionally add text labels
+text(ud12, labels = paste0("X", 1:nrow(ud12)), pos = 3, col = "blue3", cex = 0.6)
+text(v12, labels = paste0("Y", 1:nrow(v12)), pos = 3, col = "darkgreen", cex = 0.6)
+```
+<img src="image/rrda_2dim.png" width="500" >
+However, this classic two-dimensional visualization is hard to interpret because of too many features..
+
+
+
+## For more exercises with application data
 
 Go to Rpubs (https://rpubs.com/Yoska393/1351133).
 
@@ -196,4 +173,3 @@ The application data of breast cancer and soybean are stored as .rds file in a f
 Please cite :)
 
 - Yoshioka, H., Aubert, J., Iwata, H., and Mary-Huard, T., 2025. Ridge Redundancy Analysis for High-Dimensional Omics Data. *bioRxiv*, doi: 10.1101/2025.04.16.649138
-
