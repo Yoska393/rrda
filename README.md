@@ -173,3 +173,5 @@ The application data of breast cancer and soybean are stored as .rds file in a f
 Please cite :)
 
 - Yoshioka, H., Aubert, J., Iwata, H., and Mary-Huard, T., 2025. Ridge Redundancy Analysis for High-Dimensional Omics Data. *bioRxiv*, doi: 10.1101/2025.04.16.649138
+
+Yoshioka H, Aubert J, and Mary-Huard T (2025). rrda: Ridge Redundancy Analysis for High-Dimensional Omics Data.  https://CRAN.R-project.org/package=rrda (CRAN R Package) 
