@@ -33,6 +33,18 @@ install.packages("rrda")
 
 ## 💡 Tutorial
 
+```{r}
+# rrda is updated if the version is old
+required_version <- "0.2.3"  
+
+if (!requireNamespace("rrda", quietly = TRUE) ||
+    packageVersion("rrda") < required_version) {
+  message("rrda will be updated")
+  install.packages("rrda", repos = "https://cloud.r-project.org", type = "source")
+}
+```
+
+
 #### Example 1: Fitting
 
 `rdasim1` function generates rank-restricted matrices X and Y. 
