@@ -1,11 +1,18 @@
 ---
-title: "Ridge Redundancy Analysis for High-Dimensional Omics Data"
-author: "Hayato Yoshioka"
+title: "rrda: Ridge Redundancy Analysis for High-Dimensional Omics Data"
+author: "Hayato Yoshioka (University of Tokyo)"
 date: "2025-10-02"
-output: html_document
+output:
+  html_document:
+    toc: true
+    toc_float:
+      collapsed: true
+      smooth_scroll: true
+      position: left
+    number_sections: 1
 ---
 
-# R package **rrda** Workshop
+# Summary of R package **rrda** Workshop
 
 This page is designed for a workshop on the R package **rrda** (Ridge Redundancy Analysis for High-Dimensional Omics Data), available on [CRAN](https://CRAN.R-project.org/package=rrda).  
 
@@ -15,117 +22,117 @@ While conventional methods of RDA (or RRDA) are restricted to relatively small m
 
 This capability makes it especially valuable in modern **omics sciences** and other fields where analyzing extremely large datasets is essential.
 
+
+
+---
+
+# Algebra
+
+## Classic formula 
+The Ridge Redundancy Analysis model is represented as:
+
+Let \( Y \) be an \( n \times q \) matrix of response variables, and let \( X \) be an \( n \times p \) matrix of predictor variables. We assume that the columns of matrices \( Y \) and \( X \) are centered to have means of 0.
+
+The relation between \(X\) and \(Y\) is given by
+
+$$
+Y = X B + E
+$$
+
+where \( B \) is the matrix of regression coefficients, and \( E \) is an error matrix.  
+
+The ridge RDA aims to estimate \( B \) under both rank and ridge restrictions. The corresponding optimization problem is
+
+$$
+\hat{B}(\lambda, r) = \arg\min_B \left\{ \| Y - X B \|^2 + \lambda \| B \|^2 \right\}
+\quad \text{subject to} \quad \text{rank}(B) \leq r
+$$
+
+where \(\| A \|^2 = \text{tr}(A'A)\) is the Frobenius norm and \(\lambda\) is the ridge regularization parameter.
+
+---
+
+##  For High-Dimensional Data 
+
+For Ridge Redundancy Analysis, the ridge estimator \(\hat{B}(\lambda)\) can be decomposed as follows:
+
+$$
+U_{\hat{B}(\lambda)} = V (D^{2} + \lambda I)^{-1/2}\hat{U}_{\lambda}, \quad
+D_{\hat{B}(\lambda)} = \hat{D}_{\lambda}, \quad
+V_{\hat{B}(\lambda)} = \hat{V}_{\lambda}
+$$
+
+where the Singular Value Decomposition (SVD) of \( X \) is 
+$$
+X = U D V^{\prime}
+$$
+and \(\hat{U}_{\lambda}, \hat{D}_{\lambda}, \hat{V}_{\lambda}\) are the SVD components of
+
+$$
+M_\lambda = (D^{2} + \lambda I)^{-1/2} D U^{\prime} Y.
+$$
+
+Since \(M_\lambda\) depends on \(\lambda\), its SVD must be computed for **each** value of \(\lambda\).  
+However, efficiency can be gained because \(M_\lambda\) is the product of:
+
+- a diagonal matrix \((D^{2} + \lambda I)^{-1/2}\), and  
+- a constant matrix \(U'Y\) (independent of \(\lambda\)).
+
+---
+
+## Final Expression 
+
+The rank-restricted ridge estimator is:
+
+$$
+\hat{B}(\lambda,r) =
+V(D^{2} + \lambda I)^{-1/2}
+\hat{U}_{\lambda}^{[r]}
+\hat{D}_{\lambda}^{[r]}
+\hat{V}_{\lambda}^{[r]\prime}.
+$$
+
+
+
+**Important Note 1:** Ridge Redundancy Analysis (RRDA) has **two parameters**:  
+- **Ridge penalty \(\lambda\) **
+- **Rank \(r\)**
+
+
+**Important Note 2:** RRDA is efficiently rewritten with **SVD of X**
+
+
+---
+
 # Setup
 
-Required package
+Required packages
 ```{r}
-library(rrda)
-library(pheatmap)
-library(stringr)
-library(grid)
-```
+pkgs <- c("rrda", "stringr")
 
-function for top feature representation
-```{r}
-
-rrda.top<-function(cv_result,Y,X,mx=20,my=20,rank=NULL,lambda=NULL,title=NULL){
-	
-	
-  if (mx > ncol(X)) {
-    warning("mx is larger than ncol(X). Setting mx = ncol(X).")
-    mx <- ncol(X)
-  }
-  if (my > ncol(Y)) {
-    warning("my is larger than ncol(Y). Setting my = ncol(Y).")
-    my <- ncol(Y)
-  }
-	
-	K <- rank
-	L <- lambda
-  
-	#Extract optimal lambda and rank
-	if (is.null(K)) {
-	K <- cv_result$opt_min$rank
-	message(paste("K is set as the best rank", K, "selected by CV"))
-	}
-	
-	if (is.null(L)) {
-	  L <- cv_result$opt_min$lambda
-	  message(paste("L is set as the best lambda", L, "selected by CV"))
-	}
-
-	# Fit the model using the optimal lambda and rank
-	b <- rrda.fit(Y = Y, X = X, lambda = L, nrank = K)
-	
-	b1<-b$Bhat_comp[[1]][[1]]
-	b2<-b$Bhat_comp[[1]][[2]]
-	
-	rownames(b1)<-colnames(X)
-	rownames(b2)<-colnames(Y)
-	
-	x_scores <- apply(b1, 1, function(row) sqrt(sum(row^2)))
-	top_x_idx <- order(x_scores, decreasing = TRUE)[1:mx]  # so that it becomes 30 variables afetr filtering
-	
-	y_scores <- apply(b2, 1, function(row) sqrt(sum(row^2)))
-	top_y_idx <- order(y_scores, decreasing = TRUE)[1:my] # so that it becomes 30 variables afetr filtering
-	
-	b1_sub <- b1[top_x_idx, , drop = FALSE]  
-	b2_sub <- b2[top_y_idx, , drop = FALSE]  
-	
-	B_sub <- b1_sub %*% t(b2_sub)
-	
-	h<-B_sub 
-	max_value <- max(h, na.rm = TRUE)
-	min_value <- min(h, na.rm = TRUE)
-	
-	custom_colors <- colorRampPalette(c("blue", "white", "red"))(200)
-	max_abs_value <- max(abs(c(min_value, max_value)))
-	breaks <- seq(-max_abs_value, max_abs_value, length.out = 201)
-	
-	main_title <- NULL
-  if (isFALSE(title)) {
-    main_title <- NULL
-  } else if (is.null(title)) {
-    main_title <- sprintf("RRDA (rank = %s, lambda = %s)", K, L)
-  } else if (is.character(title) && length(title) == 1) {
-    main_title <- title
-  } else {
-    warning("`title` must be a single string, NULL, or FALSE. Falling back to default.")
-    main_title <- sprintf("Ridge RDA (rank = %s, lambda = %s)", K, L)
-  }
-	
-	
-	hp<-pheatmap(h,
-					 color = custom_colors,
-					 breaks = breaks,
-					 border_color = NA,
-					 #scale = "row",
-					 clustering_distance_rows = "euclidean",
-					 clustering_distance_cols = "euclidean",
-					 clustering_method = "complete",
-					 show_rownames = TRUE,
-					 show_colnames = TRUE,
-					 fontsize_row = 8,
-					 fontsize_col =8,
-					 width = 10,
-					 height = 15,
-					 main = main_title
-	) 
-	#grid.text(title, x = 0.5, y = 0.98,
-   #       gp = gpar(fontsize = 14, fontface = "bold"))
-	
-	
-	print(hp)
-	
-	
+# Install missing packages
+to_install <- pkgs[!(pkgs %in% installed.packages()[, "Package"])]
+if (length(to_install)) {
+  install.packages(to_install, repos = "https://cloud.r-project.org")
 }
+
+
+op <- old.packages(repos = "https://cloud.r-project.org")
+if (!is.null(op) && "rrda" %in% rownames(op)) {
+  install.packages("rrda", repos = "https://cloud.r-project.org")
+}
+
+
+# load packages
+library(rrda)
+library(stringr)
 
 ```
 
 
 # Simulation
 
-## Data generation 
+## Data generation  
 
 Here we generate two matrices, **X** and **Y**, with a chosen rank constraint **k**.
 
@@ -135,30 +142,28 @@ simdata<-rdasim1(n = 50,p = 100,q = 100,k = 5)
 X <- simdata$X
 Y <- simdata$Y
 
-colnames(X) <- paste0("X", 1:ncol(X))
-colnames(Y) <- paste0("Y", 1:ncol(Y))
 ```
 
-## Cross validation for parameter tuning
+## Parameter tuning 
 ```{r}
 cv_result<- rrda.cv(Y = Y, X = X,nfold = 5)
 rrda.summary(cv_result = cv_result)
 ```
 
-## Visualize and Select the Best Parameter
+## Visualize Results 
 
 Here we illustrate the parameter tuning process (regularization path), which helps identify the optimal parameter for maximizing prediction accuracy from **X** to **Y**.
 
 ```{r}
 p <- rrda.plot(cv_result) # cv result plot
 print(p)
-h <- rrda.heatmap(cv_result) # cv result heatmao
+h <- rrda.heatmap(cv_result) # cv result heatmap
 print(h)
 
-estimated_lambda<-cv_result$opt_min$lambda  # selected parameter
-estimated_rank<-cv_result$opt_min$rank # selected parameter
+best_lambda<-cv_result$opt_min$lambda  # selected parameter
+best_rank<-cv_result$opt_min$rank # selected parameter
 
-Bhat <- rrda.fit(Y = Y, X = X, nrank = estimated_rank,lambda = estimated_lambda) # fitting
+Bhat <- rrda.fit(Y = Y, X = X, nrank = best_rank,lambda = best_lambda) # fitting
 Bhat_mat<-rrda.coef(Bhat)
 Yhat_mat <- rrda.predict(Bhat = Bhat, X = X) # prediction
 Yhat<-Yhat_mat[[1]][[1]][[1]] # predicted values
@@ -171,10 +176,10 @@ abline(0, 1, col = "red")
 ```
 
 
-## Two-Dimensional Plot
+## Two-Dimensional Plot 
 
 Traditionally, (Ridge) RDA is visualized in **two dimensions**.  
-However, in omics studies, this approach can sometimes represent **too much information at once**, making interpretation challenging.
+However, in omics studies, this approach can sometimes **overload the plot** with information, making interpretation challenging.
 
 
 ```{r}
@@ -192,7 +197,7 @@ plot(v12,
      xlim = range(c(ud12[,1], v12[,1])) * 1.1, 
      ylim = range(c(ud12[,2], v12[,2])) * 1.1, 
      pch = 19, col = "darkgreen", 
-     main = "RDA")
+     main = "RRDA")
 
 # Add v (e.g., species scores) as arrows from origin
 arrows(0, 0, ud12[,1], ud12[,2], col = "blue3", length = 0.1)
@@ -202,12 +207,14 @@ text(ud12, labels = paste0("X", 1:nrow(ud12)), pos = 3, col = "blue3", cex = 0.6
 text(v12, labels = paste0("Y", 1:nrow(v12)), pos = 3, col = "darkgreen", cex = 0.6)
 ```
 
-## Top Feature Heatmap
+## Top Feature Heatmap 
 
 For better interpretability, we visualize the **feature–feature matrix** using a selected dimensionality, highlighting the most informative features.
 
-```{r}
-rrda.top(cv_result=cv_result,Y=Y,X=X,mx=20,my=20)
+```{r,fig.height=5,fig.width=5}
+best_lambda<-cv_result$opt_min$lambda  
+best_rank<-cv_result$opt_min$rank
+rrda.top(Y=Y,X=X,nrank=best_rank,lambda=best_lambda,mx=20,my=20)
 ```
 
 # Application
@@ -215,11 +222,22 @@ rrda.top(cv_result=cv_result,Y=Y,X=X,mx=20,my=20)
 As an application, we analyze **microbiome** and **metabolome** data from soybean grown under drought conditions.  
 The dataset comes from a 2019 field experiment at Tottori University (Yoshioka et al. 2025).
 
-## Read data
+## Read data 
 
-Data is available on [GitHub](https://raw.githubusercontent.com/Yoska393/rrda/main/RDAdata/SoyData.RDS). 
+Data is available on GitHub (`https://github.com/Yoska393/rrda/blob/main/RDAdata/SoyData.RDS`).
 ```{r}
+#download from github
+if(!dir.exists("RDAdata")) dir.create("RDAdata")
+url <- "https://raw.githubusercontent.com/Yoska393/rrda/main/RDAdata/SoyData.RDS"
+destfile <- "RDAdata/SoyData.RDS"
+
+if (!file.exists(destfile)) {
+  download.file(url, destfile, mode = "wb")
+  message("✅ File downloaded successfully.")
+} 
+
 SoyData <- readRDS("RDAdata/Soydata.RDS")
+
 met <- SoyData$metabolome
 micro <- SoyData$microbiome
 
@@ -236,27 +254,27 @@ dim(Y)
 dim(X)
 ```
 
-## Cross validation for parameter tuning
+## Parameter tuning 
 ```{r}
 cv_result<- rrda.cv(Y = Y, X = X, nfold = 5)
 rrda.summary(cv_result = cv_result)
 ```
-
-## Visusalize and extract best parameter
+ 
+## Visualize Results 
 ```{r}
 p <- rrda.plot(cv_result) # cv result plot
 print(p)
-h <- rrda.heatmap(cv_result) # cv result heatmao
+h <- rrda.heatmap(cv_result) # cv result heatmap
 print(h)
 
-estimated_lambda<-cv_result$opt_min$lambda  # selected parameter
-estimated_rank<-cv_result$opt_min$rank # selected parameter
+best_lambda<-cv_result$opt_min$lambda  # selected parameter
+best_rank<-cv_result$opt_min$rank # selected parameter
 
-Bhat <- rrda.fit(Y = Y, X = X, nrank = estimated_rank,lambda = estimated_lambda)
+Bhat <- rrda.fit(Y = Y, X = X, nrank = best_rank,lambda = best_lambda)
 ```
 
 
-## Fittitng
+## Fitting 
 ```{r}
 # fitting
 Bhat_mat<-rrda.coef(Bhat)
@@ -270,17 +288,19 @@ plot(Yhat, Y)
 abline(0, 1, col = "red") 
 ```
 
-## Top Feature Heatmap
+## Top Feature Heatmap 
 
 In the lower-dimensional space, we observe several **interesting interactions** among the top features.
 
 ```{r,fig.height=7,fig.width=7}
-rrda.top(cv_result=cv_result,Y=Y,X=X,mx=20,my=20)
+best_lambda<-cv_result$opt_min$lambda  # selected parameter
+best_rank<-cv_result$opt_min$rank # selected parameter
+rrda.top(Y=Y,X=X,nrank=best_rank,lambda=best_lambda,mx=20,my=20)
 ```
 
 
-
-# References
+ 
+# References {-}
 Yoshioka H, Aubert J, and Mary-Huard T (2025). rrda: Ridge Redundancy Analysis for High-Dimensional Omics Data.  https://CRAN.R-project.org/package=rrda (CRAN R Package) 
 
 Yoshioka, H., Aubert, J., Iwata, H., and Mary-Huard, T., 2025. Ridge Redundancy Analysis for High-Dimensional Omics Data. bioRxiv, https://doi.org/10.1101/2025.04.16.649138
