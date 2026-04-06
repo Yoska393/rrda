@@ -32,9 +32,7 @@ To install the required annotation package:
 library(IlluminaHumanMethylation450kanno.ilmn12.hg19)
 ```
 
-## Alternative access (breast cancer data)
-
-The breast cancer methylation and gene expression data are also available via the **brgedata** package (Pelegri-Siso et al. 2024):
+The data are also available via the **brgedata**:
 
 ```r
 library(brgedata)
