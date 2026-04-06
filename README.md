@@ -175,7 +175,33 @@ Go to Rpubs (https://rpubs.com/Yoska393/1351133).
 
 
 ## 📊 Application Data
-The application data of breast cancer and soybean are stored as .rds file in a folder (rrda/RDAdata). For methylation data, you can refer to the R package (MEAL, Ruiz-Arenas and González 2024)
+The application data of breast cancer and soybean are stored as .rds file in a folder `rrda/RDAdata`.
+
+The TGCA methylation dataset is too large to be hosted on GitHub.  
+Please refer to the script `rrda_script/Meth.rmd` for details on downloading and preprocessing. You can refer to the R package (MEAL, Ruiz-Arenas and González 2024)
+
+To install the required annotation package:
+
+```r
+# if (!requireNamespace("BiocManager", quietly = TRUE))
+#     install.packages("BiocManager")
+
+# BiocManager::install("IlluminaHumanMethylation450kanno.ilmn12.hg19")
+
+library(IlluminaHumanMethylation450kanno.ilmn12.hg19)
+```
+
+The breast cancer methylation and gene expression data are also available via the **brgedata** package (Pelegri-Siso et al., 2024):
+
+```r
+library(brgedata)
+
+data(brge_methy)
+brge_methy
+
+data(brge_gexp)
+brge_gexp
+```
 
 
 ## 📚 References 
