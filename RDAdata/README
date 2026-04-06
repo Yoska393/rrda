@@ -1,7 +1,53 @@
-Hi,
+# RRDA Data
 
-Here I store data for applications in the article "Ridge Redundancy Analysis for High-Dimensional Omics Data" (2025) doi: https://doi.org/10.1101/2025.04.16.649138
+This repository contains datasets used in the article:  
+**“Ridge Redundancy Analysis for High-Dimensional Omics Data” (2025)**  
+https://doi.org/10.1101/2025.04.16.649138
 
-For the methylation data, the data is too big for GitHub, refer to my code (rrda_script/Meth.rmd) for the installation and downloading. Also refer to the package "brgedata". (Pelegri-Siso et al. 2024)
+## Data availability
 
-Merci beaucoup, Hayato 19/11/2024
+The following datasets are included in this repository:
+
+- **Soybean data**
+  - `SoyData.RDS`
+  - `soymet.csv`
+  - `soymicro.csv`
+
+- **Breast cancer data**
+  - `breast.RDS`
+
+## Methylation data
+
+The methylation dataset is too large to be hosted on GitHub.  
+Please refer to the script `rrda_script/Meth.rmd` for instructions on downloading and preprocessing the data.
+
+To install the required annotation package:
+
+```r
+# if (!requireNamespace("BiocManager", quietly = TRUE))
+#     install.packages("BiocManager")
+
+# BiocManager::install("IlluminaHumanMethylation450kanno.ilmn12.hg19")
+
+library(IlluminaHumanMethylation450kanno.ilmn12.hg19)
+```
+
+## Alternative access (breast cancer data)
+
+The breast cancer methylation and gene expression data are also available via the **brgedata** package (Pelegri-Siso et al. 2024):
+
+```r
+library(brgedata)
+
+data(brge_methy)
+brge_methy
+
+data(brge_gexp)
+brge_gexp
+```
+
+---
+
+Merci beaucoup,  
+Hayato  
+19/11/2024
