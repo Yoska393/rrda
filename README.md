@@ -181,7 +181,7 @@ The application data for breast cancer and soybean are stored as `.rds` files in
 The TCGA methylation dataset is too large to be hosted on GitHub.  
 Please refer to the script `rrda_script/Meth.rmd` for details on downloading and preprocessing.
 
-In short, the TCGA methylation and gene expression data are available via the **brgedata** package (Pelegri-Siso et al., 2024):
+In short, the TCGA methylation and gene expression data are available via the **brgedata**:
 
 ```r
 library(brgedata)
