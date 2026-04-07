@@ -14,7 +14,7 @@
 > data**, allowing efficient computation and storage optimization.
 
 
-## Overview
+## 🌴Overview
 Hello / Bonjour / Konichiwa
 
 This repository provides the implementation, tutorial, and application materials for the R package **`rrda`**, developed for ridge redundancy analysis in high-dimensional omics data.
