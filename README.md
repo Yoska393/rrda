@@ -17,9 +17,16 @@
 ## Overview
 Hello / Bonjour / Konichiwa
 
-- rrda/script_rrda:  Scripts and my own functions used in our article.
-- rrda/RDAdata:  Application data used in our article.
-- rrda/src:  Source code for the package "rrda"
+The structure of this repository is summarized below.
+
+| Folder / File | Description |
+|--------------|------------|
+| `RDAdata/` | Application datasets (soybean, breast cancer) used in this study |
+| `script_rrda/` | Analysis scripts, including preprocessing and application workflows |
+| `src/` | Core implementation of the rrda method |
+| `lecture/` | Supplementary materials and lecture notes |
+| `image/` | Figures used in the documentation |
+| `README.md` | Project overview and instructions for reproduction |
 
 **The link to our article** -> https://doi.org/10.1101/2025.04.16.649138
 
