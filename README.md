@@ -17,6 +17,10 @@
 ## Overview
 Hello / Bonjour / Konichiwa
 
+This repository provides the implementation, tutorial, and application materials for the R package **`rrda`**, developed for ridge redundancy analysis in high-dimensional omics data.
+
+In addition to the core implementation, this repository includes example datasets, analysis scripts, and supplementary materials used in our study, allowing users to reproduce the results and explore practical applications of the method.
+
 The structure of this repository is summarized below.
 
 | Folder / File | Description |
