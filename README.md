@@ -169,19 +169,22 @@ rrda.top(Y=Y,X=X,nrank=best_rank,lambda=best_lambda,mx=20,my=20)
 <img src="image/rrda_heat.png" width="500" >
 
 
-## For more exercises with application data
-
-Go to Rpubs (https://rpubs.com/Yoska393/1351133).
-
 
 ## 📊 Application Data
 
-The application data for breast cancer and soybean are stored as `.rds` files in the folder `rrda/RDAdata`.
+
+The application datasets used in this study are summarized below.
+
+| Dataset | Files | Format | Location | Notes |
+|--------|------|--------|----------|------|
+| Soybean | `SoyData.RDS`, `soymet.csv`, `soymicro.csv` | RDS / CSV | `rrda/RDAdata` | Multi-omics dataset (genome, metabolome, microbiome) |
+| Breast cancer | `breast.RDS` | RDS | `rrda/RDAdata` | Integrated omics dataset |
+| TCGA methylation | Not included | — | — | See script `rrda_script/Meth.rmd` for download and preprocessing |
+
+---
 
 The TCGA methylation dataset is too large to be hosted on GitHub.  
-Please refer to the script `rrda_script/Meth.rmd` for details on downloading and preprocessing.
-
-The TCGA methylation and gene expression data, along with CpG annotation, can be obtained as follows:
+The TCGA data along with CpG annotation, can be obtained as follows:
 
 ```r
 # install if needed
@@ -199,6 +202,12 @@ library(IlluminaHumanMethylation450kanno.ilmn12.hg19)
 data(brge_methy)
 data(brge_gexp)
 ```
+
+## For more exercises with application data
+
+Go to Rpubs (https://rpubs.com/Yoska393/1351133).
+
+
 
 ## 📚 References 
 
