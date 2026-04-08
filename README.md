@@ -13,26 +13,41 @@
 >  with ridge penalty and rank restraint. The method is designed to handle **high-dimensional
 > data**, allowing efficient computation and storage optimization.
 
-
 ## 🌴 Overview
-Hello / Bonjour / Konichiwa
 
-This repository provides the implementation, tutorial, and application materials for the R package **`rrda`**, developed for ridge redundancy analysis in high-dimensional omics data.
+This repository serves **two complementary purposes**:
 
-In addition to the core implementation, this repository includes example datasets, analysis scripts, and supplementary materials used in our study, allowing users to reproduce the results and explore practical applications of the method.
+1. **R package distribution**  
+   It provides the implementation of the R package `rrda`, designed for ridge redundancy analysis in high-dimensional data.
 
-The structure of this repository is summarized below.
+2. **Reproducibility of the paper**  
+   It includes datasets, analysis scripts, and supplementary materials used in our study, allowing users to reproduce the analyses and explore practical applications.
 
-| Folder / File | Description |
-|--------------|------------|
-| `RDAdata/` | Application datasets (soybean, breast cancer) used in this study |
-| `script_rrda/` | Analysis scripts, including preprocessing and application workflows |
-| `src/` | Core implementation of the rrda method |
-| `lecture/` | Supplementary materials and lecture notes |
-| `image/` | Figures used in the documentation |
-| `README.md` | Project overview and instructions for reproduction |
+Thus, this repository functions both as a **software repository** and a **reproducibility repository**.
 
-**The link to our article** -> https://doi.org/10.1101/2025.04.16.649138
+---
+
+## 🚀 Quick Navigation
+
+- **Install and use the package** → see [Installation](#-installation) and [Tutorial](#-tutorial)  
+- **Access datasets used in the paper** → see [Application Data](#-application-data)  
+- **Reproduce the analyses** → see `script_rrda/`  
+- **Paper link** → https://doi.org/10.1101/2025.04.16.649138  
+
+---
+
+## 📂 Repository Structure
+
+| Section | Folder / File | Description |
+|--------|----------------|-------------|
+| Package | `src/` | Core implementation of the `rrda` method |
+| Package | `README.md` | Installation and tutorial |
+| Reproducibility | `RDAdata/` | Application datasets (soybean, breast cancer) |
+| Reproducibility | `script_rrda/` | Analysis workflows and preprocessing scripts |
+| Reproducibility | `lecture/` | Supplementary materials and lecture notes |
+| Other | `image/` | Figures used in documentation |
+
+---
 
 ## 🛠 Installation
 
