@@ -1,6 +1,6 @@
 Package: rrda
 Title: Ridge Redundancy Analysis for High-Dimensional Omics Data
-Version: 0.1.1
+Version: 0.2.3
 Authors@R: c(
     person("Hayato", "Yoshioka", , "yoshioka-hayato393@g.ecc.u-tokyo.ac.jp", role = "aut",
            comment = c(ORCID = "0000-0001-5383-2909")),
@@ -25,7 +25,9 @@ Imports:
     dplyr,
     furrr,
     ggplot2,
+    grDevices,
     MASS,
+    pheatmap,
     reshape2,
     RSpectra,
     scales,

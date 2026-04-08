@@ -31,15 +31,18 @@ globalVariables(c("rank", "MSE","SEM","label"))
 #' @importFrom stats sd
 #' @export
 #' @examples
-#'
+#'\dontrun{
 #' set.seed(10)
-#' simdata<-rdasim1(n = 10,p = 30,q = 30,k = 3)
+#' simdata<-rdasim1(n = 100,p = 200,q = 200,k = 3)
 #' X <- simdata$X
 #' Y <- simdata$Y
 #' cv_result<- rrda.cv(Y = Y, X = X, maxrank = 5, nfold = 5)
 #' rrda.summary(cv_result = cv_result)
 #'
 #' ##Complete Example##
+#'
+#'
+#'
 #' # library(future) # <- if you want to compute in parallel
 #'
 #' # plan(multisession) # <- if you want to compute in parallel
@@ -63,6 +66,7 @@ globalVariables(c("rank", "MSE","SEM","label"))
 #'
 #' cor_Y_Yhat<-diag(cor(Y,Yhat)) # correlation
 #' summary(cor_Y_Yhat)
+#' }
 
 rrda.cv <- function(Y, X, maxrank=NULL, lambda=NULL, num.lambda=50, nfold=5, folds = NULL, sample.X = 1000, sample.Y = 1000, scale.X = FALSE, scale.Y = FALSE, center.X = TRUE, center.Y = TRUE, verbose = TRUE){
 

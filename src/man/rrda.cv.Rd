@@ -9,6 +9,7 @@ rrda.cv(
   X,
   maxrank = NULL,
   lambda = NULL,
+  num.lambda = 50,
   nfold = 5,
   folds = NULL,
   sample.X = 1000,
@@ -28,6 +29,8 @@ rrda.cv(
 \item{maxrank}{A numeric vector specifying the maximum rank of the coefficient Bhat. Default is \code{NULL}, which sets it to \code{(min(15, min(dim(X), dim(Y))))}.}
 
 \item{lambda}{A numeric vector of ridge penalty values. Default is \code{NULL}, where the lambda values are automatically chosen.}
+
+\item{num.lambda}{A number of lambda generated (only when the lambda is not given by user). Default is 50.}
 
 \item{nfold}{The number of folds for cross-validation. Default is 5.}
 
@@ -62,15 +65,18 @@ Then, we define \eqn{\lambda_{min}=10^{-4}\lambda_{max}}, and the sequence \eqn{
 Also, to reduce the computation, the variable sampling is performed for the large matrix of X and Y (by default, when the number of the variables is over 1000). Alternatively, the range of lambda can be specified manually.
 }
 \examples{
-
+\dontrun{
 set.seed(10)
-simdata<-rdasim1(n = 10,p = 30,q = 30,k = 3)
+simdata<-rdasim1(n = 100,p = 200,q = 200,k = 3)
 X <- simdata$X
 Y <- simdata$Y
 cv_result<- rrda.cv(Y = Y, X = X, maxrank = 5, nfold = 5)
 rrda.summary(cv_result = cv_result)
 
 ##Complete Example##
+
+
+
 # library(future) # <- if you want to compute in parallel
 
 # plan(multisession) # <- if you want to compute in parallel
@@ -94,4 +100,5 @@ Yhat<-Yhat_mat[[1]][[1]][[1]] # predicted values
 
 cor_Y_Yhat<-diag(cor(Y,Yhat)) # correlation
 summary(cor_Y_Yhat)
+}
 }

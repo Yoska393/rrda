@@ -35,7 +35,9 @@ rrda.cv 8.232  0.131   8.521
 ( cd .. )
 R CMD check --as-cran --no-manual rrda_0.0.0.9000.tar.gz
 
-R CMD check --as-cran  rrda_0.1.0.tar.gz
+#R CMD check --as-cran  rrda_0.1.0.tar.gz
+R CMD check --as-cran ./rrda_0.2.3.tar.gz
+
 
 ```{}
 * using log directory ‘/Users/hayatoyoshioka/Documents/R/HayatoINRAE/rrda.Rcheck’

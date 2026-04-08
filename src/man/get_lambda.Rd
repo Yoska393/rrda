@@ -4,7 +4,14 @@
 \alias{get_lambda}
 \title{Estimate an appropriate value for the ridge penalty (lambda).}
 \usage{
-get_lambda(Y, X, scale.X = FALSE, sample.X = sample.X, sample.Y = sample.Y)
+get_lambda(
+  Y,
+  X,
+  scale.X = FALSE,
+  sample.X = 1000,
+  sample.Y = 1000,
+  num.lambda = 50
+)
 }
 \arguments{
 \item{Y}{A numeric matrix of response variables.}
@@ -16,6 +23,8 @@ get_lambda(Y, X, scale.X = FALSE, sample.X = sample.X, sample.Y = sample.Y)
 \item{sample.X}{A number of variables sampled from X for the lamdba range estimate. Default is 1000.}
 
 \item{sample.Y}{A number of variables sampled from Y for the lamdba range estimate. Default is 1000.}
+
+\item{num.lambda}{A number of lambda generated. Default is 50.}
 }
 \value{
 A numeric vector of the range of lambda values.

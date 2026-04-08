@@ -33,12 +33,14 @@ A heatmap of MSE cross-validation results.
 This function creates a heatmap to visualize the Mean Squared Error (MSE) results from the cross-validation of the Bhat matrix obtained from the rrda.cv function. The heatmap displays the MSE for different ranks of Bhat and values of the regularization parameter lambda, allowing users to visually assess the best combination of rank and lambda. The function also allows the user to highlight the points corresponding to the minimum MSE and the 1-standard error rule, helping to identify optimal model parameters.
 }
 \examples{
+\dontrun{
 set.seed(10)
-simdata<-rdasim1(n = 10,p = 30,q = 30,k = 3) # data generation
+simdata<-rdasim1(n = 100,p = 200,q = 200,k = 3) # data generation
 X <- simdata$X
 Y <- simdata$Y
 
 cv_result<- rrda.cv(Y = Y, X = X, maxrank = 5, nfold = 5) # cv
 rrda.summary(cv_result = cv_result)
 rrda.heatmap(cv_result=cv_result)
+}
 }

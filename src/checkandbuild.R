@@ -14,7 +14,8 @@ build()
 
 # for the install
 #install.packages("~/Documents/R/HayatoINRAE/rrda_0.0.0.9000.tar.gz", repos = NULL, type = "source")
-install.packages("~/Documents/R/HayatoINRAE/rrda_0.1.1.tar.gz", repos = NULL, type = "source")
+install.packages("~/Documents/R/HayatoINRAE/rrda_0.2.3.tar.gz", repos = NULL, type = "source")
 
 library(rrda)
 
+??rrda

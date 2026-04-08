@@ -33,12 +33,14 @@ A plot of MSE cross-validation results.
 This function visualizes the results of cross-validation for the estimated Bhat matrix obtained from the rrda.cv function. It creates a plot of the Mean Squared Error (MSE) for each combination of rank and lambda regularization parameter, allowing for the selection of specific ranks and lambda ranges to be plotted. Error bars representing the standard error of the MSE can be displayed for the best rank.
 }
 \examples{
+\dontrun{
 set.seed(10)
-simdata<-rdasim1(n = 10,p = 30,q = 30,k = 3) # data generation
+simdata<-rdasim1(n = 100,p = 200,q = 200,k = 3) # data generation
 X <- simdata$X
 Y <- simdata$Y
 
 cv_result<- rrda.cv(Y = Y, X = X, maxrank = 5, nfold = 5) # cv
 rrda.summary(cv_result = cv_result)
 rrda.plot(cv_result = cv_result)
+}
 }

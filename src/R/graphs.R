@@ -14,14 +14,16 @@
 #' @importFrom stats sd
 #' @export
 #' @examples
+#' \dontrun{
 #' set.seed(10)
-#' simdata<-rdasim1(n = 10,p = 30,q = 30,k = 3) # data generation
+#' simdata<-rdasim1(n = 100,p = 200,q = 200,k = 3) # data generation
 #' X <- simdata$X
 #' Y <- simdata$Y
 #'
 #' cv_result<- rrda.cv(Y = Y, X = X, maxrank = 5, nfold = 5) # cv
 #' rrda.summary(cv_result = cv_result)
 #' rrda.plot(cv_result = cv_result)
+#' }
 rrda.plot <- function(cv_result, nrank = NULL, min_l = NULL, max_l = NULL, show_error_bar = FALSE, title = NULL) {
   res_MSE_matrix <- cv_result[["MSE"]]
   res_SEM_matrix <- cv_result[["SEM"]]  # Standard error matrix
@@ -166,14 +168,16 @@ rrda.plot <- function(cv_result, nrank = NULL, min_l = NULL, max_l = NULL, show_
 #' @importFrom reshape2 melt
 #' @export
 #' @examples
+#' \dontrun{
 #' set.seed(10)
-#' simdata<-rdasim1(n = 10,p = 30,q = 30,k = 3) # data generation
+#' simdata<-rdasim1(n = 100,p = 200,q = 200,k = 3) # data generation
 #' X <- simdata$X
 #' Y <- simdata$Y
 #'
 #' cv_result<- rrda.cv(Y = Y, X = X, maxrank = 5, nfold = 5) # cv
 #' rrda.summary(cv_result = cv_result)
 #' rrda.heatmap(cv_result=cv_result)
+#' }
 
 rrda.heatmap <- function(cv_result, nrank = NULL, min_l = NULL, max_l = NULL, highlight_min = TRUE, title = NULL) {
   res_MSE_matrix <- cv_result[["MSE"]]
@@ -282,4 +286,232 @@ rrda.heatmap <- function(cv_result, nrank = NULL, min_l = NULL, max_l = NULL, hi
 
   return(p)
 }
+
+
+
+
+
+#' @title Top feature interactions visualization with rank and lambda penalty
+#' @description Visualizes the most influential feature interactions (based on the L2 norm) from Ridge Redundancy Analysis (RRDA) as a heatmap.
+#'
+#' Let the (rank-\eqn{r} truncated) decomposition of \eqn{\hat{B}(\lambda)} be
+#' \deqn{\hat{B}(\lambda, r) = U_{\hat{B}(\lambda)} \, D_{\hat{B}(\lambda)} \, V_{\hat{B}(\lambda)}^{\prime}.}
+#'
+#' The following three biplot scalings are defined:
+#'
+#' **Symmetric scaling (default)**:
+#' \deqn{\tilde{F} = U_{\hat{B}(\lambda)} \, D_{\hat{B}(\lambda)}^{1/2}, \qquad
+#'       \tilde{G} = V_{\hat{B}(\lambda)} \, D_{\hat{B}(\lambda)}^{1/2}.}
+#'
+#' **X scaling**:
+#' \deqn{\tilde{F} = U_{\hat{B}(\lambda)} \, D_{\hat{B}(\lambda)}, \qquad
+#'       \tilde{G} = V_{\hat{B}(\lambda)}.}
+#'
+#' **Y scaling**:
+#' \deqn{\tilde{F} = U_{\hat{B}(\lambda)}, \qquad
+#'       \tilde{G} = V_{\hat{B}(\lambda)} \, D_{\hat{B}(\lambda)}.}
+#'
+#' In all three cases, \eqn{\hat{B}(\lambda, r) = \tilde{F} \, \tilde{G}^{\prime}.}
+#'
+#' Variable importance is scored by the row-wise \eqn{\ell_2}-norms:
+#' \deqn{s_i^{(\tilde{F})} = \| \tilde{F}_{i,\cdot} \|_2, \qquad
+#'       s_j^{(\tilde{G})} = \| \tilde{G}_{j,\cdot} \|_2.}
+#'
+#' Selecting the top \eqn{m_x} predictors and \eqn{m_y} responses yields the submatrices of the scaled factor matrices (each with \eqn{r} columns).
+#'
+#' The reduced coefficient submatrix is then
+#' \deqn{\hat{B}_{\mathrm{sub}}(\lambda, r) =
+#'       \tilde{F}_{\mathrm{sub}} \, \tilde{G}_{\mathrm{sub}}^{\prime}.}
+#'
+#' The matrix \eqn{\hat{B}_{\mathrm{sub}}(\lambda, r)} retains the dominant low-rank structure and is visualized as a heatmap (with \eqn{m_x = m_y = 20} by default).
+#'
+#' @param Y A numeric matrix of response variables.
+#' @param X A numeric matrix of explanatory variables.
+#' @param nrank Integer rank \eqn{r} of \eqn{\hat{B}} to visualize. If \code{NULL} (default), it is set to \code{min(5, min(dim(X), dim(Y)))}.
+#' @param lambda A numeric vector of ridge penalty values. If \code{NULL} (default), it is set to 1.
+#' @param mx Integer; number of top \eqn{X}-features (predictors) to display. Defaults to \code{20}.
+#' @param my Integer; number of top \eqn{Y}-features (responses) to display. Defaults to \code{20}.
+#' @param scaling Character string specifying how to apply the singular values from the compositions of \eqn{\hat{B}(\lambda)} when constructing the biplot factors.
+#'Options are:
+#'   \code{"symmetric"} (default) distributes singular values evenly to both sides (balanced scaling),
+#'   \code{"x"} applies them fully to the X (left) side,
+#'   \code{"y"} applies them fully to the Y (right) side,
+#'and \code{"none"} removes them (no singular value weighting).
+#' @param title Figure title. If \code{TRUE} (default), a formatted title is used. If \code{FALSE} or \code{NULL}, no title is drawn. If a single string, it is passed through to the figure title.
+#' @return A list with elements: \code{heatmap} (pheatmap object), \code{B_sub} (mx x my matrix), \code{top_x}, \code{top_y}, \code{b1_sub}, \code{b2_sub}, \code{fit}, \code{scaling}.
+#'
+#' @importFrom pheatmap pheatmap
+#' @importFrom grDevices colorRampPalette
+#' @export
+#' @examples
+#' set.seed(10)
+#' simdata<-rdasim1(n = 10,p = 50,q = 50,k = 3) # data generation
+#' X <- simdata$X
+#' Y <- simdata$Y
+#' rrda.top(Y=Y,X=X,nrank=5,lambda=1,mx=20,my=20)
+#'
+#' \dontrun{
+#' ### In practice, the parameters nrank and lambda should be selected by CV ###
+#' cv_result<- rrda.cv(Y = Y, X = X, maxrank = 5, nfold = 5) # cv
+#' best_lambda<-cv_result$opt_min$lambda
+#' best_rank<-cv_result$opt_min$rank
+#' rrda.summary(cv_result = cv_result)
+#'
+#' rrda.top(Y=Y,X=X,nrank=best_rank,lambda=best_lambda,mx=20,my=20)
+#' }
+#'
+
+rrda.top<-function(Y,X,nrank=NULL,lambda=NULL,mx=20,my=20,scaling = c("symmetric","none","x","y"),title=TRUE){
+
+  scaling <- match.arg(scaling)
+
+  if (!is.numeric(mx) || mx < 1) mx <- 1
+  if (!is.numeric(my) || my < 1) my <- 1
+
+  if (mx > ncol(X)) {
+    warning("mx is larger than ncol(X). Setting mx = ncol(X).")
+    mx <- ncol(X)
+  }
+  if (my > ncol(Y)) {
+    warning("my is larger than ncol(Y). Setting my = ncol(Y).")
+    my <- ncol(Y)
+  }
+
+
+  if (is.null(nrank)) {
+    nrank <- min(5, min(dim(X), dim(Y)))
+    message("nrank is set to default: ", nrank)
+  }
+
+  if (is.null(lambda)) {
+    lambda <- 1
+    message("lambda is set to default: ", lambda)
+  }
+
+  if (!is.numeric(nrank)) {
+    stop("nrank must be numeric \n")
+  }
+  else if (max(nrank) > min(dim(X), dim(Y))) {
+    stop("rank(B) must be less than or equal to rank(X) and rank(Y) \n")
+  }
+  if (any(lambda < 0)) {
+    stop("lambdas should be non-negative")
+  }
+
+  # colnames for X and Y
+  if (is.null(colnames(X))) {
+    colnames(X) <- paste0("X", seq_len(ncol(X)))
+  }
+  if (is.null(colnames(Y))) {
+    colnames(Y) <- paste0("Y", seq_len(ncol(Y)))
+  }
+
+  K <- as.integer(nrank)
+  L <- lambda
+
+  # Fit the model using the indicated lambda and rank
+  b <- rrda.fit(Y = Y, X = X, lambda = L, nrank = K)
+
+  b1<-b$Bhat_comp[[1]][[1]] #UD
+  b2<-b$Bhat_comp[[1]][[2]] #V
+  D <- b$Bhat_comp[[1]][[3]] #D
+
+  Dvec <- if (is.matrix(D)) diag(D) else as.numeric(D)
+  Dvec <- ifelse(Dvec > 0, Dvec, .Machine$double.eps)
+
+  if (scaling == "none") {
+    b1 <- sweep(b1, 2, Dvec, "/")
+    #b2 = b2
+  } else if (scaling == "x") {
+    #b1 = b1
+    #b2 = b2
+  } else if (scaling == "y") {
+    b1 <- sweep(b1, 2, Dvec, "/")
+    b2 <- sweep(b2, 2, Dvec, "*")
+  } else if (scaling == "symmetric") {
+    sD <- sqrt(Dvec)
+    b1 <- sweep(b1, 2, sD, "/")
+    b2 <- sweep(b2, 2, sD, "*")
+  }
+
+  rownames(b1)<-colnames(X)
+  rownames(b2)<-colnames(Y)
+
+  x_scores <- apply(b1, 1, function(row) sqrt(sum(row^2, na.rm = TRUE)))
+  top_x_idx <- order(x_scores, decreasing = TRUE)[1:mx]  # so that it becomes 30 variables afetr filtering
+
+  y_scores <- apply(b2, 1, function(row) sqrt(sum(row^2, na.rm = TRUE)))
+  top_y_idx <- order(y_scores, decreasing = TRUE)[1:my] # so that it becomes 30 variables afetr filtering
+
+  b1_sub <- b1[top_x_idx, , drop = FALSE]
+  b2_sub <- b2[top_y_idx, , drop = FALSE]
+
+  B_sub <- b1_sub %*% t(b2_sub)
+
+  h<-B_sub
+  max_value <- max(h, na.rm = TRUE)
+  min_value <- min(h, na.rm = TRUE)
+
+  custom_colors <- colorRampPalette(c("blue", "white", "red"))(200)
+  max_abs_value <- max(abs(c(min_value, max_value)))
+  breaks <- seq(-max_abs_value, max_abs_value, length.out = 201)
+
+  # --- title handling (no spurious warnings, F/NULL => no title) ---
+  if (is.null(title)) {
+    main_title <- NA_character_  # no title
+  } else if (is.character(title) && length(title) == 1) {
+    main_title <- title          # custom title
+  } else {
+    val <- suppressWarnings(as.logical(title))
+    if (isTRUE(val)) {
+      main_title <- sprintf("RRDA (rank = %s, lambda = %s)",
+                            K, format(L, digits = 6, trim = TRUE))
+    } else if (isFALSE(val)) {
+      main_title <- NA_character_  # no title
+    } else {
+      warning("`title` must be TRUE, FALSE, NULL, or a single string. Falling back to default.")
+      main_title <- sprintf("RRDA (rank = %s, lambda = %s)",
+                            K, format(L, digits = 6, trim = TRUE))
+    }
+  }
+
+  cluster_rows <- nrow(h) >= 2
+  cluster_cols <- ncol(h) >= 2
+
+
+  hp<-pheatmap::pheatmap(h,
+               color = custom_colors,
+               breaks = breaks,
+               border_color = NA,
+               clustering_distance_rows = "euclidean",
+               clustering_distance_cols = "euclidean",
+               clustering_method = "complete",
+               show_rownames = TRUE,
+               show_colnames = TRUE,
+               cluster_rows = cluster_rows,
+               cluster_cols = cluster_cols,
+               fontsize_row = 8,
+               fontsize_col =8,
+               width = 10,
+               height = 15,
+               main = main_title
+  )
+
+
+  print(hp)
+
+  invisible(list(
+    heatmap = hp,
+    B_sub = B_sub,
+    top_x = rownames(b1_sub),
+    top_y = rownames(b2_sub),
+    b1_sub = b1_sub,
+    b2_sub = b2_sub,
+    fit = b,
+    scaling = scaling
+  ))
+
+
+}
+
 
