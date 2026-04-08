@@ -16,7 +16,7 @@ The following datasets are included in this repository:
 
 ---
 
-## Methylation data
+## TCGA data - how to obtain
 
 The TCGA methylation dataset is too large to be hosted on GitHub.  
 Please refer to the script `rrda_script/Meth.rmd` for details on downloading and preprocessing.
