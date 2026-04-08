@@ -30,8 +30,7 @@ Thus, this repository functions both as a **software repository** and a **reprod
 ## 🚀 Quick Navigation
 
 - **Install and use the package** → see [Installation](#-installation) and [Tutorial](#-tutorial)  
-- **Access datasets used in the paper** → see [Application Data](#-application-data)  
-- **Reproduce the analyses** → see [`script_rrda/`](./script_rrda/) 
+- **Access datasets and reproduce the analyses** → see [Application Data](#-application-data) and [`script_rrda/`](./script_rrda/)  
 - **Paper link** → https://doi.org/10.1101/2025.04.16.649138  
 
 ---
