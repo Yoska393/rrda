@@ -225,13 +225,11 @@ data(brge_gexp)
 
 | Section | Folder / File | Description |
 |--------|----------------|-------------|
-| Package | `src/` | Core implementation of the `rrda` method |
-| Package | `README.md` | Installation and tutorial |
-| Reproducibility | `RDAdata/` | Application datasets (soybean, breast cancer) |
-| Reproducibility | `script_rrda/` | Analysis workflows and preprocessing scripts |
-| Reproducibility | `lecture/` | Supplementary materials and lecture notes |
-| Other | `image/` | Figures used in documentation |
-
+| Package | [`src/`](./src/) | Core implementation of the `rrda` method |
+| Reproducibility | [`RDAdata/`](./RDAdata/) | Application datasets (soybean, breast cancer) |
+| Reproducibility | [`script_rrda/`](./script_rrda/) | Analysis workflows and preprocessing scripts |
+| Reproducibility | [`lecture/`](./lecture/) | Supplementary materials and lecture notes |
+| Other | [`image/`](./image/) | Figures used in documentation |
 ---
 
 ## 📚 References 
