@@ -33,18 +33,6 @@ Thus, this repository functions both as a **software repository** and a **reprod
 - **Access datasets and reproduce the analyses** → see [Application Data](#-application-data) and [`script_rrda/`](./script_rrda/)  
 - **Paper link** → https://doi.org/10.1101/2025.04.16.649138  
 
----
-
-## 📂 Repository Structure
-
-| Section | Folder / File | Description |
-|--------|----------------|-------------|
-| Package | `src/` | Core implementation of the `rrda` method |
-| Package | `README.md` | Installation and tutorial |
-| Reproducibility | `RDAdata/` | Application datasets (soybean, breast cancer) |
-| Reproducibility | `script_rrda/` | Analysis workflows and preprocessing scripts |
-| Reproducibility | `lecture/` | Supplementary materials and lecture notes |
-| Other | `image/` | Figures used in documentation |
 
 ---
 
@@ -231,6 +219,18 @@ data(brge_methy)
 data(brge_gexp)
 ```
 
+---
+
+## 📂 Repository Structure
+
+| Section | Folder / File | Description |
+|--------|----------------|-------------|
+| Package | `src/` | Core implementation of the `rrda` method |
+| Package | `README.md` | Installation and tutorial |
+| Reproducibility | `RDAdata/` | Application datasets (soybean, breast cancer) |
+| Reproducibility | `script_rrda/` | Analysis workflows and preprocessing scripts |
+| Reproducibility | `lecture/` | Supplementary materials and lecture notes |
+| Other | `image/` | Figures used in documentation |
 
 ---
 
