@@ -195,6 +195,7 @@ rrda.top(Y=Y,X=X,nrank=best_rank,lambda=best_lambda,mx=20,my=20)
 <img src="image/rrda_heat.png" width="500" >
 
 
+---
 
 ## 📊 Application Data
 
@@ -233,7 +234,7 @@ data(brge_gexp)
 
 Go to Rpubs (https://rpubs.com/Yoska393/1351133).
 
-
+---
 
 ## 📚 References 
 
