@@ -14,6 +14,8 @@ rrda.topheat<-function(cv_result,Y,X,mx=20,my=20){
 	
 	b1<-b$Bhat_comp[[1]][[1]]
 	b2<-b$Bhat_comp[[1]][[2]]
+	D <- b$Bhat_comp[[1]][[3]]
+	b2 <- b2 %*% D  
 	
 	rownames(b1)<-colnames(X)
 	rownames(b2)<-colnames(Y)
@@ -28,7 +30,7 @@ rrda.topheat<-function(cv_result,Y,X,mx=20,my=20){
 	b2_sub <- b2[top_y_idx, , drop = FALSE]  
 	
 	B_sub <- b1_sub %*% t(b2_sub)
-	
+	h<-B_sub 
 	
 	max_value <- max(h, na.rm = TRUE)
 	min_value <- min(h, na.rm = TRUE)
@@ -37,7 +39,7 @@ rrda.topheat<-function(cv_result,Y,X,mx=20,my=20){
 	max_abs_value <- max(abs(c(min_value, max_value)))
 	breaks <- seq(-max_abs_value, max_abs_value, length.out = 201)
 	
-	h<-B_sub 
+	
 	
 	pheatmap(h,
 					 color = custom_colors,

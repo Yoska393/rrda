@@ -481,6 +481,9 @@ b <- rrda.fit(Y = Y, X = X, lambda = L, nrank = K)
 
 b1<-b$Bhat_comp[[1]][[1]]
 b2<-b$Bhat_comp[[1]][[2]]
+D <- b$Bhat_comp[[1]][[3]] #D
+b1 <- b1  %*% diag(1 / sqrt(D)) 
+b2 <- b2  %*% diag(sqrt(D))
 
 dim(b1)
 dim(b2)
