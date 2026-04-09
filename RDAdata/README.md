@@ -1,4 +1,4 @@
-# RRDA Data
+# 📊 Application Data
 
 This repository contains datasets used in the article:  
 **“Ridge Redundancy Analysis for High-Dimensional Omics Data” (2025)**  
@@ -16,7 +16,7 @@ The following datasets are included in this repository:
 
 ---
 
-## TCGA data - how to obtain
+## TCGA data - how to access
 
 The TCGA methylation dataset is too large to be hosted on GitHub.  
 Please refer to the script `rrda_script/Meth.rmd` for details on downloading and preprocessing.
