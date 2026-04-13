@@ -169,7 +169,7 @@ The application datasets used in this study are summarized below.
 |--------|------|--------|----------|------|
 | Soybean | `SoyData.RDS`, `soymet.csv`, `soymicro.csv` | RDS / CSV | [`RDAdata/`](./RDAdata/)  | Multi-omics dataset (genome, metabolome, microbiome) |
 | Breast cancer | `breast.RDS` | RDS | [`RDAdata/`](./RDAdata/)  | Integrated omics dataset |
-| TCGA methylation | Not included | — | — | See script `rrda_script/Meth.rmd` for download and preprocessing |
+| TCGA methylation | Not included | — | Open Source | See script `rrda_script/Meth.rmd` for download and preprocessing |
 
 
 The TCGA methylation dataset is too large to be hosted on GitHub.  
