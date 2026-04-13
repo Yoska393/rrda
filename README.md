@@ -145,34 +145,7 @@ abline(0, 1, col = "red")
 
 #### Visualize and Select the Best Parameter
 
-If you want to plot X and Y matrix in two-dimensional space (like classic RDA approach) :
-
-```{r}
-ud<-Bhat$Bhat_comp[[1]][[1]] # SVD component of B (UD) for lambda=0.1
-v <-Bhat$Bhat_comp[[1]][[2]] # SVD component of B (V). for lambda=0.1
-
-ud12 <- ud[, 1:2]
-v12  <- v[, 1:2]
-
-# Base plot: ud (e.g., site scores)
-plot(v12, 
-     xlab = "RRDA1", ylab = "RRDA2", 
-     xlim = range(c(ud12[,1], v12[,1])) * 1.1, 
-     ylim = range(c(ud12[,2], v12[,2])) * 1.1, 
-     pch = 19, col = "darkgreen", 
-     main = "RRDA")
-
-# Add v (e.g., species scores) as arrows from origin
-arrows(0, 0, ud12[,1], ud12[,2], col = "blue3", length = 0.1)
-
-# Optionally add text labels
-text(ud12, labels = paste0("X", 1:nrow(ud12)), pos = 3, col = "blue3", cex = 0.6)
-text(v12, labels = paste0("Y", 1:nrow(v12)), pos = 3, col = "darkgreen", cex = 0.6)
-```
-<img src="image/rrda_2dim.png" width="500" >
-However, this classic two-dimensional visualization is hard to interpret because of too many features..
-
-For better interpretations, we visualize the **feature–feature matrix** using a selected dimensionality, highlighting the most informative features based on L2 norm.
+We visualize the **feature–feature matrix** using a selected dimensionality, highlighting the most informative features based on L2 norm.
 
 ```{r}
 best_lambda<-cv_result$opt_min$lambda  
