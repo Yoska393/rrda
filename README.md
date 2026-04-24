@@ -1,4 +1,4 @@
-# Reproducibility Repository: Ridge Redundancy Analysis for High-Dimensional Omics Data <img src="src/man/figures/logo.png" align="right" width="170"/>
+# rrda: Ridge Redundancy Analysis for High-Dimensional Omics Data <img src="image/logo.png" align="right" width="170"/>
 
 
 > This repository provides the **datasets, analysis scripts, and supplementary materials** used in our study on Ridge Redundancy Analysis (rrda).  
