@@ -14,8 +14,6 @@
 | 📄 Paper | [doi: 10.1101/2025.04.16.649138](https://doi.org/10.1101/2025.04.16.649138) | bioRxiv preprint |
 | 🧪 Tutorial (RPubs) | [rpubs.com/Yoska393/1351133](https://rpubs.com/Yoska393/1351133) | Application exercises |
 
-# **For package installation and usage**, please refer to the [FORGE repository](https://forge.inrae.fr/mia-paris/rrda) and its [documentation site](https://rrda-00f094.pages-forge.inrae.fr).
-
 ---
 
 ## 📂 Repository Structure
