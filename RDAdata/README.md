@@ -10,7 +10,7 @@ The following datasets are included in this repository:
 
 | Dataset | Files | Format | Location | Notes |
 |--------|------|--------|----------|------|
-| Soybean | `SoyData.RDS`, `soymet.csv`, `soymicro.csv` | RDS / CSV | `rrda/RDAdata` | Multi-omics dataset (genome, metabolome, microbiome) |
+| Soybean | `SoyData.RDS` | RDS | `rrda/RDAdata` | Multi-omics dataset (genome, metabolome, microbiome) |
 | Breast cancer | `breast.RDS` | RDS | `rrda/RDAdata` | Integrated omics dataset |
 | TCGA methylation | Not included | — | — | See script `rrda_script/Meth.rmd` for download and preprocessing |
 
