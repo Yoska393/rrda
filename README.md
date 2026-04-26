@@ -37,7 +37,7 @@ The application datasets used in this study are summarized below.
 
 | Dataset | Files | Format | Location | Notes |
 |--------|------|--------|----------|------|
-| Soybean | `SoyData.RDS`, `soymet.csv`, `soymicro.csv` | RDS / CSV | [`RDAdata/`](./RDAdata/) | Multi-omics dataset (genome, metabolome, microbiome) |
+| Soybean | `SoyData.RDS` | RDS  | [`RDAdata/`](./RDAdata/) | Multi-omics dataset (genome, metabolome, microbiome) |
 | Breast cancer | `breast.RDS` | RDS | [`RDAdata/`](./RDAdata/) | Integrated omics dataset |
 | TCGA methylation | Not included | — | Open Source | See [`script_rrda/Meth.rmd`](./script_rrda/Meth.rmd) for download instructions |
 
