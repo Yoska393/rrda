@@ -1,16 +1,14 @@
 # rrda: Ridge Redundancy Analysis for High-Dimensional Omics Data <img src="image/logo.png" align="right" width="170"/>
 
 
-> This repository provides the **datasets, analysis scripts, and supplementary materials** used in our study on Ridge Redundancy Analysis (rrda).  
-> It is intended for reproducing the analyses in the paper and exploring practical applications.
-
+> This repository provides the **datasets, analysis scripts, and supplementary materials** used in our study on Ridge Redundancy Analysis (rrda). It is intended to reproduce the analyses in the paper and explore practical applications.
 ---
 
 ## 🔗 Related Resources
 
 | Resource | Link | Description |
 |----------|------|-------------|
-| 📦 R Package (CRAN) | [![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/rrda)](https://cran.r-project.org/package=rrda) | Stable release |
+| 📦 R Package (CRAN) |[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/rrda)](https://cran.r-project.org/package=rrda) [![CRAN Downloads (Last Month)](https://cranlogs.r-pkg.org/badges/last-month/rrda)](https://cran.r-project.org/package=rrda) [![CRAN Downloads](https://cranlogs.r-pkg.org/badges/grand-total/rrda)](https://cran.r-project.org/package=rrda)| Stable release |
 | 🔧 Package Development (FORGE) | [forge.inrae.fr/mia-paris/rrda](https://forge.inrae.fr/mia-paris/rrda) | Source code, dev version, issue tracker |
 | 📖 Package Documentation | [rrda-00f094.pages-forge.inrae.fr](https://rrda-00f094.pages-forge.inrae.fr) | Function reference & vignettes |
 | 📄 Paper | [doi: 10.1101/2025.04.16.649138](https://doi.org/10.1101/2025.04.16.649138) | bioRxiv preprint |
