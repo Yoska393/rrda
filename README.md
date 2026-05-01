@@ -1,7 +1,7 @@
 # rrda: Ridge Redundancy Analysis for High-Dimensional Omics Data <img src="image/logo.png" align="right" width="170"/>
 
 
-> This repository provides the **datasets, analysis scripts, and supplementary materials** used in our study on [bioRxiv](https://doi.org/10.1101/2025.04.16.649138). It is intended to reproduce the analyses in the paper and explore practical applications.
+>This repository contains the datasets, scripts, and supplementary materials for the study available on bioRxiv (https://doi.org/10.1101/2025.04.16.649138).
 ---
 
 ## 🔗 Related Resources
