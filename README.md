@@ -1,7 +1,7 @@
 # rrda: Ridge Redundancy Analysis for High-Dimensional Omics Data <img src="image/logo.png" align="right" width="170"/>
 
 
-> This repository provides the **datasets, analysis scripts, and supplementary materials** used in our study on Ridge Redundancy Analysis (rrda). It is intended to reproduce the analyses in the paper and explore practical applications.
+> This repository provides the **datasets, analysis scripts, and supplementary materials** used in our study on [bioRxiv](https://doi.org/10.1101/2025.04.16.649138). It is intended to reproduce the analyses in the paper and explore practical applications.
 ---
 
 ## 🔗 Related Resources
@@ -9,7 +9,7 @@
 | Resource | Link | Description |
 |----------|------|-------------|
 | 📦 R Package (CRAN) |[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/rrda)](https://cran.r-project.org/package=rrda) [![CRAN Downloads](https://cranlogs.r-pkg.org/badges/grand-total/rrda)](https://cran.r-project.org/package=rrda) | Stable release |
-| 📄 Paper | [doi: 10.1101/2025.04.16.649138](https://doi.org/10.1101/2025.04.16.649138) | bioRxiv preprint |
+| 📄 Paper | [bioRxiv](https://doi.org/10.1101/2025.04.16.649138) | bioRxiv preprint |
 | 🧪 Tutorial (RPubs) | [rpubs.com/Yoska393/1351133](https://rpubs.com/Yoska393/1351133) | Application exercises |
 | 🔧 Developer Version | [FORGE](https://forge.inrae.fr/mia-paris/rrda) | Source code, dev version, issue tracker |
 | 📖 Developer Documentation | [Vignette](https://rrda-00f094.pages-forge.inrae.fr) | Function reference & vignettes |
